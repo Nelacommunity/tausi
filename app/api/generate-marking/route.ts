@@ -50,14 +50,18 @@ export async function POST(request: Request) {
         totalTokens += (await result.response).usageMetadata?.totalTokenCount ?? 0;
 
         // ── Pass 2: continuation if output was cut short ───────────
-        // We check for the mandatory Weak Points Analysis section at the end.
-        // If it's missing the model was truncated mid-output; we resume it.
-        if (!fullContent.includes("Weak Points Analysis")) {
+        // The marking scheme is only complete when BOTH:
+        //   • The Weak Points Analysis section is present
+        //   • The Difficulty Breakdown table (last subsection) is present
+        // If either is missing the model was truncated; resume the conversation.
+        const hasWeakPoints  = fullContent.includes("Weak Points Analysis");
+        const hasDifficulty  = fullContent.includes("Difficulty Breakdown") || fullContent.includes("Difficulty Rating");
+        if (!hasWeakPoints || !hasDifficulty) {
           const contResult = await model.generateContentStream({
             contents: [
               { role: "user",  parts: [{ text: INITIAL_PROMPT }] },
               { role: "model", parts: [{ text: fullContent }] },
-              { role: "user",  parts: [{ text: "You stopped before finishing. Please continue from exactly where you left off — complete any remaining questions and then add the full ## Weak Points Analysis section." }] },
+              { role: "user",  parts: [{ text: "You stopped before finishing. Please continue from exactly where you left off — complete any remaining questions, then add the full ## Weak Points Analysis section including all 6 subsections ending with the Difficulty Breakdown table." }] },
             ],
             generationConfig: { maxOutputTokens: 65536 },
           });

@@ -2,6 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import type { ComponentPropsWithoutRef } from "react";
@@ -15,7 +16,7 @@ export function ExamOutput({ content, isStreaming }: ExamOutputProps) {
   return (
     <div className="exam-output text-gray-100 leading-relaxed">
       <ReactMarkdown
-        remarkPlugins={[remarkMath]}
+        remarkPlugins={[remarkMath, remarkGfm]}
         rehypePlugins={[rehypeKatex]}
         components={{
           h1: ({ children }) => (
@@ -61,32 +62,37 @@ export function ExamOutput({ content, isStreaming }: ExamOutputProps) {
             <em className="italic text-gray-300">{children}</em>
           ),
           hr: () => <hr className="border-gray-600 my-6" />,
+
+          // ── Tables — scroll horizontally on small screens ────────────
           table: ({ children }) => (
-            <div className="overflow-x-auto mb-4 rounded-lg border border-gray-700">
-              <table className="border-collapse text-sm text-gray-200">
+            <div className="overflow-x-auto mb-5 rounded-lg border border-gray-700 w-full">
+              <table className="border-collapse text-sm text-gray-200 w-full min-w-max">
                 {children}
               </table>
             </div>
           ),
           thead: ({ children }) => (
-            <thead className="bg-gray-800">{children}</thead>
+            <thead className="bg-gray-800/90">{children}</thead>
           ),
-          tbody: ({ children }) => <tbody>{children}</tbody>,
+          tbody: ({ children }) => (
+            <tbody className="divide-y divide-gray-800">{children}</tbody>
+          ),
           tr: ({ children }) => (
-            <tr className="hover:bg-gray-800/40 transition-colors">
+            <tr className="hover:bg-gray-800/40 transition-colors even:bg-gray-900/30">
               {children}
             </tr>
           ),
           th: ({ children }) => (
-            <th className="border border-gray-600 px-3 py-2 text-center font-semibold text-indigo-300 align-middle bg-gray-800">
+            <th className="border border-gray-600 px-4 py-2.5 text-left font-semibold text-indigo-300 align-middle bg-gray-800 whitespace-nowrap">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="border border-gray-700 px-3 py-2 text-center text-gray-200 align-middle">
+            <td className="border border-gray-700/60 px-4 py-2 text-left text-gray-200 align-middle">
               {children}
             </td>
           ),
+
           code: ({
             children,
             className,

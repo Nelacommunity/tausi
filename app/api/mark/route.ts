@@ -110,9 +110,11 @@ export async function POST(request: Request) {
         totalTokens += (await result.response).usageMetadata?.totalTokenCount ?? 0;
 
         // ── Pass 2: continuation if report was cut short ───────────
-        // The report always ends with "## Priority Study Areas". If that section
-        // is missing the output was truncated; resume the multi-turn conversation.
-        if (!fullFeedback.includes("Priority Study Areas")) {
+        // The report is only complete when both the Overall Feedback AND
+        // Priority Study Areas sections are present. Resume if either is missing.
+        const hasOverall  = fullFeedback.includes("Overall Performance Feedback");
+        const hasPriority = fullFeedback.includes("Priority Study Areas");
+        if (!hasOverall || !hasPriority) {
           const contResult = await model.generateContentStream({
             contents: [
               { role: "user",  parts },
