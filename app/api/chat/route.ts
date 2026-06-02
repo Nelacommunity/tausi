@@ -20,11 +20,12 @@ export async function POST(request: Request) {
   const tokenCheck = await checkTokenLimit(supabase, user.id, "exam_chat");
   if (!tokenCheck.allowed) return tokenLimitError("exam_chat", tokenCheck.used, tokenCheck.limit);
 
-  let body: { examId?: string; message?: string };
+  let body: { examId?: string; message?: string; context?: string };
   try { body = await request.json(); }
   catch { return jsonErr("Invalid JSON", 400); }
 
   const { examId, message } = body;
+  const context: "predicted" | "source" = body.context === "source" ? "source" : "predicted";
   if (!examId || !message?.trim()) return jsonErr("examId and message are required", 400);
   if (message.length > 4000) return jsonErr("Message too long (max 4000 characters)", 400);
 
@@ -39,8 +40,12 @@ export async function POST(request: Request) {
   await supabase.from("chat_messages").insert({ exam_id: examId, user_id: user.id, role: "user", content: message });
 
   let systemText = CHAT_SYSTEM_PROMPT;
-  if (exam.predicted_exam) systemText += `\n\n---\nPREDICTED EXAM PAPER:\n${exam.predicted_exam}`;
-  if (exam.marking_scheme) systemText += `\n\n---\nMARKING SCHEME:\n${exam.marking_scheme}`;
+  if (context === "source") {
+    systemText += "\n\nThe student wants to discuss the ORIGINAL SOURCE PAPER(S) they uploaded. Focus your answers on the source material, not the predicted exam.";
+  } else {
+    if (exam.predicted_exam) systemText += `\n\n---\nPREDICTED EXAM PAPER:\n${exam.predicted_exam}`;
+    if (exam.marking_scheme) systemText += `\n\n---\nMARKING SCHEME:\n${exam.marking_scheme}`;
+  }
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: systemText });

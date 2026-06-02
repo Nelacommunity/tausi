@@ -31,5 +31,9 @@ export async function GET(request: NextRequest) {
     await supabase.auth.verifyOtp({ type: type as "email" | "signup" | "recovery", token_hash });
   }
 
-  return NextResponse.redirect(new URL(next, request.url));
+  // Email confirmation flows land on the verified page; everything else (OAuth, recovery) uses next
+  const isEmailConfirmation = type === "signup" || type === "email";
+  const destination = isEmailConfirmation ? "/auth/verified" : next;
+
+  return NextResponse.redirect(new URL(destination, request.url));
 }

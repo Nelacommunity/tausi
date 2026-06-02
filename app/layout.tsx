@@ -37,21 +37,12 @@ export const metadata: Metadata = {
     "marking scheme generator", "AI tutor", "exam preparation",
     "IGCSE predicted exam", "WAEC mock", "ZIMSEC past papers",
     "UNEB exams", "form four exams Tanzania", "O level exams East Africa",
-    "study assistant AI", "Gemini AI education",
+    "study assistant AI", "AI education",
   ],
 
   authors: [{ name: "Tausi", url: APP_URL }],
   creator: "Tausi",
   publisher: "Tausi",
-
-  // Canonical & alternates
-  alternates: {
-    canonical: APP_URL,
-    languages: {
-      "en": `${APP_URL}`,
-      "sw": `${APP_URL}`,
-    },
-  },
 
   // Robots
   robots: {

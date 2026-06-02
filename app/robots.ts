@@ -10,7 +10,6 @@ export default function robots(): MetadataRoute.Robots {
           "/",
           "/discover",
           "/pricing",
-          "/login",
           "/signup",
           "/exams/",   // public exam pages indexed individually
         ],

@@ -108,12 +108,33 @@ export async function recordTokenUsage(
   tokens: number
 ): Promise<void> {
   if (!tokens || tokens <= 0) return;
-  await supabase.rpc("increment_token_usage", {
+  const month = currentMonth();
+
+  // Primary path: atomic increment via SECURITY DEFINER RPC
+  const { error: rpcError } = await supabase.rpc("increment_token_usage", {
     p_user_id: userId,
-    p_month:   currentMonth(),
+    p_month:   month,
     p_feature: feature,
     p_tokens:  tokens,
   });
+
+  if (!rpcError) return;
+
+  // Fallback: read current value then upsert (non-atomic but correct for single-request cases)
+  const { data: row } = await supabase
+    .from("token_usage_monthly")
+    .select("tokens")
+    .eq("user_id", userId)
+    .eq("month", month)
+    .eq("feature", feature)
+    .maybeSingle();
+
+  await supabase
+    .from("token_usage_monthly")
+    .upsert(
+      { user_id: userId, month, feature, tokens: ((row?.tokens as number) ?? 0) + tokens },
+      { onConflict: "user_id,month,feature" }
+    );
 }
 
 export async function getMonthlyUsage(

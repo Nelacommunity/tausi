@@ -21,7 +21,7 @@ const t = {
 
     // ── Landing page ──────────────────────────────────────────────────────
     landing: {
-      badge:            "Powered by Gemini 2.5 Flash",
+      badge:            "Powered by Tausi AI",
       headline1:        "Predict your next exam.",
       headline2:        "Study smarter.",
       subheadline:      "Upload your past exam papers. Tausi's AI analyses the structure, topics, and patterns — then generates a realistic predicted exam complete with a full marking scheme and an AI tutor to guide your preparation.",
@@ -53,7 +53,7 @@ const t = {
 
       steps: [
         { title: "Upload your past papers",       desc: "Drag-and-drop one or more past exam papers — PDFs or images. Add optional instructions like \"focus on thermodynamics\" or \"third-year difficulty\"." },
-        { title: "AI analyses structure and patterns", desc: "Gemini 2.5 Flash reads every section, question type, mark allocation, and topic distribution before generating anything." },
+        { title: "AI analyses structure and patterns", desc: "Tausi AI reads every section, question type, mark allocation, and topic distribution before generating anything." },
         { title: "Receive your predicted exam",   desc: "A brand-new exam is streamed to you in real time — same format, same sections, same marking style, entirely new questions." },
         { title: "Study with your AI tutor",      desc: "Open the chat panel and talk to Tausi AI about your exam. Ask it to explain questions, walk through solutions, or plan your revision schedule." },
       ],
@@ -347,7 +347,7 @@ const t = {
     },
 
     landing: {
-      badge:            "Inaendeshwa na Gemini 2.5 Flash",
+      badge:            "Inaendeshwa na Tausi AI",
       headline1:        "Tabiri mtihani wako ujao.",
       headline2:        "Soma kwa akili.",
       subheadline:      "Pakia mitihani yako ya zamani. AI ya Tausi inachunguza muundo, mada, na mifumo — kisha inatengeneza mtihani wa kweli uliotabiriwa pamoja na mpango kamili wa maksi na mwalimu wa AI kukuongoza.",
@@ -379,7 +379,7 @@ const t = {
 
       steps: [
         { title: "Pakia mitihani yako ya zamani",           desc: "Buruta na udondoshe mitihani moja au zaidi ya zamani — PDF au picha. Ongeza maelekezo ya hiari kama \"zingatia thermodynamics\" au \"kiwango cha mwaka wa tatu\"." },
-        { title: "AI inachunguza muundo na mifumo",         desc: "Gemini 2.5 Flash inasoma kila sehemu, aina ya swali, ugawaji wa maksi, na mgawanyo wa mada kabla ya kutengeneza chochote." },
+        { title: "AI inachunguza muundo na mifumo",         desc: "AI ya Tausi inasoma kila sehemu, aina ya swali, ugawaji wa maksi, na mgawanyo wa mada kabla ya kutengeneza chochote." },
         { title: "Pokea mtihani wako uliotabiriwa",         desc: "Mtihani mpya unastreamu kwako kwa wakati halisi — muundo sawa, sehemu sawa, mtindo sawa wa maksi, maswali mapya kabisa." },
         { title: "Soma na mwalimu wako wa AI",              desc: "Fungua paneli ya mazungumzo na uzungumze na AI ya Tausi kuhusu mtihani wako. Muombe aeleze maswali, apitie suluhisho, au apange ratiba yako ya marudio." },
       ],

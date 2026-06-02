@@ -70,7 +70,7 @@ export default function OgImage() {
             }}
           />
           <span style={{ color: "#a5b4fc", fontSize: 16, fontWeight: 500 }}>
-            Powered by Gemini 2.5 Flash
+            Powered by Tausi AI
           </span>
         </div>
 

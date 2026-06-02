@@ -115,7 +115,7 @@ const faqSchema = {
       name: "How does Tausi predict NECTA exams?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Tausi uses Google Gemini 2.5 Flash AI to analyse the structure, section types, mark allocation, topics, and question patterns of uploaded past NECTA papers. It then generates a brand-new predicted exam that follows the same format with different questions.",
+        text: "Tausi AI analyses the structure, section types, mark allocation, topics, and question patterns of uploaded past NECTA papers. It then generates a brand-new predicted exam that follows the same format with different questions.",
       },
     },
     {
@@ -167,7 +167,7 @@ const howToSchema = {
     {
       "@type": "HowToStep",
       name: "Tausi AI analyses the papers",
-      text: "Gemini 2.5 Flash reads the exam structure, sections, question types, mark allocation, and topic distribution.",
+      text: "Tausi AI reads the exam structure, sections, question types, mark allocation, and topic distribution.",
     },
     {
       "@type": "HowToStep",

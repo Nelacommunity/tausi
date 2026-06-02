@@ -31,13 +31,14 @@ export async function POST(request: Request) {
   if (!paperIds?.length)  return jsonErr("No papers selected", 400);
   if (paperIds.length > 3) return jsonErr("Max 3 papers allowed", 400);
 
-  const { data: papers } = await supabase
+  const { data: papers, error: papersError } = await supabase
     .from("exam_papers")
     .select("id, name, subject, exam_type, year, file_paths, exam_structure")
     .in("id", paperIds)
     .eq("user_id", user.id);
 
-  if (!papers?.length) return jsonErr("Papers not found", 404);
+  if (papersError) return jsonErr(`Database error: ${papersError.message}`, 500);
+  if (!papers?.length) return jsonErr("Papers not found — make sure the selected papers belong to your account.", 404);
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: EXAM_SYSTEM_PROMPT });

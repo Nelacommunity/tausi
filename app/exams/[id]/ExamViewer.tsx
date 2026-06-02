@@ -8,13 +8,14 @@ import { ExamOutput } from "@/app/components/ExamOutput";
 import { downloadPDF } from "@/app/lib/download-pdf";
 import { useT } from "@/app/lib/language-context";
 
-type Tab = "exam" | "marking" | "chat";
+type Tab = "exam" | "marking" | "chat" | "source";
 
 interface ExamViewerProps {
   exam: Exam;
   initialMessages: ChatMessage[];
   isOwner: boolean;
   userTier: "free" | "premium";
+  sourceSignedUrls: string[];
 }
 
 // ── Icons ────────────────────────────────────────────────────
@@ -24,6 +25,10 @@ const Icon = ({ d, size = 4 }: { d: string; size?: number }) => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={d} />
   </svg>
 );
+
+function isImage(path: string) {
+  return /\.(png|jpg|jpeg|webp)$/i.test(path);
+}
 
 const ICONS = {
   pdf:  "M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
@@ -38,6 +43,8 @@ const ICONS = {
   pencil: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125",
   check: "M4.5 12.75l6 6 9-13.5",
   copy: "M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184",
+  file: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z",
+  external: "M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25",
 };
 
 function LoadingDots() {
@@ -55,7 +62,7 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
-export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTier }: ExamViewerProps) {
+export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTier, sourceSignedUrls }: ExamViewerProps) {
   const router = useRouter();
   const { T } = useT();
   const V = T.examViewer;
@@ -75,6 +82,8 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
   const [savingTitle, setSavingTitle] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
   const [isDownloading, setIsDownloading] = useState(false);
+  const [activeSourceFile, setActiveSourceFile] = useState(0);
+  const [chatContext, setChatContext] = useState<"predicted" | "source">("predicted");
   const examContentRef = useRef<HTMLDivElement>(null);
   const markingContentRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -193,7 +202,7 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ examId: exam.id, message: text }),
+        body: JSON.stringify({ examId: exam.id, message: text, context: chatContext }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? res.statusText);
       const reader = res.body!.getReader();
@@ -357,42 +366,144 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
         <div className={`flex-col flex-1 min-w-0 overflow-hidden border-r border-gray-800 ${
           activeTab === "chat" ? "hidden md:flex" : "flex"
         }`}>
-          <div className="flex items-center gap-1 border-b border-gray-800 px-2 sm:px-4 bg-gray-950 shrink-0 overflow-x-auto">
-            {([
-              { key: "exam" as Tab, label: V.predictedExam, iconD: ICONS.sparkle, color: "indigo" },
-              { key: "marking" as Tab, label: V.markingScheme, iconD: ICONS.book, color: "emerald" },
-            ] as const).map(({ key, label, iconD, color }) => (
-              <button key={key} onClick={() => setActiveTab(key)}
-                className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
-                  activeTab === key
-                    ? color === "indigo" ? "text-indigo-300 border-indigo-500" : "text-emerald-300 border-emerald-500"
-                    : "text-gray-500 border-transparent hover:text-gray-300"
-                }`}>
-                <Icon d={iconD} />
-                <span className="hidden xs:inline">{label}</span>
-                <span className="xs:hidden">{key === "exam" ? V.predictedExam : V.markingScheme}</span>
-                {key === "marking" && isGeneratingMarking && <LoadingDots />}
+          <div className="border-b border-gray-800 bg-gray-950 shrink-0">
+            {/* ── Primary picker: Source Paper vs Predicted Exam ── */}
+            <div className="flex items-center gap-2 px-3 pt-2 pb-2">
+              {sourceSignedUrls.length > 0 ? (
+                <div className="flex rounded-lg bg-gray-900 border border-gray-800 p-0.5 gap-px">
+                  <button
+                    onClick={() => setActiveTab("source")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
+                      activeTab === "source"
+                        ? "bg-amber-500/20 text-amber-300 shadow-sm"
+                        : "text-gray-500 hover:text-gray-300"
+                    }`}
+                  >
+                    <Icon d={ICONS.file} size={3} />
+                    Source Paper
+                  </button>
+                  <button
+                    onClick={() => setActiveTab(activeTab === "marking" ? "marking" : "exam")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
+                      activeTab === "exam" || activeTab === "marking"
+                        ? "bg-indigo-500/20 text-indigo-300 shadow-sm"
+                        : "text-gray-500 hover:text-gray-300"
+                    }`}
+                  >
+                    <Icon d={ICONS.sparkle} size={3} />
+                    Predicted Exam
+                  </button>
+                </div>
+              ) : (
+                /* No source paper — flat tabs only */
+                <div className="flex items-center gap-1">
+                  {([
+                    { key: "exam" as Tab, label: V.predictedExam, iconD: ICONS.sparkle, active: "text-indigo-300 border-indigo-500" },
+                    { key: "marking" as Tab, label: V.markingScheme, iconD: ICONS.book, active: "text-emerald-300 border-emerald-500" },
+                  ] as const).map(({ key, label, iconD, active }) => (
+                    <button key={key} onClick={() => setActiveTab(key)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
+                        activeTab === key ? active : "text-gray-500 border-transparent hover:text-gray-300"
+                      }`}>
+                      <Icon d={iconD} size={3} />
+                      {label}
+                      {key === "marking" && isGeneratingMarking && <LoadingDots />}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Mobile Chat tab */}
+              <button
+                onClick={() => setActiveTab("chat")}
+                className={`md:hidden ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  activeTab === "chat"
+                    ? "bg-purple-500/20 text-purple-300"
+                    : "text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                <Icon d={ICONS.chat} size={3} />
+                {V.chat}
               </button>
-            ))}
-            {/* Chat tab — visible only on mobile */}
-            <button
-              onClick={() => setActiveTab("chat")}
-              className={`md:hidden flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
-                activeTab === "chat"
-                  ? "text-purple-300 border-purple-500"
-                  : "text-gray-500 border-transparent hover:text-gray-300"
-              }`}>
-              <Icon d={ICONS.chat} />
-              {V.chat}
-            </button>
+            </div>
+
+            {/* ── Sub-tabs: Exam / Marking Scheme (only when Predicted is active) ── */}
+            {sourceSignedUrls.length > 0 && (activeTab === "exam" || activeTab === "marking") && (
+              <div className="flex items-center gap-1 px-3 border-t border-gray-800/60">
+                {([
+                  { key: "exam" as Tab, label: V.predictedExam, iconD: ICONS.sparkle, cls: "text-indigo-300 border-indigo-500" },
+                  { key: "marking" as Tab, label: V.markingScheme, iconD: ICONS.book, cls: "text-emerald-300 border-emerald-500" },
+                ] as const).map(({ key, label, iconD, cls }) => (
+                  <button key={key} onClick={() => setActiveTab(key)}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
+                      activeTab === key ? cls : "text-gray-500 border-transparent hover:text-gray-300"
+                    }`}>
+                    <Icon d={iconD} size={3} />
+                    {label}
+                    {key === "marking" && isGeneratingMarking && <LoadingDots />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className={`flex-1 min-h-0 ${activeTab === "source" ? "flex flex-col overflow-hidden" : "overflow-y-auto p-6"}`}>
             {activeTab === "exam" && (
               <div ref={examContentRef}>
                 <ExamOutput content={exam.predicted_exam} />
               </div>
             )}
+            {activeTab === "source" && sourceSignedUrls.length > 0 && (() => {
+              const currentUrl = sourceSignedUrls[activeSourceFile] ?? "";
+              const currentPath = (exam.pdf_storage_paths as string[])[activeSourceFile] ?? "";
+              return (
+                <>
+                  {/* File tabs */}
+                  {exam.original_filenames.length > 1 && (
+                    <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-800 bg-gray-950 shrink-0 overflow-x-auto">
+                      {exam.original_filenames.map((name, i) => (
+                        <button key={i} onClick={() => setActiveSourceFile(i)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
+                            activeSourceFile === i
+                              ? "bg-gray-800 text-white"
+                              : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
+                          }`}>
+                          <Icon d={ICONS.file} size={3} />
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {/* File bar */}
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800 bg-gray-900/60 shrink-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Icon d={ICONS.file} size={3} />
+                      <span className="text-xs text-gray-400 truncate">
+                        {exam.original_filenames[activeSourceFile] ?? "Source Paper"}
+                      </span>
+                    </div>
+                    <a href={currentUrl} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 transition-colors shrink-0">
+                      <Icon d={ICONS.external} size={3} />
+                      <span className="hidden sm:inline">Open full</span>
+                    </a>
+                  </div>
+                  {/* Viewer */}
+                  <div className="flex-1 overflow-hidden bg-gray-900">
+                    {isImage(currentPath) ? (
+                      <div className="h-full overflow-y-auto flex items-start justify-center p-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={currentUrl} alt={exam.original_filenames[activeSourceFile]}
+                          className="max-w-full h-auto rounded-lg shadow-lg" />
+                      </div>
+                    ) : (
+                      <iframe src={currentUrl} className="w-full h-full border-0"
+                        title={exam.original_filenames[activeSourceFile]} />
+                    )}
+                  </div>
+                </>
+              );
+            })()}
             {activeTab === "marking" && (
               hasMarking ? (
                 <div ref={markingContentRef}>
@@ -425,16 +536,47 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
         <div className={`flex-col min-h-0 overflow-hidden md:w-full md:max-w-md lg:max-w-lg md:shrink-0 ${
           activeTab === "chat" ? "flex w-full" : "hidden md:flex"
         }`}>
-          <div className="px-4 py-3 border-b border-gray-800 flex items-center gap-2 shrink-0">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0">
-              <Icon d={ICONS.sparkle} size={3} />
+          <div className="border-b border-gray-800 shrink-0">
+            <div className="px-4 py-3 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0">
+                <Icon d={ICONS.sparkle} size={3} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-200">{V.chatTitle}</p>
+                <p className="text-xs text-gray-600 truncate">
+                  {isOwner ? V.chatPrivate : V.chatPublic}
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-200">{V.chatTitle}</p>
-              <p className="text-xs text-gray-600 truncate">
-                {isOwner ? V.chatPrivate : V.chatPublic}
-              </p>
-            </div>
+            {sourceSignedUrls.length > 0 && (
+              <div className="px-4 pb-3 flex items-center gap-2">
+                <span className="text-xs text-gray-600 shrink-0">Ask about:</span>
+                <div className="flex rounded-lg bg-gray-900 border border-gray-800 p-0.5 gap-px">
+                  <button
+                    onClick={() => setChatContext("predicted")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
+                      chatContext === "predicted"
+                        ? "bg-indigo-500/20 text-indigo-300"
+                        : "text-gray-500 hover:text-gray-300"
+                    }`}
+                  >
+                    <Icon d={ICONS.sparkle} size={3} />
+                    Predicted Exam
+                  </button>
+                  <button
+                    onClick={() => setChatContext("source")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
+                      chatContext === "source"
+                        ? "bg-amber-500/20 text-amber-300"
+                        : "text-gray-500 hover:text-gray-300"
+                    }`}
+                  >
+                    <Icon d={ICONS.file} size={3} />
+                    Source Paper
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">

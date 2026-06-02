@@ -1,4 +1,5 @@
 import { createClient } from "@/app/lib/supabase/server";
+import { getMonthlyUsage } from "@/app/lib/usage";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 export async function GET(request: Request) {
@@ -13,18 +14,25 @@ export async function GET(request: Request) {
   // Upsert to ensure profile exists
   await supabase.from("profiles").upsert({ id: user.id, email: user.email }, { onConflict: "id", ignoreDuplicates: true });
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-
-  // Exam + session counts for stats
-  const [{ count: examCount }, { count: markingCount }, { count: studyCount }] = await Promise.all([
+  const [
+    { data: profile },
+    { count: examCount },
+    { count: markingCount },
+    { count: studyCount },
+    { usage, isPremium },
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase.from("exams").select("*", { count: "exact", head: true }).eq("user_id", user.id),
     supabase.from("marking_sessions").select("*", { count: "exact", head: true }).eq("user_id", user.id),
     supabase.from("study_sessions").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+    getMonthlyUsage(supabase, user.id),
   ]);
 
   return Response.json({
     profile,
     stats: { exams: examCount ?? 0, markings: markingCount ?? 0, studies: studyCount ?? 0 },
+    usage,
+    isPremium,
   });
 }
 

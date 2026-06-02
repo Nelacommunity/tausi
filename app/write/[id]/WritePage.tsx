@@ -25,7 +25,7 @@ interface WritePageProps {
 
 type SaveStatus = "saved" | "saving" | "unsaved";
 type AIMode = "write" | "continue" | "improve" | "summarize" | "ask";
-type ChatMsg  = { id: string; role: "user" | "assistant"; content: string };
+type ChatMsg = { id: string; role: "user" | "assistant"; content: string };
 
 const AI_MODES: { id: AIMode; label: string }[] = [
   { id: "write",     label: "Write"     },
@@ -45,8 +45,8 @@ const MODE_HINTS: Record<AIMode, string> = {
 
 function Icon({ d, size = 4 }: { d: string; size?: number }) {
   return (
-    <svg className={`w-${size} h-${size} shrink-0`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={d} />
+    <svg className={`w-${size} h-${size} shrink-0`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d={d} />
     </svg>
   );
 }
@@ -73,48 +73,64 @@ const ICONS = {
   pencil:  "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125",
   check:   "M4.5 12.75l6 6 9-13.5",
   clear:   "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16",
+  hr:      "M4 12h16",
 };
 
-function ToolbarBtn({ active, disabled, onClick, title, children }: {
-  active?: boolean; disabled?: boolean; onClick: () => void; title?: string; children: React.ReactNode;
+/* ── MS-Word-style toolbar button ── */
+function TBtn({ active, disabled, onClick, title, children, wide }: {
+  active?: boolean; disabled?: boolean; onClick: () => void;
+  title?: string; children: React.ReactNode; wide?: boolean;
 }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled} title={title}
-      className={`flex items-center justify-center w-7 h-7 rounded transition-colors text-sm font-medium
-        ${active ? "bg-indigo-100 text-indigo-700" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"}
-        disabled:opacity-30 disabled:cursor-not-allowed`}>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={[
+        "flex items-center justify-center h-[30px] rounded transition-all select-none shrink-0",
+        wide ? "px-2.5 gap-1 text-xs font-medium" : "w-[30px]",
+        active
+          ? "bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-300"
+          : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
+        "disabled:opacity-30 disabled:cursor-not-allowed",
+      ].join(" ")}
+    >
       {children}
     </button>
   );
 }
 
-function ToolbarDivider() {
+function TDivider() {
   return <div className="w-px h-5 bg-gray-200 mx-1 shrink-0" />;
 }
 
+/* ──────────────────────────────────────────────────────── */
+
 export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
   const router = useRouter();
-  const [title, setTitle]                   = useState(initialDoc.title);
-  const [editingTitle, setEditingTitle]     = useState(false);
-  const [saveStatus, setSaveStatus]         = useState<SaveStatus>("saved");
-  const [showAI, setShowAI]                 = useState(false);
-  const [aiMode, setAIMode]                 = useState<AIMode>("write");
-  const [chatHistory, setChatHistory]       = useState<ChatMsg[]>([]);
-  const [chatInput, setChatInput]           = useState("");
-  const [isStreaming, setIsStreaming]       = useState(false);
-  const [lastAiMsgId, setLastAiMsgId]       = useState<string | null>(null);
+
+  const [title, setTitle]                         = useState(initialDoc.title);
+  const [editingTitle, setEditingTitle]           = useState(false);
+  const [saveStatus, setSaveStatus]               = useState<SaveStatus>("saved");
+  const [showAI, setShowAI]                       = useState(false);
+  const [aiMode, setAIMode]                       = useState<AIMode>("write");
+  const [chatHistory, setChatHistory]             = useState<ChatMsg[]>([]);
+  const [chatInput, setChatInput]                 = useState("");
+  const [isStreaming, setIsStreaming]             = useState(false);
+  const [lastAiMsgId, setLastAiMsgId]             = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting]         = useState(false);
+  const [isDeleting, setIsDeleting]               = useState(false);
+  const [pageCount, setPageCount]                 = useState(1);
 
-  const titleRef    = useRef<HTMLInputElement>(null);
+  const titleRef      = useRef<HTMLInputElement>(null);
   const chatBottomRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const saveTimer   = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isSaving    = useRef(false);
-  const pendingSave = useRef<string | null>(null);
-
-  // Stable ref so the editor onUpdate closure never goes stale
-  const persistRef = useRef(async (_html: string) => {});
+  const textareaRef   = useRef<HTMLTextAreaElement>(null);
+  const saveTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSaving      = useRef(false);
+  const pendingSave   = useRef<string | null>(null);
+  const docSheetRef   = useRef<HTMLDivElement>(null);
+  const persistRef    = useRef(async (_html: string) => {});
 
   async function persistContent(html: string) {
     if (isSaving.current) { pendingSave.current = html; return; }
@@ -148,7 +164,7 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Highlight,
       TextStyle,
-      Placeholder.configure({ placeholder: "Start writing, or ask the AI assistant on the right…" }),
+      Placeholder.configure({ placeholder: "Start writing, or ask the AI assistant…" }),
       CharacterCount,
       Table.configure({ resizable: false }),
       TableRow,
@@ -157,7 +173,7 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
     ],
     content: initialDoc.content || "",
     editorProps: {
-      attributes: { class: "tiptap-content min-h-[600px] focus:outline-none" },
+      attributes: { class: "tiptap-content focus:outline-none" },
     },
     onUpdate: ({ editor: ed }) => {
       const html = ed.getHTML();
@@ -167,20 +183,28 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
     },
   });
 
-  // Scroll chat to bottom on new messages
+  /* ── Page count via ResizeObserver ── */
+  useEffect(() => {
+    const el = docSheetRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      setPageCount(Math.max(1, Math.ceil(el.getBoundingClientRect().height / 1122)));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
-  // Save on tab/window close
   useEffect(() => {
     const handler = () => {
       if (saveTimer.current && editor) {
         clearTimeout(saveTimer.current);
-        const html = editor.getHTML();
         navigator.sendBeacon(
           `/api/write/${initialDoc.id}`,
-          new Blob([JSON.stringify({ content: html })], { type: "application/json" })
+          new Blob([JSON.stringify({ content: editor.getHTML() })], { type: "application/json" })
         );
       }
     };
@@ -217,7 +241,7 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
 
     setChatHistory((prev) => [
       ...prev,
-      { id: userMsgId, role: "user", content: text },
+      { id: userMsgId, role: "user",      content: text },
       { id: aiMsgId,   role: "assistant", content: "" },
     ]);
     setIsStreaming(true);
@@ -227,8 +251,9 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
       ? editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, " ")
       : "";
 
-    // Build conversation history for context (last 10 messages)
-    const history = chatHistory.slice(-10).map((m) => `${m.role === "user" ? "User" : "AI"}: ${m.content}`).join("\n");
+    const history = chatHistory.slice(-10)
+      .map((m) => `${m.role === "user" ? "User" : "AI"}: ${m.content}`)
+      .join("\n");
     const contextPrompt = history ? `Previous conversation:\n${history}\n\nUser: ${text}` : text;
 
     try {
@@ -257,7 +282,10 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
       }
     } catch {
       setChatHistory((prev) =>
-        prev.map((m) => m.id === aiMsgId ? { ...m, content: "Sorry, something went wrong. Please try again." } : m)
+        prev.map((m) => m.id === aiMsgId
+          ? { ...m, content: "Sorry, something went wrong. Please try again." }
+          : m
+        )
       );
     } finally {
       setIsStreaming(false);
@@ -299,192 +327,299 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
 
   return (
     <div className="h-screen bg-gray-950 flex flex-col overflow-hidden">
-      {/* ── Header ─────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-20 border-b border-gray-800 bg-gray-950/95 backdrop-blur-sm shrink-0">
-        <div className="flex items-center gap-3 px-4 py-2.5 min-w-0">
-          <Link href="/write" className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors shrink-0">
-            <Icon d={ICONS.back} />
+
+      {/* ── App header (dark) ─────────────────────────────── */}
+      <header className="z-20 border-b border-gray-800 bg-gray-950 shrink-0">
+        <div className="flex items-center gap-2 px-3 py-2 min-w-0">
+
+          <Link
+            href="/write"
+            className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors shrink-0"
+          >
+            <Icon d={ICONS.back} size={4} />
             <span className="font-bold text-indigo-400 hidden sm:block text-sm">Tausi</span>
           </Link>
-          <span className="text-gray-700">/</span>
+          <span className="text-gray-700 shrink-0">/</span>
 
           {editingTitle ? (
-            <form className="flex-1 min-w-0"
-              onSubmit={(e) => { e.preventDefault(); saveTitle((new FormData(e.currentTarget).get("t") as string) ?? ""); }}>
-              <input ref={titleRef} name="t" defaultValue={title}
+            <form
+              className="flex-1 min-w-0"
+              onSubmit={(e) => {
+                e.preventDefault();
+                saveTitle((new FormData(e.currentTarget).get("t") as string) ?? "");
+              }}
+            >
+              <input
+                ref={titleRef}
+                name="t"
+                defaultValue={title}
                 onBlur={(e) => saveTitle(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Escape") setEditingTitle(false); }}
-                className="w-full bg-gray-800 border border-indigo-600 rounded-lg px-3 py-1 text-sm text-white outline-none" />
+                className="w-full bg-gray-800 border border-indigo-600 rounded-lg px-3 py-1 text-sm text-white outline-none"
+              />
             </form>
           ) : (
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <span className="text-sm font-semibold text-gray-200 truncate">{title}</span>
-              <button onClick={() => setEditingTitle(true)} className="text-gray-600 hover:text-gray-400 shrink-0">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              <span className="text-sm font-medium text-gray-200 truncate">{title}</span>
+              <button
+                onClick={() => setEditingTitle(true)}
+                className="text-gray-600 hover:text-gray-400 shrink-0 transition-colors p-0.5"
+              >
                 <Icon d={ICONS.pencil} size={3} />
               </button>
             </div>
           )}
 
+          {/* Right-side controls */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
-            <span className={`hidden md:flex items-center gap-1 text-xs ${
+            {/* Save status */}
+            <span className={`hidden sm:flex items-center gap-1 text-xs ${
               saveStatus === "saved"   ? "text-emerald-500"
-              : saveStatus === "saving" ? "text-yellow-500"
+              : saveStatus === "saving" ? "text-amber-400"
               : "text-gray-500"
             }`}>
-              {saveStatus === "saving" && <span className="w-2.5 h-2.5 border-2 border-yellow-500/40 border-t-yellow-400 rounded-full animate-spin" />}
+              {saveStatus === "saving" && (
+                <span className="w-2.5 h-2.5 border-2 border-amber-400/40 border-t-amber-400 rounded-full animate-spin" />
+              )}
               {saveStatus === "saved" && <Icon d={ICONS.check} size={3} />}
               {saveStatus === "saved" ? "Saved" : saveStatus === "saving" ? "Saving…" : "Unsaved"}
             </span>
+
             <span className="hidden lg:block text-xs text-gray-600">{words} words</span>
 
-            <button onClick={() => setShowAI((v) => !v)}
+            {/* AI toggle */}
+            <button
+              onClick={() => setShowAI((v) => !v)}
               className={`flex items-center gap-1.5 text-xs border rounded-lg px-2.5 py-1.5 transition-colors ${
-                showAI ? "text-indigo-300 border-indigo-700 bg-indigo-950/50"
-                       : "text-gray-400 border-gray-700 hover:border-gray-500 hover:text-white"
-              }`}>
+                showAI
+                  ? "text-indigo-300 border-indigo-700 bg-indigo-950/60"
+                  : "text-gray-400 border-gray-700 hover:border-gray-500 hover:text-white"
+              }`}
+            >
               <Icon d={ICONS.sparkle} size={3} />
               <span className="hidden sm:block">AI</span>
             </button>
 
-            <button onClick={() => downloadPDF({ title, html: editor?.getHTML() ?? "", isFree: userTier === "free" })}
-              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 rounded-lg px-2.5 py-1.5 transition-colors">
+            {/* Export PDF — prominent filled button */}
+            <button
+              onClick={() => downloadPDF({ title, html: editor?.getHTML() ?? "", isFree: userTier === "free" })}
+              className="flex items-center gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg px-3 py-1.5 transition-colors font-medium shrink-0"
+            >
               <Icon d={ICONS.pdf} size={3} />
-              <span className="hidden sm:block">PDF</span>
+              <span>Export PDF</span>
             </button>
 
+            {/* Delete */}
             {!showDeleteConfirm ? (
-              <button onClick={() => setShowDeleteConfirm(true)}
-                className="text-xs text-red-500 hover:text-red-400 border border-red-900 hover:border-red-700 rounded-lg px-2 py-1.5 transition-colors">
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-xs text-red-500 hover:text-red-400 border border-red-900 hover:border-red-700 rounded-lg p-1.5 transition-colors"
+              >
                 <Icon d={ICONS.trash} size={3} />
               </button>
             ) : (
               <div className="flex items-center gap-1.5">
                 <span className="text-xs text-red-400">Delete?</span>
-                <button onClick={deleteDocument} disabled={isDeleting}
-                  className="text-xs text-white bg-red-600 hover:bg-red-500 disabled:opacity-50 rounded-lg px-2.5 py-1 transition-colors">
+                <button
+                  onClick={deleteDocument}
+                  disabled={isDeleting}
+                  className="text-xs text-white bg-red-600 hover:bg-red-500 disabled:opacity-50 rounded-lg px-2.5 py-1 transition-colors"
+                >
                   {isDeleting ? "…" : "Yes"}
                 </button>
-                <button onClick={() => setShowDeleteConfirm(false)}
-                  className="text-xs text-gray-400 border border-gray-700 rounded-lg px-2.5 py-1 transition-colors">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="text-xs text-gray-400 border border-gray-700 rounded-lg px-2.5 py-1 transition-colors"
+                >
                   No
                 </button>
               </div>
             )}
           </div>
         </div>
-
-        {/* ── Toolbar ── */}
-        <div className="flex items-center gap-0.5 px-4 py-1.5 border-t border-gray-800 bg-white/[0.02] overflow-x-auto">
-          <ToolbarBtn onClick={() => editor?.chain().focus().undo().run()} title="Undo" disabled={!editor?.can().undo()}>
-            <Icon d={ICONS.undo} size={3} />
-          </ToolbarBtn>
-          <ToolbarBtn onClick={() => editor?.chain().focus().redo().run()} title="Redo" disabled={!editor?.can().redo()}>
-            <Icon d={ICONS.redo} size={3} />
-          </ToolbarBtn>
-          <ToolbarDivider />
-
-          {([1, 2, 3] as const).map((level) => (
-            <ToolbarBtn key={level}
-              active={editor?.isActive("heading", { level }) ?? false}
-              onClick={() => editor?.chain().focus().toggleHeading({ level }).run()}
-              title={`Heading ${level}`}>
-              <span className="text-xs font-bold">H{level}</span>
-            </ToolbarBtn>
-          ))}
-          <ToolbarBtn active={editor?.isActive("paragraph") ?? false}
-            onClick={() => editor?.chain().focus().setParagraph().run()} title="Paragraph">
-            <span className="text-xs">¶</span>
-          </ToolbarBtn>
-          <ToolbarDivider />
-
-          <ToolbarBtn active={editor?.isActive("bold") ?? false}
-            onClick={() => editor?.chain().focus().toggleBold().run()} title="Bold (Ctrl+B)">
-            <span className="text-xs font-bold">B</span>
-          </ToolbarBtn>
-          <ToolbarBtn active={editor?.isActive("italic") ?? false}
-            onClick={() => editor?.chain().focus().toggleItalic().run()} title="Italic (Ctrl+I)">
-            <span className="text-xs italic">I</span>
-          </ToolbarBtn>
-          <ToolbarBtn active={editor?.isActive("underline") ?? false}
-            onClick={() => editor?.chain().focus().toggleUnderline().run()} title="Underline (Ctrl+U)">
-            <span className="text-xs underline">U</span>
-          </ToolbarBtn>
-          <ToolbarBtn active={editor?.isActive("strike") ?? false}
-            onClick={() => editor?.chain().focus().toggleStrike().run()} title="Strikethrough">
-            <span className="text-xs line-through">S</span>
-          </ToolbarBtn>
-          <ToolbarBtn active={editor?.isActive("highlight") ?? false}
-            onClick={() => editor?.chain().focus().toggleHighlight().run()} title="Highlight">
-            <span className="text-xs font-semibold" style={{ background: "#fef08a", padding: "0 2px", color: "#111" }}>H</span>
-          </ToolbarBtn>
-          <ToolbarDivider />
-
-          <ToolbarBtn active={editor?.isActive("bulletList") ?? false}
-            onClick={() => editor?.chain().focus().toggleBulletList().run()} title="Bullet list">
-            <Icon d={ICONS.list} size={3} />
-          </ToolbarBtn>
-          <ToolbarBtn active={editor?.isActive("orderedList") ?? false}
-            onClick={() => editor?.chain().focus().toggleOrderedList().run()} title="Numbered list">
-            <Icon d={ICONS.listOl} size={3} />
-          </ToolbarBtn>
-          <ToolbarBtn active={editor?.isActive("blockquote") ?? false}
-            onClick={() => editor?.chain().focus().toggleBlockquote().run()} title="Blockquote">
-            <Icon d={ICONS.quote} size={3} />
-          </ToolbarBtn>
-          <ToolbarBtn active={editor?.isActive("code") ?? false}
-            onClick={() => editor?.chain().focus().toggleCode().run()} title="Inline code">
-            <Icon d={ICONS.code} size={3} />
-          </ToolbarBtn>
-          <ToolbarDivider />
-
-          <ToolbarBtn active={editor?.isActive({ textAlign: "left" }) ?? false}
-            onClick={() => editor?.chain().focus().setTextAlign("left").run()} title="Align left">
-            <Icon d={ICONS.alignL} size={3} />
-          </ToolbarBtn>
-          <ToolbarBtn active={editor?.isActive({ textAlign: "center" }) ?? false}
-            onClick={() => editor?.chain().focus().setTextAlign("center").run()} title="Align center">
-            <Icon d={ICONS.alignC} size={3} />
-          </ToolbarBtn>
-          <ToolbarBtn active={editor?.isActive({ textAlign: "right" }) ?? false}
-            onClick={() => editor?.chain().focus().setTextAlign("right").run()} title="Align right">
-            <Icon d={ICONS.alignR} size={3} />
-          </ToolbarBtn>
-          <ToolbarDivider />
-
-          <ToolbarBtn onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insert table">
-            <Icon d={ICONS.table} size={3} />
-          </ToolbarBtn>
-
-          <div className="ml-auto hidden lg:block pl-2 shrink-0">
-            <span className="text-xs text-gray-600">{chars} chars</span>
-          </div>
-        </div>
       </header>
 
-      {/* ── Body ─────────────────────────────────────────────────── */}
+      {/* ── MS-Word-style formatting toolbar (white) ──────── */}
+      <div className="bg-white border-b border-gray-200 shrink-0 z-10">
+        <div className="flex items-center gap-0.5 px-3 py-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+
+          {/* History */}
+          <TBtn onClick={() => editor?.chain().focus().undo().run()} title="Undo (Ctrl+Z)" disabled={!editor?.can().undo()}>
+            <Icon d={ICONS.undo} size={3} />
+          </TBtn>
+          <TBtn onClick={() => editor?.chain().focus().redo().run()} title="Redo (Ctrl+Y)" disabled={!editor?.can().redo()}>
+            <Icon d={ICONS.redo} size={3} />
+          </TBtn>
+
+          <TDivider />
+
+          {/* Paragraph style */}
+          <TBtn
+            wide
+            active={!editor?.isActive("heading")}
+            onClick={() => editor?.chain().focus().setParagraph().run()}
+            title="Normal paragraph"
+          >
+            <span className="text-xs">Normal</span>
+          </TBtn>
+          {([1, 2, 3] as const).map((level) => (
+            <TBtn
+              key={level}
+              wide
+              active={editor?.isActive("heading", { level }) ?? false}
+              onClick={() => editor?.chain().focus().toggleHeading({ level }).run()}
+              title={`Heading ${level}`}
+            >
+              <span className={`font-bold ${level === 1 ? "text-sm" : level === 2 ? "text-xs" : "text-[11px]"}`}>
+                H{level}
+              </span>
+            </TBtn>
+          ))}
+
+          <TDivider />
+
+          {/* Character formatting */}
+          <TBtn active={editor?.isActive("bold") ?? false}
+            onClick={() => editor?.chain().focus().toggleBold().run()} title="Bold (Ctrl+B)">
+            <span className="text-sm font-bold leading-none">B</span>
+          </TBtn>
+          <TBtn active={editor?.isActive("italic") ?? false}
+            onClick={() => editor?.chain().focus().toggleItalic().run()} title="Italic (Ctrl+I)">
+            <span className="text-sm italic font-serif leading-none">I</span>
+          </TBtn>
+          <TBtn active={editor?.isActive("underline") ?? false}
+            onClick={() => editor?.chain().focus().toggleUnderline().run()} title="Underline (Ctrl+U)">
+            <span className="text-sm underline leading-none">U</span>
+          </TBtn>
+          <TBtn active={editor?.isActive("strike") ?? false}
+            onClick={() => editor?.chain().focus().toggleStrike().run()} title="Strikethrough">
+            <span className="text-sm line-through leading-none">S</span>
+          </TBtn>
+          <TBtn active={editor?.isActive("highlight") ?? false}
+            onClick={() => editor?.chain().focus().toggleHighlight().run()} title="Highlight">
+            <span
+              className="text-xs font-semibold leading-none px-0.5 rounded"
+              style={{ background: "#fef08a", color: "#111" }}
+            >
+              H
+            </span>
+          </TBtn>
+
+          <TDivider />
+
+          {/* Lists & blocks */}
+          <TBtn active={editor?.isActive("bulletList") ?? false}
+            onClick={() => editor?.chain().focus().toggleBulletList().run()} title="Bullet list">
+            <Icon d={ICONS.list} size={3} />
+          </TBtn>
+          <TBtn active={editor?.isActive("orderedList") ?? false}
+            onClick={() => editor?.chain().focus().toggleOrderedList().run()} title="Numbered list">
+            <Icon d={ICONS.listOl} size={3} />
+          </TBtn>
+          <TBtn active={editor?.isActive("blockquote") ?? false}
+            onClick={() => editor?.chain().focus().toggleBlockquote().run()} title="Blockquote">
+            <Icon d={ICONS.quote} size={3} />
+          </TBtn>
+          <TBtn active={editor?.isActive("code") ?? false}
+            onClick={() => editor?.chain().focus().toggleCode().run()} title="Inline code">
+            <Icon d={ICONS.code} size={3} />
+          </TBtn>
+
+          <TDivider />
+
+          {/* Text alignment */}
+          <TBtn active={editor?.isActive({ textAlign: "left" }) ?? false}
+            onClick={() => editor?.chain().focus().setTextAlign("left").run()} title="Align left">
+            <Icon d={ICONS.alignL} size={3} />
+          </TBtn>
+          <TBtn active={editor?.isActive({ textAlign: "center" }) ?? false}
+            onClick={() => editor?.chain().focus().setTextAlign("center").run()} title="Align center">
+            <Icon d={ICONS.alignC} size={3} />
+          </TBtn>
+          <TBtn active={editor?.isActive({ textAlign: "right" }) ?? false}
+            onClick={() => editor?.chain().focus().setTextAlign("right").run()} title="Align right">
+            <Icon d={ICONS.alignR} size={3} />
+          </TBtn>
+
+          <TDivider />
+
+          {/* Insert */}
+          <TBtn
+            onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+            title="Insert table"
+          >
+            <Icon d={ICONS.table} size={3} />
+          </TBtn>
+          <TBtn
+            onClick={() => editor?.chain().focus().setHorizontalRule().run()}
+            title="Insert divider"
+          >
+            <Icon d={ICONS.hr} size={3} />
+          </TBtn>
+
+          {/* Page / char count pushed to the right */}
+          <div className="ml-auto flex items-center gap-3 pl-3 border-l border-gray-200 shrink-0">
+            <span className="text-[11px] text-gray-400 whitespace-nowrap">
+              {pageCount} {pageCount === 1 ? "page" : "pages"}
+            </span>
+            <span className="hidden md:block text-[11px] text-gray-400 whitespace-nowrap">
+              {chars} chars
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Body ──────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
-        {/* Editor pane — hidden on mobile when AI sidebar is open */}
-        <div className={`overflow-y-auto bg-gray-100 ${showAI ? "hidden md:flex md:flex-1" : "flex-1"}`}>
-          <div className="min-h-full py-10 px-4 sm:px-8 flex justify-center">
-            {/* White "document" sheet */}
-            <div className="w-full max-w-[780px] bg-white rounded-lg shadow-sm border border-gray-200 px-10 py-12 min-h-[900px]"
-              style={{ color: "#111827" }}>
-              <EditorContent editor={editor} />
+        {/* ── Editor canvas ── */}
+        <div
+          className={`overflow-y-auto overflow-x-hidden bg-[#e0e0e0] ${
+            showAI ? "hidden md:block md:flex-1" : "flex-1"
+          }`}
+        >
+          <div className="py-8 px-4 sm:px-6">
+            <div className="mx-auto w-full max-w-[794px]">
+
+              {/* A4 document sheet with page-break guide lines */}
+              <div
+                ref={docSheetRef}
+                className="bg-white shadow-[0_3px_16px_rgba(0,0,0,0.18)] border border-gray-300/60"
+                style={{
+                  minHeight: "1122px",
+                  /* ~1 inch margins matching the PDF export */
+                  padding: "96px 88px",
+                  /* Faint horizontal line every A4 page height */
+                  backgroundImage:
+                    "repeating-linear-gradient(to bottom, transparent 0px, transparent 1121px, #c8cdd5 1121px, #c8cdd5 1122px)",
+                }}
+              >
+                <EditorContent editor={editor} />
+              </div>
+
+              {/* Below-sheet status bar */}
+              <div className="flex items-center justify-between py-3 px-1">
+                <span className="text-xs text-gray-500">{words} words · {chars} characters</span>
+                <span className="text-xs text-gray-500">
+                  {pageCount} {pageCount === 1 ? "page" : "pages"}
+                </span>
+              </div>
+
             </div>
           </div>
         </div>
 
-        {/* ── AI Chatbot Sidebar — full-width on mobile, 320px on desktop ── */}
+        {/* ── AI Chatbot Sidebar ────────────────────────── */}
         {showAI && (
           <div className="flex-1 w-full md:flex-none md:w-80 md:shrink-0 min-h-0 flex flex-col overflow-hidden border-l border-gray-800 bg-gray-950">
 
             {/* Sidebar header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 shrink-0">
-              {/* Mobile: back arrow; Desktop: sparkle icon + label */}
               <div className="flex items-center gap-2">
-                <button onClick={() => setShowAI(false)}
-                  className="md:hidden flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm">
+                <button
+                  onClick={() => setShowAI(false)}
+                  className="md:hidden flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm"
+                >
                   <Icon d={ICONS.back} size={4} />
                   <span>Editor</span>
                 </button>
@@ -497,27 +632,35 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
               </div>
               <div className="flex items-center gap-1">
                 {chatHistory.length > 0 && (
-                  <button onClick={() => setChatHistory([])} title="Clear chat"
-                    className="text-gray-600 hover:text-gray-400 transition-colors p-1">
+                  <button
+                    onClick={() => setChatHistory([])}
+                    title="Clear chat"
+                    className="text-gray-600 hover:text-gray-400 transition-colors p-1"
+                  >
                     <Icon d={ICONS.clear} size={3} />
                   </button>
                 )}
-                <button onClick={() => setShowAI(false)} className="hidden md:flex text-gray-600 hover:text-gray-400 transition-colors">
+                <button
+                  onClick={() => setShowAI(false)}
+                  className="hidden md:flex text-gray-600 hover:text-gray-400 transition-colors"
+                >
                   <Icon d={ICONS.close} size={4} />
                 </button>
               </div>
             </div>
 
             {/* Mode selector */}
-            <div className="flex gap-1 px-3 pt-2.5 pb-2 border-b border-gray-800/60 shrink-0 overflow-x-auto">
+            <div className="flex gap-1 px-3 pt-2.5 pb-2 border-b border-gray-800/60 shrink-0 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
               {AI_MODES.map((m) => (
-                <button key={m.id}
+                <button
+                  key={m.id}
                   onClick={() => setAIMode(m.id)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
                     aiMode === m.id
                       ? "bg-indigo-600 text-white"
                       : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700"
-                  }`}>
+                  }`}
+                >
                   {m.label}
                 </button>
               ))}
@@ -532,7 +675,7 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
                   </div>
                   <p className="text-sm text-gray-400 font-medium">AI Writing Assistant</p>
                   <p className="text-xs text-gray-600 max-w-[200px]">
-                    Select a mode above, then type your request below. I can write, improve, or answer questions about your document.
+                    Select a mode above, then type your request below.
                   </p>
                   <div className="w-full space-y-1.5 mt-1">
                     {[
@@ -540,8 +683,11 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
                       "Improve my selected paragraph",
                       "Continue writing from here",
                     ].map((s) => (
-                      <button key={s} onClick={() => { setChatInput(s); textareaRef.current?.focus(); }}
-                        className="w-full text-left text-xs text-gray-500 hover:text-gray-300 border border-gray-800 hover:border-gray-600 rounded-lg px-3 py-1.5 transition-colors">
+                      <button
+                        key={s}
+                        onClick={() => { setChatInput(s); textareaRef.current?.focus(); }}
+                        className="w-full text-left text-xs text-gray-500 hover:text-gray-300 border border-gray-800 hover:border-gray-600 rounded-lg px-3 py-1.5 transition-colors"
+                      >
                         {s}
                       </button>
                     ))}
@@ -575,9 +721,12 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
                         </p>
                       ) : (
                         <span className="inline-flex items-center gap-1">
-                          {[0,1,2].map((i) => (
-                            <span key={i} className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce"
-                              style={{ animationDelay: `${i * 0.15}s` }} />
+                          {[0, 1, 2].map((i) => (
+                            <span
+                              key={i}
+                              className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce"
+                              style={{ animationDelay: `${i * 0.15}s` }}
+                            />
                           ))}
                         </span>
                       )}
@@ -588,36 +737,50 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
               <div ref={chatBottomRef} />
             </div>
 
-            {/* Insert/Replace buttons — show after last AI message */}
+            {/* Insert / Replace */}
             {lastAiMsg && !isStreaming && (
               <div className="flex gap-2 px-3 pb-2 shrink-0">
-                <button onClick={insertLastResponse}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold bg-indigo-700 hover:bg-indigo-600 text-white rounded-lg transition-colors">
+                <button
+                  onClick={insertLastResponse}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold bg-indigo-700 hover:bg-indigo-600 text-white rounded-lg transition-colors"
+                >
                   <Icon d={ICONS.insert} size={3} /> Insert
                 </button>
-                <button onClick={replaceSelectionWithLastResponse}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
+                <button
+                  onClick={replaceSelectionWithLastResponse}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                >
                   <Icon d={ICONS.replace} size={3} /> Replace
                 </button>
               </div>
             )}
 
-            {/* Input area */}
+            {/* Input */}
             <div className="border-t border-gray-800 p-3 shrink-0">
               <div className="flex items-end gap-2">
-                <textarea ref={textareaRef} value={chatInput} onChange={autoResize}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                <textarea
+                  ref={textareaRef}
+                  value={chatInput}
+                  onChange={autoResize}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+                  }}
                   disabled={isStreaming}
                   placeholder={MODE_HINTS[aiMode]}
                   rows={1}
                   className="flex-1 bg-gray-900 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 rounded-xl px-3 py-2 text-xs text-gray-200 placeholder-gray-600 resize-none overflow-hidden outline-none transition-colors disabled:opacity-50"
-                  style={{ minHeight: "36px", maxHeight: "120px" }} />
-                <button onClick={sendMessage} disabled={!chatInput.trim() || isStreaming}
+                  style={{ minHeight: "36px", maxHeight: "120px" }}
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={!chatInput.trim() || isStreaming}
                   className="flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-800 disabled:text-gray-600 text-white transition-colors shrink-0"
-                  aria-label="Send">
+                  aria-label="Send"
+                >
                   {isStreaming
                     ? <span className="w-3.5 h-3.5 border-2 border-gray-500 border-t-indigo-400 rounded-full animate-spin" />
-                    : <Icon d={ICONS.send} size={3} />}
+                    : <Icon d={ICONS.send} size={3} />
+                  }
                 </button>
               </div>
               <p className="text-xs text-gray-700 mt-1.5 text-center">Enter to send · Shift+Enter for new line</p>
@@ -629,7 +792,7 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
   );
 }
 
-// Minimal markdown → Tiptap HTML
+/* ── Minimal markdown → Tiptap HTML ── */
 function markdownToHtml(md: string): string {
   const out: string[] = [];
   let inUl = false, inOl = false;
@@ -660,13 +823,14 @@ function markdownToHtml(md: string): string {
   flush();
   return out.join("");
 }
+
 function inline(t: string): string {
   return t
     .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/__(.+?)__/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/_(.+?)_/g,   "<em>$1</em>")
-    .replace(/`(.+?)`/g,   "<code>$1</code>")
-    .replace(/~~(.+?)~~/g, "<s>$1</s>");
+    .replace(/\*\*(.+?)\*\*/g,     "<strong>$1</strong>")
+    .replace(/__(.+?)__/g,         "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g,         "<em>$1</em>")
+    .replace(/_(.+?)_/g,           "<em>$1</em>")
+    .replace(/`(.+?)`/g,           "<code>$1</code>")
+    .replace(/~~(.+?)~~/g,         "<s>$1</s>");
 }

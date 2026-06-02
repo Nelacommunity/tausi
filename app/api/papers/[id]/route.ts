@@ -1,6 +1,32 @@
 import { createClient } from "@/app/lib/supabase/server";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: paper } = await supabase
+    .from("exam_papers")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single();
+
+  if (!paper) return Response.json({ error: "Not found" }, { status: 404 });
+
+  const { data: urlData } = await supabase.storage
+    .from("exam-papers")
+    .createSignedUrls(paper.file_paths as string[], 3600);
+
+  const signedUrls = (urlData ?? []).map((u) => u.signedUrl ?? "").filter(Boolean);
+  return Response.json({ paper, signedUrls });
+}
+
 export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }

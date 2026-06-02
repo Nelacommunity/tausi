@@ -176,7 +176,18 @@ export default async function ExamPage({
     .order("created_at", { ascending: true });
 
   if (user) messagesQuery.eq("user_id", user.id);
-  const { data: messages } = await messagesQuery;
+
+  const sourcePaths: string[] = (exam.pdf_storage_paths as string[] | null) ?? [];
+  const [messagesResult, sourceUrlResult] = await Promise.all([
+    messagesQuery,
+    sourcePaths.length && user
+      ? supabase.storage.from("exam-papers").createSignedUrls(sourcePaths, 3600)
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const sourceSignedUrls = ((sourceUrlResult as { data: { signedUrl: string }[] | null }).data ?? [])
+    .map((u) => u.signedUrl ?? "")
+    .filter(Boolean);
 
   return (
     <>
@@ -189,9 +200,10 @@ export default async function ExamPage({
       )}
       <ExamViewer
         exam={exam as Exam}
-        initialMessages={(messages ?? []) as ChatMessage[]}
+        initialMessages={(messagesResult.data ?? []) as ChatMessage[]}
         isOwner={user?.id === exam.user_id}
         userTier={(profile?.tier ?? "free") as "free" | "premium"}
+        sourceSignedUrls={sourceSignedUrls}
       />
     </>
   );

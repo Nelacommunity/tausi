@@ -146,6 +146,10 @@ create table if not exists token_usage_monthly (
 alter table token_usage_monthly enable row level security;
 create policy "users read own token usage"
   on token_usage_monthly for select using (auth.uid() = user_id);
+create policy "users insert own token usage"
+  on token_usage_monthly for insert with check (auth.uid() = user_id);
+create policy "users update own token usage"
+  on token_usage_monthly for update using (auth.uid() = user_id);
 
 -- Atomic upsert used by every AI route
 create or replace function increment_token_usage(
@@ -176,9 +180,30 @@ create table if not exists exam_papers (
   created_at         timestamptz not null default now()
 );
 
+-- Migration: structure extraction cache (enables fast library generation without re-downloading PDFs)
+alter table exam_papers add column if not exists exam_structure text;
+
 create index if not exists exam_papers_user_idx on exam_papers(user_id, created_at desc);
 alter table exam_papers enable row level security;
 create policy "users manage own papers" on exam_papers for all using (auth.uid() = user_id);
+
+-- ── Paper chat messages ─────────────────────────────────────
+
+create table if not exists paper_chat_messages (
+  id         uuid primary key default gen_random_uuid(),
+  paper_id   uuid not null references exam_papers(id) on delete cascade,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  role       text not null check (role in ('user', 'assistant')),
+  content    text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists paper_chat_messages_paper_idx
+  on paper_chat_messages(paper_id, user_id, created_at asc);
+
+alter table paper_chat_messages enable row level security;
+create policy "users manage own paper chat"
+  on paper_chat_messages for all using (auth.uid() = user_id);
 
 -- ── Write documents ─────────────────────────────────────────
 

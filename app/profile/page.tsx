@@ -5,29 +5,35 @@ import Link from "next/link";
 import { Header } from "@/app/components/Header";
 import { useT } from "@/app/lib/language-context";
 import type { Profile } from "@/app/lib/types";
-import { FREE_LIMITS } from "@/app/lib/types";
+import {
+  FREE_TOKEN_LIMITS, PREMIUM_TOKEN_LIMITS,
+  type Feature,
+} from "@/app/lib/usage";
 
 interface Stats { exams: number; markings: number; studies: number }
 
+function fmt(n: number) {
+  if (n < 1000) return String(n);
+  if (n < 1_000_000) return `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1)}k`;
+  return `${(n / 1_000_000).toFixed(1)}M`;
+}
+
 function UsageBar({ label, used, limit, color }: { label: string; used: number; limit: number; color: string }) {
-  const pct = limit <= 0 ? 100 : Math.min((used / limit) * 100, 100);
-  const isUnlimited = limit <= 0;
-  const nearLimit = !isUnlimited && pct >= 80;
+  const pct = Math.min((used / limit) * 100, 100);
+  const nearLimit = pct >= 80;
 
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-xs">
         <span className="text-gray-400">{label}</span>
         <span className={nearLimit ? "text-amber-400 font-medium" : "text-gray-500"}>
-          {isUnlimited ? `${used} used (unlimited)` : `${used} / ${limit}`}
+          {fmt(used)} / {fmt(limit)} tokens
         </span>
       </div>
       <div className="h-1.5 rounded-full bg-gray-800 overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-500 ${
-            isUnlimited ? "bg-indigo-500" : nearLimit ? "bg-amber-500" : color
-          }`}
-          style={{ width: `${isUnlimited ? 40 : pct}%` }}
+          className={`h-full rounded-full transition-all duration-500 ${nearLimit ? "bg-amber-500" : color}`}
+          style={{ width: `${pct}%` }}
         />
       </div>
     </div>
@@ -48,6 +54,11 @@ export default function ProfilePage() {
   const P = T.profile;
   const [profile, setProfile] = useState<Profile | null>(null);
   const [stats, setStats] = useState<Stats>({ exams: 0, markings: 0, studies: 0 });
+  const [usage, setUsage] = useState<Record<Feature, number>>({
+    exam_prediction: 0, paper_prediction: 0, marking_scheme: 0,
+    ai_marking: 0, exam_chat: 0, study_chat: 0, ai_writer: 0,
+  });
+  const [isPremium, setIsPremium] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
@@ -57,7 +68,12 @@ export default function ProfilePage() {
   useEffect(() => {
     fetch("/api/profile")
       .then((r) => r.json())
-      .then(({ profile, stats }) => { setProfile(profile); if (stats) setStats(stats); })
+      .then(({ profile, stats, usage: u, isPremium: p }) => {
+        setProfile(profile);
+        if (stats) setStats(stats);
+        if (u) setUsage(u);
+        if (typeof p === "boolean") setIsPremium(p);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -81,7 +97,6 @@ export default function ProfilePage() {
     setSavingName(false);
   };
 
-  const isPremium = profile?.tier === "premium" && profile?.subscription_status === "active";
   const initials = (profile?.full_name || profile?.email || "?").slice(0, 2).toUpperCase();
   const currentMonth = new Date().toLocaleString("en-US", { month: "long", year: "numeric" });
 
@@ -172,14 +187,23 @@ export default function ProfilePage() {
             )}
           </div>
           <div className="space-y-4">
-            <UsageBar label={P.predictedExams} used={profile?.predictions_used ?? 0}
-              limit={isPremium ? -1 : FREE_LIMITS.predictions} color="bg-indigo-500" />
-            <UsageBar label={T.nav.examLibrary} used={profile?.marking_schemes_used ?? 0}
-              limit={isPremium ? -1 : FREE_LIMITS.marking_schemes} color="bg-emerald-500" />
-            <UsageBar label={P.aiMarkings} used={profile?.ai_markings_used ?? 0}
-              limit={isPremium ? -1 : FREE_LIMITS.ai_markings} color="bg-purple-500" />
-            <UsageBar label={P.studySessions} used={profile?.study_sessions_used ?? 0}
-              limit={isPremium ? -1 : FREE_LIMITS.study_sessions} color="bg-cyan-500" />
+            {([
+              { feature: "exam_prediction"  as Feature, label: P.predictedExams,       color: "bg-indigo-500"  },
+              { feature: "paper_prediction" as Feature, label: T.nav.examLibrary,       color: "bg-violet-500"  },
+              { feature: "marking_scheme"   as Feature, label: T.examViewer.markingScheme, color: "bg-emerald-500" },
+              { feature: "ai_marking"       as Feature, label: P.aiMarkings,            color: "bg-purple-500"  },
+              { feature: "exam_chat"        as Feature, label: "Exam Chat",             color: "bg-blue-500"    },
+              { feature: "study_chat"       as Feature, label: P.studySessions,         color: "bg-cyan-500"    },
+              { feature: "ai_writer"        as Feature, label: "AI Writer",             color: "bg-rose-500"    },
+            ] as const).map(({ feature, label, color }) => (
+              <UsageBar
+                key={feature}
+                label={label}
+                used={usage[feature]}
+                limit={isPremium ? PREMIUM_TOKEN_LIMITS[feature] : FREE_TOKEN_LIMITS[feature]}
+                color={color}
+              />
+            ))}
           </div>
           {!isPremium && (
             <p className="text-xs text-gray-600 mt-4">{P.usageResets}</p>
