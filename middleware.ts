@@ -120,8 +120,8 @@ export async function middleware(request: NextRequest) {
     pathname === "/write" ||
     pathname.startsWith("/write/");
 
-  // Logged-in users skip the auth pages
-  if (user && (pathname === "/login" || pathname === "/signup")) {
+  // Logged-in users skip auth pages and the marketing home — send them to the app
+  if (user && (pathname === "/" || pathname === "/login" || pathname === "/signup")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
