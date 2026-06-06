@@ -110,6 +110,8 @@ const t = {
       orSignUp:         "or sign up",
       fullNameLabel:    "Full name (optional)",
       fullNamePlaceholder: "Your name",
+      continueWithGoogle: "Continue with Google",
+      or:               "or",
     },
 
     // ── Dashboard ─────────────────────────────────────────────────────────
@@ -434,6 +436,8 @@ const t = {
       orSignUp:         "au jisajili",
       fullNameLabel:    "Jina kamili (si lazima)",
       fullNamePlaceholder: "Jina lako",
+      continueWithGoogle: "Endelea na Google",
+      or:               "au",
     },
 
     dashboard: {
