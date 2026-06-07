@@ -1,9 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// API routes accessible without authentication (GET only)
+// API routes accessible without authentication
 const PUBLIC_API_PATTERNS = [
-  /^\/api\/exams\/[0-9a-f-]+$/,
+  /^\/api\/exams\/[0-9a-f-]+$/,        // public exam data (GET)
+  /^\/api\/webhook\/polar$/,            // Polar webhook (POST, validated by secret)
 ];
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -21,8 +22,11 @@ function applySecurityHeaders(res: NextResponse | Response) {
   return res;
 }
 
+// Polar webhook is POST; exam reads are GET-only
+const GET_ONLY_PATTERNS = [/^\/api\/exams\/[0-9a-f-]+$/];
+
 function isPublicApiPath(pathname: string, method: string) {
-  if (method !== "GET") return false;
+  if (GET_ONLY_PATTERNS.some((re) => re.test(pathname))) return method === "GET";
   return PUBLIC_API_PATTERNS.some((re) => re.test(pathname));
 }
 
@@ -113,8 +117,6 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/mark/") ||
     pathname === "/study" ||
     pathname.startsWith("/study/") ||
-    pathname === "/exams" ||
-    pathname.startsWith("/exams/") ||
     pathname === "/papers" ||
     pathname.startsWith("/papers/") ||
     pathname === "/write" ||

@@ -3,17 +3,19 @@
 import Link from "next/link";
 import { Header } from "@/app/components/Header";
 import { useT } from "@/app/lib/language-context";
-
-// Metadata cannot be exported from "use client" pages in Next.js App Router.
-// The parent layout provides the site-wide defaults; pricing-specific
-// metadata is handled via the <title> tag populated by the layout template.
 import {
   FREE_TOKEN_LIMITS,
   PREMIUM_TOKEN_LIMITS,
   FEATURE_LABELS,
   type Feature,
 } from "@/app/lib/usage";
-import { PREMIUM_PRICE_MONTHLY_TZS, PREMIUM_PRICE_ANNUAL_TZS } from "@/app/lib/types";
+type PolarProduct = {
+  id: string;
+  name: string;
+  description: string | null;
+  recurringInterval: string | null;
+  prices: Array<Record<string, unknown>>;
+};
 
 // Human-readable approximations shown on each feature row
 const FEATURE_ESTIMATES: Record<Feature, { free: string; premium: string; icon: string }> = {
@@ -53,13 +55,33 @@ function CheckIcon() {
   );
 }
 
-export function PricingClient() {
+function formatPrice(amount: number, currency: string) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount / 100);
+}
+
+function getFirstFixedPrice(product: PolarProduct) {
+  for (const price of product.prices) {
+    if ("priceAmount" in price && "priceCurrency" in price) {
+      return price as { id: string; priceAmount: number; priceCurrency: string };
+    }
+  }
+  return null;
+}
+
+function intervalLabel(interval: string | null) {
+  if (interval === "month") return "/month";
+  if (interval === "year") return "/year";
+  return "";
+}
+
+export function PricingClient({ products }: { products: PolarProduct[] }) {
   const { T } = useT();
   const PR = T.pricing;
-  const monthly = PREMIUM_PRICE_MONTHLY_TZS.toLocaleString();
-  const annual  = PREMIUM_PRICE_ANNUAL_TZS.toLocaleString();
-  const annualPerMonth = Math.round(PREMIUM_PRICE_ANNUAL_TZS / 12).toLocaleString();
-  const annualSaving = (PREMIUM_PRICE_MONTHLY_TZS * 12 - PREMIUM_PRICE_ANNUAL_TZS).toLocaleString();
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -74,14 +96,14 @@ export function PricingClient() {
         </div>
 
         {/* Plan cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className={`grid grid-cols-1 gap-6 ${products.length > 0 ? "md:grid-cols-" + Math.min(products.length + 1, 3) : "md:grid-cols-2"}`}>
 
-          {/* Free */}
+          {/* Free — always shown */}
           <div className="rounded-2xl border border-gray-800 bg-gray-900/50 p-7 flex flex-col">
             <div className="mb-6">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">{PR.freeTitle}</p>
               <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-4xl font-extrabold">TZS 0</span>
+                <span className="text-4xl font-extrabold">Free</span>
               </div>
               <p className="text-xs text-gray-600">{PR.freeSub}</p>
             </div>
@@ -104,44 +126,86 @@ export function PricingClient() {
             </Link>
           </div>
 
-          {/* Premium */}
-          <div className="relative rounded-2xl border-2 border-indigo-600 bg-gray-900/80 p-7 flex flex-col">
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-              <span className="bg-indigo-600 text-white text-xs font-bold px-4 py-1 rounded-full">{PR.premiumBadge}</span>
-            </div>
-            <div className="mb-6">
-              <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-2">Premium</p>
-              <div className="flex items-baseline gap-1 mb-0.5">
-                <span className="text-4xl font-extrabold">TZS {monthly}</span>
-                <span className="text-gray-500 text-sm">{PR.monthSuffix}</span>
+          {/* Polar products */}
+          {products.map((product, idx) => {
+            const price = getFirstFixedPrice(product);
+            const isFirst = idx === 0;
+            return (
+              <div
+                key={product.id}
+                className={`relative rounded-2xl p-7 flex flex-col ${
+                  isFirst
+                    ? "border-2 border-indigo-600 bg-gray-900/80"
+                    : "border border-gray-700 bg-gray-900/50"
+                }`}
+              >
+                {isFirst && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                    <span className="bg-indigo-600 text-white text-xs font-bold px-4 py-1 rounded-full">
+                      {PR.premiumBadge}
+                    </span>
+                  </div>
+                )}
+
+                <div className="mb-6">
+                  <p className={`text-xs font-semibold uppercase tracking-widest mb-2 ${isFirst ? "text-indigo-400" : "text-gray-400"}`}>
+                    {product.name}
+                  </p>
+                  {price ? (
+                    <div className="flex items-baseline gap-1 mb-1">
+                      <span className="text-4xl font-extrabold">
+                        {formatPrice(price.priceAmount, price.priceCurrency)}
+                      </span>
+                      <span className="text-gray-500 text-sm">
+                        {intervalLabel(product.recurringInterval)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-baseline gap-1 mb-1">
+                      <span className="text-4xl font-extrabold">—</span>
+                    </div>
+                  )}
+                  {product.description && (
+                    <p className="text-xs text-gray-500 mt-1">{product.description}</p>
+                  )}
+                </div>
+
+                <ul className="space-y-2.5 text-sm text-gray-200 flex-1 mb-7">
+                  {[
+                    "Everything in Free",
+                    "25× higher monthly token limits",
+                    "Priority AI processing",
+                    "Priority support",
+                    "Early access to new features",
+                  ].map(f => (
+                    <li key={f} className="flex items-center gap-2.5"><CheckIcon />{f}</li>
+                  ))}
+                </ul>
+
+                <a
+                  href={`/checkout?productId=${product.id}`}
+                  className={`flex items-center justify-center gap-2 rounded-xl font-semibold py-3 transition-all text-sm ${
+                    isFirst
+                      ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25"
+                      : "border border-indigo-700 hover:border-indigo-500 text-indigo-300 hover:text-white"
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  Get {product.name}
+                </a>
               </div>
-              <p className="text-xs text-emerald-400">or TZS {annual}/year — saves TZS {annualSaving}</p>
-              <p className="text-xs text-gray-600">(TZS {annualPerMonth}/mo billed annually)</p>
+            );
+          })}
+
+          {/* Fallback if Polar returned no products */}
+          {products.length === 0 && (
+            <div className="relative rounded-2xl border-2 border-indigo-600 bg-gray-900/80 p-7 flex flex-col items-center justify-center text-center gap-3">
+              <p className="text-sm text-gray-400">Premium plans loading…</p>
+              <Link href="/signup" className="text-sm text-indigo-400 hover:text-indigo-300">{PR.getStarted}</Link>
             </div>
-            <ul className="space-y-2.5 text-sm text-gray-200 flex-1 mb-7">
-              {[
-                "Everything in Free",
-                "25× higher monthly token limits",
-                "Priority AI processing",
-                "Priority support via WhatsApp",
-                "Early access to new features",
-              ].map(f => (
-                <li key={f} className="flex items-center gap-2.5"><CheckIcon />{f}</li>
-              ))}
-            </ul>
-            <div className="space-y-3">
-              <a href="https://wa.me/255000000000?text=Hi%2C%20I%20want%20to%20upgrade%20to%20Tausi%20Premium"
-                target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 transition-all text-sm shadow-lg shadow-indigo-600/25">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.561 4.14 1.541 5.875L0 24l6.335-1.524A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.65-.498-5.178-1.368l-.371-.22-3.762.904.936-3.661-.24-.378A9.94 9.94 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
-                </svg>
-                Upgrade via WhatsApp
-              </a>
-              <p className="text-center text-xs text-gray-600">M-Pesa · Airtel Money · Tigo Cash · Bank Transfer</p>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Detailed token breakdown */}
@@ -152,7 +216,6 @@ export function PricingClient() {
           </div>
 
           <div className="rounded-2xl border border-gray-800 overflow-hidden">
-            {/* Header row */}
             <div className="grid grid-cols-[1fr_1fr_1fr] bg-gray-900 border-b border-gray-800 px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               <span>{PR.tableFeature}</span>
               <span>{PR.tableFree}</span>
@@ -171,21 +234,16 @@ export function PricingClient() {
                     !isLast ? "border-b border-gray-800/60" : ""
                   } hover:bg-gray-900/40 transition-colors`}
                 >
-                  {/* Feature name */}
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-7 h-7 rounded-lg bg-indigo-950/60 border border-indigo-900/40 flex items-center justify-center shrink-0">
                       <Icon d={est.icon} className="w-3.5 h-3.5 text-indigo-400" />
                     </div>
                     <span className="text-sm font-medium text-gray-200 truncate">{FEATURE_LABELS[feature]}</span>
                   </div>
-
-                  {/* Free column */}
                   <div>
                     <p className="text-sm font-semibold text-gray-300">{fmt(free)} tokens</p>
                     <p className="text-xs text-gray-600">{est.free}</p>
                   </div>
-
-                  {/* Premium column */}
                   <div>
                     <p className="text-sm font-semibold text-indigo-400">{fmt(premium)} tokens</p>
                     <p className="text-xs text-gray-600">{est.premium}</p>
@@ -200,15 +258,15 @@ export function PricingClient() {
 
         {/* Payment methods */}
         <section className="rounded-2xl border border-gray-800 bg-gray-900/30 p-6">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">{PR.paymentHeading}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-            {["M-Pesa", "Airtel Money", "Tigo Cash", "Bank Transfer"].map(m => (
+          <h2 className="text-sm font-semibold text-gray-300 mb-1">Secure checkout powered by Polar</h2>
+          <p className="text-xs text-gray-500 mb-4">Pay with card or any method supported by Polar. Your account upgrades instantly after payment.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {["Visa", "Mastercard", "Apple Pay", "Google Pay"].map(m => (
               <div key={m} className="flex items-center justify-center rounded-xl border border-gray-700 bg-gray-900 py-3 text-sm font-medium text-gray-400">
                 {m}
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-600">{PR.paymentNote}</p>
         </section>
 
         {/* FAQ */}
@@ -218,8 +276,8 @@ export function PricingClient() {
             { q: "What exactly is a token?", a: "A token is roughly ¾ of a word in English, or about 4 characters. A 10-page PDF exam paper is typically 5,000–15,000 input tokens. Each AI response adds output tokens on top." },
             { q: "When do token limits reset?", a: "Your token counters reset to zero on the 1st of every month, midnight UTC." },
             { q: "What happens when I hit the limit?", a: "You'll see a friendly error message explaining which feature is capped and how many tokens you've used. Existing saved exams and documents are never deleted." },
-            { q: "What does Premium give me?", a: "Roughly 25× more tokens per feature per month. A free user can do ~5 exam predictions; a premium user can do ~130+. You also get priority support and early feature access." },
-            { q: "How do I pay?", a: "Send payment via M-Pesa, Airtel Money, Tigo Cash, or bank transfer and message us on WhatsApp with the receipt. Upgrades are processed within 30 minutes." },
+            { q: "What does Premium give me?", a: "More tokens per feature per month, priority AI processing, and priority support. Upgrade to unlock higher limits instantly." },
+            { q: "How do I pay?", a: "Click the upgrade button on any plan above. You'll be taken to our secure Polar checkout where you can pay by card. Your account upgrades instantly after payment." },
           ].map(({ q, a }) => (
             <details key={q} className="rounded-xl border border-gray-800 bg-gray-900/30">
               <summary className="px-5 py-3.5 text-sm font-medium text-gray-300 cursor-pointer hover:text-white select-none">{q}</summary>
