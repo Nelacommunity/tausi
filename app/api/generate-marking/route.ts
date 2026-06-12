@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { MARKING_SYSTEM_PROMPT } from "@/app/lib/prompts";
 import { createClient } from "@/app/lib/supabase/server";
-import { checkTokenLimit, recordTokenUsage, tokenLimitError } from "@/app/lib/usage";
+import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 export async function POST(request: Request) {
@@ -12,8 +12,8 @@ export async function POST(request: Request) {
   const rl = checkRateLimit(`${user.id}:generate-marking`, LIMITS.ai);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
-  const tokenCheck = await checkTokenLimit(supabase, user.id, "marking_scheme");
-  if (!tokenCheck.allowed) return tokenLimitError("marking_scheme", tokenCheck.used, tokenCheck.limit);
+  const credit = await checkAndDeductCredits(supabase, user.id, "marking_scheme");
+  if (!credit.allowed) return insufficientCreditsError("marking_scheme", credit.balance, CREDIT_COSTS.marking_scheme);
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return jsonErr("GEMINI_API_KEY is not configured", 500);
@@ -35,7 +35,6 @@ export async function POST(request: Request) {
     async start(controller) {
       const enc = new TextEncoder();
       let fullContent = "";
-      let totalTokens = 0;
 
       try {
         // ── Pass 1: full marking scheme ────────────────────────────
@@ -47,7 +46,6 @@ export async function POST(request: Request) {
           const text = chunk.text();
           if (text) { fullContent += text; controller.enqueue(enc.encode(text)); }
         }
-        totalTokens += (await result.response).usageMetadata?.totalTokenCount ?? 0;
 
         // ── Pass 2: continuation if output was cut short ───────────
         // The marking scheme is only complete when BOTH:
@@ -69,10 +67,7 @@ export async function POST(request: Request) {
             const text = chunk.text();
             if (text) { fullContent += text; controller.enqueue(enc.encode(text)); }
           }
-          totalTokens += (await contResult.response).usageMetadata?.totalTokenCount ?? 0;
         }
-
-        await recordTokenUsage(supabase, user.id, "marking_scheme", totalTokens);
 
         if (examId && fullContent) {
           await supabase.from("exams").update({ marking_scheme: fullContent }).eq("id", examId);

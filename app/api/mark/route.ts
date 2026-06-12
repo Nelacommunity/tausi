@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@/app/lib/supabase/server";
 import { AI_MARKER_SYSTEM_PROMPT } from "@/app/lib/prompts";
-import { checkTokenLimit, recordTokenUsage, tokenLimitError } from "@/app/lib/usage";
+import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 export async function GET(request: Request) {
@@ -34,8 +34,8 @@ export async function POST(request: Request) {
   const rl2 = checkRateLimit(`${user.id}:mark-create`, LIMITS.ai);
   if (!rl2.allowed) return rateLimitError(rl2.resetAt);
 
-  const tokenCheck = await checkTokenLimit(supabase, user.id, "ai_marking");
-  if (!tokenCheck.allowed) return tokenLimitError("ai_marking", tokenCheck.used, tokenCheck.limit);
+  const credit = await checkAndDeductCredits(supabase, user.id, "ai_marking");
+  if (!credit.allowed) return insufficientCreditsError("ai_marking", credit.balance, CREDIT_COSTS.ai_marking);
 
   const formData = await request.formData().catch(() => null);
   if (!formData) return jsonErr("Invalid form data", 400);
@@ -96,7 +96,6 @@ export async function POST(request: Request) {
   const stream = new ReadableStream({
     async start(controller) {
       const enc = new TextEncoder();
-      let totalTokens = 0;
       try {
         // ── Pass 1: full marking report ────────────────────────────
         const result = await model.generateContentStream({
@@ -107,7 +106,6 @@ export async function POST(request: Request) {
           const text = chunk.text();
           if (text) { fullFeedback += text; controller.enqueue(enc.encode(text)); }
         }
-        totalTokens += (await result.response).usageMetadata?.totalTokenCount ?? 0;
 
         // ── Pass 2: continuation if report was cut short ───────────
         // The report is only complete when both the Overall Feedback AND
@@ -127,14 +125,12 @@ export async function POST(request: Request) {
             const text = chunk.text();
             if (text) { fullFeedback += text; controller.enqueue(enc.encode(text)); }
           }
-          totalTokens += (await contResult.response).usageMetadata?.totalTokenCount ?? 0;
         }
 
         const totalMatch   = fullFeedback.match(/\*\*Total Score:\*\*\s*(\d+)\s*\/\s*(\d+)/i);
         const percentMatch = fullFeedback.match(/\*\*Percentage:\*\*\s*([\d.]+)%/i);
 
         await Promise.all([
-          recordTokenUsage(supabase, user.id, "ai_marking", totalTokens),
           sessionId ? supabase.from("marking_sessions").update({
             raw_feedback: fullFeedback,
             total_marks:  totalMatch  ? parseInt(totalMatch[1])      : null,

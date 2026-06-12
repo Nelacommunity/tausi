@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { EXAM_SYSTEM_PROMPT } from "@/app/lib/prompts";
 import { createClient } from "@/app/lib/supabase/server";
-import { checkTokenLimit, recordTokenUsage, tokenLimitError } from "@/app/lib/usage";
+import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 function mimeFromPath(path: string): string {
@@ -17,8 +17,8 @@ export async function POST(request: Request) {
   const rl = checkRateLimit(`${user.id}:generate-exam`, LIMITS.ai);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
-  const tokenCheck = await checkTokenLimit(supabase, user.id, "exam_prediction");
-  if (!tokenCheck.allowed) return tokenLimitError("exam_prediction", tokenCheck.used, tokenCheck.limit);
+  const credit = await checkAndDeductCredits(supabase, user.id, "exam_prediction");
+  if (!credit.allowed) return insufficientCreditsError("exam_prediction", credit.balance, CREDIT_COSTS.exam_prediction);
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return jsonErr("GEMINI_API_KEY is not configured", 500);
@@ -104,9 +104,6 @@ export async function POST(request: Request) {
           const text = chunk.text();
           if (text) controller.enqueue(enc.encode(text));
         }
-
-        const tokens = (await result.response).usageMetadata?.totalTokenCount ?? 0;
-        await recordTokenUsage(supabase, user.id, "exam_prediction", tokens);
 
         // If some papers lacked structure, trigger background analysis for next time
         const papersWithoutStructure = papers.filter(p => !p.exam_structure);

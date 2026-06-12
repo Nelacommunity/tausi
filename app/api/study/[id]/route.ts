@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@/app/lib/supabase/server";
 import { STUDY_SYSTEM_PROMPT } from "@/app/lib/prompts";
-import { checkTokenLimit, recordTokenUsage, tokenLimitError } from "@/app/lib/usage";
+import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 type GeminiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
@@ -38,8 +38,8 @@ export async function POST(request: Request, ctx: Ctx) {
   const rl = checkRateLimit(`${user.id}:study-chat`, LIMITS.ai);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
-  const tokenCheck = await checkTokenLimit(supabase, user.id, "study_chat");
-  if (!tokenCheck.allowed) return tokenLimitError("study_chat", tokenCheck.used, tokenCheck.limit);
+  const credit = await checkAndDeductCredits(supabase, user.id, "study_chat");
+  if (!credit.allowed) return insufficientCreditsError("study_chat", credit.balance, CREDIT_COSTS.study_chat);
 
   const { message } = await request.json().catch(() => ({ message: "" }));
   if (!message?.trim()) return jsonErr("Message required", 400);
@@ -93,11 +93,7 @@ export async function POST(request: Request, ctx: Ctx) {
           const text = chunk.text();
           if (text) { reply += text; controller.enqueue(new TextEncoder().encode(text)); }
         }
-        const tokens = (await result.response).usageMetadata?.totalTokenCount ?? 0;
-        await Promise.all([
-          supabase.from("study_messages").insert({ session_id: id, user_id: user.id, role: "assistant", content: reply }),
-          recordTokenUsage(supabase, user.id, "study_chat", tokens),
-        ]);
+        await supabase.from("study_messages").insert({ session_id: id, user_id: user.id, role: "assistant", content: reply });
         controller.close();
       } catch (err) {
         controller.enqueue(new TextEncoder().encode(`\n\n**Error:** ${err instanceof Error ? err.message : "Failed"}`));

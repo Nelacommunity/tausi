@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@/app/lib/supabase/server";
-import { checkTokenLimit, recordTokenUsage, tokenLimitError } from "@/app/lib/usage";
+import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 const SYSTEM = `You are an expert writing assistant integrated into Tausi, an AI-powered document editor.
@@ -17,8 +17,8 @@ export async function POST(request: Request) {
   const rl = checkRateLimit(`${user.id}:write-ai`, LIMITS.ai);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
-  const tokenCheck = await checkTokenLimit(supabase, user.id, "ai_writer");
-  if (!tokenCheck.allowed) return tokenLimitError("ai_writer", tokenCheck.used, tokenCheck.limit);
+  const credit = await checkAndDeductCredits(supabase, user.id, "ai_writer");
+  if (!credit.allowed) return insufficientCreditsError("ai_writer", credit.balance, CREDIT_COSTS.ai_writer);
 
   const { mode, prompt, document: docContent = "", selection = "" } =
     await request.json().catch(() => ({}));
@@ -51,8 +51,6 @@ export async function POST(request: Request) {
           const text = chunk.text();
           if (text) controller.enqueue(enc.encode(text));
         }
-        const tokens = (await result.response).usageMetadata?.totalTokenCount ?? 0;
-        await recordTokenUsage(supabase, user.id, "ai_writer", tokens);
         controller.close();
       } catch (err) {
         controller.error(err);

@@ -1,33 +1,19 @@
 import type { Metadata } from "next";
 import { PricingClient } from "./PricingClient";
-import { api } from "@/lib/polar";
 
 export const metadata: Metadata = {
-  title: "Pricing — Free & Premium Plans",
+  title: "Buy Credits — Tausi AI",
   description:
-    "Tausi is free for all East African students. Upgrade to Premium for higher AI usage limits on exam predictions, marking schemes, AI marking, and study sessions.",
+    "Pay-as-you-go credits for AI exam predictions, marking schemes, AI marking, and study sessions. No subscriptions — buy what you need.",
   alternates: { canonical: "https://tausi.app/pricing" },
   openGraph: {
     url: "https://tausi.app/pricing",
-    title: "Tausi Pricing — Free & Premium for East African Students",
+    title: "Tausi Credits — AI for East African Students",
     description:
-      "Start free — no card needed. Upgrade for more AI exam predictions, marking schemes, and tutoring sessions.",
+      "Start free with 5 credits. Buy more credit packs via mobile money — M-Pesa, Airtel, Mixx, Halotel.",
   },
 };
 
-async function getPolarProducts() {
-  const productId = process.env.PRODUCT_ID;
-  if (!productId) return [];
-  try {
-    const product = await api.products.get({ id: productId });
-    return [product];
-  } catch (err) {
-    console.error("[polar] products.get failed:", err);
-    return [];
-  }
-}
-
-export default async function PricingPage() {
-  const products = await getPolarProducts();
-  return <PricingClient products={products} />;
+export default function PricingPage() {
+  return <PricingClient />;
 }

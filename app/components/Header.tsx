@@ -94,6 +94,7 @@ const NAV_LINK_KEYS = [
 export function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [open, setOpen] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -104,6 +105,15 @@ export function Header() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => setUser(s?.user ?? null));
     return () => subscription.unsubscribe();
   }, []);
+
+  // Fetch credits balance when user is authenticated
+  useEffect(() => {
+    if (!user) { setCredits(null); return; }
+    fetch("/api/credits")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d && typeof d.credits === "number") setCredits(d.credits); })
+      .catch(() => {});
+  }, [user]);
 
   useEffect(() => { setOpen(false); }, [pathname]);
 
@@ -154,13 +164,26 @@ export function Header() {
           <LangToggle />
 
           {user ? (
-            <Link href="/profile"
-              className="flex items-center gap-2 rounded-xl border border-line hover:border-line-2 bg-ink-2 hover:bg-ink-3 px-3 py-1.5 transition-colors">
-              <div className="w-6 h-6 rounded-md bg-teal-deep flex items-center justify-center text-xs font-bold text-teal select-none">
-                {initials}
-              </div>
-              <span className="text-sm text-body hidden sm:block max-w-[130px] truncate">{user.email}</span>
-            </Link>
+            <div className="flex items-center gap-2">
+              {/* Credits chip */}
+              {credits !== null && (
+                <Link href="/pricing"
+                  className="hidden sm:flex items-center gap-1.5 rounded-lg border border-line bg-ink-2 hover:border-teal/60 px-2.5 py-1.5 transition-colors">
+                  <svg className="w-3.5 h-3.5 text-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                  </svg>
+                  <span className="text-xs font-bold text-teal">{credits}</span>
+                  <span className="text-xs text-dim">cr</span>
+                </Link>
+              )}
+              <Link href="/profile"
+                className="flex items-center gap-2 rounded-xl border border-line hover:border-line-2 bg-ink-2 hover:bg-ink-3 px-3 py-1.5 transition-colors">
+                <div className="w-6 h-6 rounded-md bg-teal-deep flex items-center justify-center text-xs font-bold text-teal select-none">
+                  {initials}
+                </div>
+                <span className="text-sm text-body hidden sm:block max-w-[130px] truncate">{user.email}</span>
+              </Link>
+            </div>
           ) : (
             <div className="flex items-center gap-2">
               <Link href="/login" className="text-sm text-body hover:text-snow px-3 py-1.5 rounded-lg hover:bg-ink-3 transition-colors">
@@ -238,11 +261,11 @@ export function Header() {
                 </Link>
 
                 <Link href="/pricing" onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gold hover:bg-gold/10 transition-colors">
-                  <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-teal hover:bg-teal/10 transition-colors">
+                  <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
                   </svg>
-                  {T.nav.upgradePremium}
+                  {credits !== null ? `${credits} credits · Buy more` : "Buy credits"}
                 </Link>
 
                 <button onClick={signOut}

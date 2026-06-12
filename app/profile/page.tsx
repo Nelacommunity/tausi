@@ -5,46 +5,15 @@ import Link from "next/link";
 import { Header } from "@/app/components/Header";
 import { useT } from "@/app/lib/language-context";
 import type { Profile } from "@/app/lib/types";
-import {
-  FREE_TOKEN_LIMITS, PREMIUM_TOKEN_LIMITS,
-  type Feature,
-} from "@/app/lib/usage";
+import { CREDIT_COSTS } from "@/app/lib/usage";
 
 interface Stats { exams: number; markings: number; studies: number }
 
-function fmt(n: number) {
-  if (n < 1000) return String(n);
-  if (n < 1_000_000) return `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1)}k`;
-  return `${(n / 1_000_000).toFixed(1)}M`;
-}
-
-function UsageBar({ label, used, limit, color }: { label: string; used: number; limit: number; color: string }) {
-  const pct = Math.min((used / limit) * 100, 100);
-  const nearLimit = pct >= 80;
-
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-gray-400">{label}</span>
-        <span className={nearLimit ? "text-amber-400 font-medium" : "text-gray-500"}>
-          {fmt(used)} / {fmt(limit)} tokens
-        </span>
-      </div>
-      <div className="h-1.5 rounded-full bg-gray-800 overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-500 ${nearLimit ? "bg-amber-500" : color}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
 function StatCard({ value, label, icon }: { value: number; label: string; icon: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4 text-center">
-      <div className="text-2xl font-bold text-white mb-0.5">{value}</div>
-      <div className="text-xs text-gray-500 flex items-center justify-center gap-1">{icon}{label}</div>
+    <div className="rounded-xl border border-line bg-ink-2/50 p-4 text-center">
+      <div className="text-2xl font-bold text-snow mb-0.5">{value}</div>
+      <div className="text-xs text-dim flex items-center justify-center gap-1">{icon}{label}</div>
     </div>
   );
 }
@@ -52,27 +21,23 @@ function StatCard({ value, label, icon }: { value: number; label: string; icon: 
 export default function ProfilePage() {
   const { T } = useT();
   const P = T.profile;
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [stats, setStats] = useState<Stats>({ exams: 0, markings: 0, studies: 0 });
-  const [usage, setUsage] = useState<Record<Feature, number>>({
-    exam_prediction: 0, paper_prediction: 0, marking_scheme: 0,
-    ai_marking: 0, exam_chat: 0, study_chat: 0, ai_writer: 0,
-  });
-  const [isPremium, setIsPremium] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile]     = useState<Profile | null>(null);
+  const [stats, setStats]         = useState<Stats>({ exams: 0, markings: 0, studies: 0 });
+  const [credits, setCredits]     = useState<number>(0);
+  const [loading, setLoading]     = useState(true);
   const [editingName, setEditingName] = useState(false);
-  const [nameDraft, setNameDraft] = useState("");
-  const [savingName, setSavingName] = useState(false);
+  const [nameDraft, setNameDraft]     = useState("");
+  const [savingName, setSavingName]   = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/profile")
       .then((r) => r.json())
-      .then(({ profile, stats, usage: u, isPremium: p }) => {
-        setProfile(profile);
-        if (stats) setStats(stats);
-        if (u) setUsage(u);
-        if (typeof p === "boolean") setIsPremium(p);
+      .then(({ profile: p, stats: s, credits: c }) => {
+        setProfile(p);
+        if (s) setStats(s);
+        if (typeof c === "number") setCredits(c);
+        else if (p?.credits) setCredits(p.credits as number);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -98,26 +63,27 @@ export default function ProfilePage() {
   };
 
   const initials = (profile?.full_name || profile?.email || "?").slice(0, 2).toUpperCase();
-  const currentMonth = new Date().toLocaleString("en-US", { month: "long", year: "numeric" });
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen bg-ink">
       <Header />
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-teal border-t-transparent rounded-full animate-spin" />
       </div>
     </div>
   );
 
+  const lowCredits = credits <= 5;
+
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-ink text-snow">
       <Header />
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
         {/* Identity card */}
-        <div className="rounded-2xl border border-gray-800 bg-gray-900/50 p-6">
+        <div className="rounded-2xl border border-line bg-ink-2/50 p-6">
           <div className="flex items-start gap-5">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-2xl font-bold text-white shrink-0 select-none">
+            <div className="w-16 h-16 rounded-2xl bg-teal-deep border border-teal/30 flex items-center justify-center text-2xl font-bold text-teal shrink-0 select-none">
               {initials}
             </div>
             <div className="flex-1 min-w-0">
@@ -125,15 +91,15 @@ export default function ProfilePage() {
                 <form onSubmit={(e) => { e.preventDefault(); saveName(); }} className="flex items-center gap-2 mb-1">
                   <input ref={nameInputRef} value={nameDraft} onChange={(e) => setNameDraft(e.target.value)}
                     onBlur={saveName} disabled={savingName}
-                    className="bg-gray-800 border border-indigo-600 rounded-lg px-3 py-1 text-sm text-white outline-none w-48" />
+                    className="bg-ink border border-teal rounded-lg px-3 py-1 text-sm text-snow outline-none w-48" />
                 </form>
               ) : (
                 <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-lg font-bold text-white">
+                  <h1 className="text-lg font-bold text-snow">
                     {profile?.full_name || P.setName}
                   </h1>
                   <button onClick={() => { setNameDraft(profile?.full_name || ""); setEditingName(true); }}
-                    className="text-gray-600 hover:text-gray-400 transition-colors">
+                    className="text-dim hover:text-body transition-colors">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                         d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
@@ -141,78 +107,61 @@ export default function ProfilePage() {
                   </button>
                 </div>
               )}
-              <p className="text-sm text-gray-500 mb-3">{profile?.email}</p>
+              <p className="text-sm text-dim mb-3">{profile?.email}</p>
               <div className="flex items-center gap-3">
-                <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border ${
-                  isPremium
-                    ? "bg-amber-950/60 border-amber-700 text-amber-300"
-                    : "bg-gray-800 border-gray-700 text-gray-400"
-                }`}>
-                  {isPremium ? (
-                    <>
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      Premium
-                    </>
-                  ) : "Free Plan"}
-                </span>
                 {profile?.created_at && (
-                  <span className="text-xs text-gray-600">
+                  <span className="text-xs text-dim">
                     {P.joined} {new Date(profile.created_at).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}
                   </span>
                 )}
               </div>
             </div>
-            {!isPremium && (
-              <Link href="/pricing"
-                className="shrink-0 flex items-center gap-1.5 text-xs font-semibold bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 text-white px-4 py-2 rounded-lg transition-all">
-                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                {P.upgrade}
-              </Link>
-            )}
           </div>
         </div>
 
-        {/* Monthly usage */}
-        <div className="rounded-2xl border border-gray-800 bg-gray-900/50 p-6">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-sm font-semibold text-gray-200">{P.usageHeading} — {currentMonth}</h2>
-            {!isPremium && (
-              <Link href="/pricing" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
-                {P.upgradeLink}
-              </Link>
-            )}
+        {/* Credits balance */}
+        <div className={`rounded-2xl border p-6 ${lowCredits ? "border-amber-700/60 bg-amber-950/20" : "border-teal/40 bg-teal-deep/20"}`}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-semibold text-body mb-1">Credit Balance</h2>
+              <div className="flex items-baseline gap-2">
+                <span className={`font-display text-5xl font-bold ${lowCredits ? "text-amber-400" : "text-teal"}`}>
+                  {credits}
+                </span>
+                <span className="text-body text-lg">credits</span>
+              </div>
+              {lowCredits && (
+                <p className="text-xs text-amber-400 mt-1">Running low — consider buying more credits</p>
+              )}
+            </div>
+            <Link href="/pricing"
+              className="flex items-center gap-2 rounded-xl border border-teal/60 hover:border-teal bg-teal-deep/40 hover:bg-teal-deep/60 text-teal font-semibold px-4 py-2.5 text-sm transition-all">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Buy credits
+            </Link>
           </div>
-          <div className="space-y-4">
+
+          {/* Quick cost reference */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
             {([
-              { feature: "exam_prediction"  as Feature, label: P.predictedExams,       color: "bg-indigo-500"  },
-              { feature: "paper_prediction" as Feature, label: T.nav.examLibrary,       color: "bg-violet-500"  },
-              { feature: "marking_scheme"   as Feature, label: T.examViewer.markingScheme, color: "bg-emerald-500" },
-              { feature: "ai_marking"       as Feature, label: P.aiMarkings,            color: "bg-purple-500"  },
-              { feature: "exam_chat"        as Feature, label: "Exam Chat",             color: "bg-blue-500"    },
-              { feature: "study_chat"       as Feature, label: P.studySessions,         color: "bg-cyan-500"    },
-              { feature: "ai_writer"        as Feature, label: "AI Writer",             color: "bg-rose-500"    },
-            ] as const).map(({ feature, label, color }) => (
-              <UsageBar
-                key={feature}
-                label={label}
-                used={usage[feature]}
-                limit={isPremium ? PREMIUM_TOKEN_LIMITS[feature] : FREE_TOKEN_LIMITS[feature]}
-                color={color}
-              />
+              { label: "Exam Predict", cost: CREDIT_COSTS.exam_prediction },
+              { label: "AI Mark",      cost: CREDIT_COSTS.ai_marking      },
+              { label: "Chat msg",     cost: CREDIT_COSTS.exam_chat        },
+              { label: "AI Write",     cost: CREDIT_COSTS.ai_writer        },
+            ] as const).map(({ label, cost }) => (
+              <div key={label} className="rounded-lg border border-line/60 bg-ink-2/40 px-3 py-2 text-center">
+                <p className="text-xs text-dim">{label}</p>
+                <p className="text-sm font-bold text-body">{cost} cr</p>
+              </div>
             ))}
           </div>
-          {!isPremium && (
-            <p className="text-xs text-gray-600 mt-4">{P.usageResets}</p>
-          )}
         </div>
 
         {/* Stats */}
         <div>
-          <h2 className="text-sm font-semibold text-gray-400 mb-3">{P.allTimeStats}</h2>
+          <h2 className="text-sm font-semibold text-dim mb-3">{P.allTimeStats}</h2>
           <div className="grid grid-cols-3 gap-3">
             <StatCard value={stats.exams} label={P.predictedExams} icon={
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -237,13 +186,13 @@ export default function ProfilePage() {
         {/* Quick links */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { href: "/dashboard", label: T.nav.myExams, color: "text-indigo-400" },
-            { href: "/mark", label: T.nav.aiMarker, color: "text-purple-400" },
-            { href: "/study", label: T.nav.studyRoom, color: "text-cyan-400" },
-            { href: "/pricing", label: isPremium ? P.managePlan : P.upgrade, color: "text-amber-400" },
+            { href: "/dashboard",  label: T.nav.myExams,   color: "text-teal"  },
+            { href: "/mark",       label: T.nav.aiMarker,  color: "text-body"  },
+            { href: "/study",      label: T.nav.studyRoom, color: "text-body"  },
+            { href: "/pricing",    label: "Buy credits",   color: "text-gold"  },
           ].map(({ href, label, color }) => (
             <Link key={href} href={href}
-              className="flex items-center justify-center rounded-xl border border-gray-800 bg-gray-900/50 hover:bg-gray-900 hover:border-gray-600 py-3 text-xs font-medium transition-all">
+              className="flex items-center justify-center rounded-xl border border-line bg-ink-2/50 hover:bg-ink-2 hover:border-line-2 py-3 text-xs font-medium transition-all">
               <span className={color}>{label}</span>
             </Link>
           ))}

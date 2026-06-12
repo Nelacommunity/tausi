@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@/app/lib/supabase/server";
 import { EXAM_STRUCTURE_PROMPT } from "@/app/lib/prompts";
-import { recordTokenUsage } from "@/app/lib/usage";
+
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 function mimeFromPath(path: string): string {
@@ -66,11 +66,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const structure = result.response.text();
   if (!structure) return jsonErr("Structure extraction produced no output", 500);
 
-  const tokens = result.response.usageMetadata?.totalTokenCount ?? 0;
-  await Promise.all([
-    supabase.from("exam_papers").update({ exam_structure: structure }).eq("id", id),
-    recordTokenUsage(supabase, user.id, "paper_prediction", tokens),
-  ]);
+  // Analysis is free — no credit deduction needed
+  await supabase.from("exam_papers").update({ exam_structure: structure }).eq("id", id);
 
   return Response.json({ ok: true });
 }

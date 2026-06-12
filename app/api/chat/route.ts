@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@/app/lib/supabase/server";
 import { CHAT_SYSTEM_PROMPT } from "@/app/lib/prompts";
-import { checkTokenLimit, recordTokenUsage, tokenLimitError } from "@/app/lib/usage";
+import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 type GeminiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
@@ -17,8 +17,8 @@ export async function POST(request: Request) {
   const rl = checkRateLimit(`${user.id}:chat`, LIMITS.ai);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
-  const tokenCheck = await checkTokenLimit(supabase, user.id, "exam_chat");
-  if (!tokenCheck.allowed) return tokenLimitError("exam_chat", tokenCheck.used, tokenCheck.limit);
+  const credit = await checkAndDeductCredits(supabase, user.id, "exam_chat");
+  if (!credit.allowed) return insufficientCreditsError("exam_chat", credit.balance, CREDIT_COSTS.exam_chat);
 
   let body: { examId?: string; message?: string; context?: string };
   try { body = await request.json(); }
@@ -85,11 +85,7 @@ export async function POST(request: Request) {
           const text = chunk.text();
           if (text) { assistantContent += text; controller.enqueue(new TextEncoder().encode(text)); }
         }
-        const tokens = (await result.response).usageMetadata?.totalTokenCount ?? 0;
-        await Promise.all([
-          supabase.from("chat_messages").insert({ exam_id: examId, user_id: user.id, role: "assistant", content: assistantContent }),
-          recordTokenUsage(supabase, user.id, "exam_chat", tokens),
-        ]);
+        await supabase.from("chat_messages").insert({ exam_id: examId, user_id: user.id, role: "assistant", content: assistantContent });
         controller.close();
       } catch (err) {
         controller.enqueue(new TextEncoder().encode(`\n\n**Error:** ${err instanceof Error ? err.message : "Generation failed"}`));

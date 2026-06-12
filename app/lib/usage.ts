@@ -8,37 +8,22 @@ export type Feature =
   | "exam_chat"
   | "study_chat"
   | "ai_writer"
-  | "paper_prediction";
+  | "paper_prediction"
+  | "paper_chat";
 
-// ── Monthly token budgets ────────────────────────────────────
-// Based on Gemini 2.5 Flash typical usage:
-//   exam_prediction  ≈ 12–22k tokens each   (PDF input + long exam output)
-//   marking_scheme   ≈  7–14k tokens each   (text only)
-//   ai_marking       ≈ 20–40k tokens each   (2 PDFs in + detailed report)
-//   exam_chat/study  ≈  2– 5k tokens / msg
-//   ai_writer        ≈  1– 3k tokens / req
-//   paper_prediction ≈ 12–22k tokens each   (same as exam_prediction)
-
-export const FREE_TOKEN_LIMITS: Record<Feature, number> = {
-  exam_prediction:   80_000,   // ~4–6 predictions
-  marking_scheme:    50_000,   // ~4–7 schemes
-  ai_marking:       150_000,   // ~4–7 markings
-  exam_chat:         30_000,   // ~6–15 messages
-  study_chat:        30_000,   // ~6–15 messages
-  ai_writer:         15_000,   // ~5–15 AI requests
-  paper_prediction:  80_000,   // ~4–6 predictions
+// ── Credit costs per action ──────────────────────────────────
+export const CREDIT_COSTS: Record<Feature, number> = {
+  exam_prediction:  4,
+  marking_scheme:   3,
+  ai_marking:       3,
+  exam_chat:        2,
+  study_chat:       2,
+  ai_writer:        1,
+  paper_prediction: 4,
+  paper_chat:       1,
 };
 
-export const PREMIUM_TOKEN_LIMITS: Record<Feature, number> = {
-  exam_prediction:  2_000_000,   // ~90–165 predictions
-  marking_scheme:   1_200_000,   // ~85–170 schemes
-  ai_marking:       4_000_000,   // ~100–200 markings
-  exam_chat:          600_000,   // ~120–300 messages
-  study_chat:         600_000,   // ~120–300 messages
-  ai_writer:          300_000,   // ~100–300 AI requests
-  paper_prediction: 2_000_000,   // ~90–165 predictions
-};
-
+// ── Human-readable labels ────────────────────────────────────
 export const FEATURE_LABELS: Record<Feature, string> = {
   exam_prediction:  "Exam Prediction",
   marking_scheme:   "Marking Scheme",
@@ -47,12 +32,112 @@ export const FEATURE_LABELS: Record<Feature, string> = {
   study_chat:       "Study Room",
   ai_writer:        "AI Writer",
   paper_prediction: "Library Prediction",
+  paper_chat:       "Paper Chat",
 };
 
-// ── Helpers ──────────────────────────────────────────────────
-function currentMonth() {
-  return new Date().toISOString().slice(0, 7);
+// ── Credit check result ──────────────────────────────────────
+export interface CreditCheckResult {
+  allowed: boolean;
+  balance: number;
 }
+
+// ── Core: check + deduct credits atomically ──────────────────
+export async function checkAndDeductCredits(
+  supabase: SupabaseClient,
+  userId: string,
+  feature: Feature
+): Promise<CreditCheckResult> {
+  const cost = CREDIT_COSTS[feature];
+
+  // Primary path: atomic deduct via SECURITY DEFINER RPC
+  const { data: rpcResult, error: rpcError } = await supabase.rpc(
+    "deduct_credits",
+    { p_user_id: userId, p_credits: cost }
+  );
+
+  if (!rpcError) {
+    const allowed = rpcResult === true;
+    const balance = await getCreditBalance(supabase, userId);
+    return { allowed, balance };
+  }
+
+  // Fallback: manual check + update (RPC not yet deployed in dev)
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("credits")
+    .eq("id", userId)
+    .single();
+
+  const credits: number = (profile?.credits as number) ?? 0;
+
+  if (credits < cost) {
+    return { allowed: false, balance: credits };
+  }
+
+  await supabase
+    .from("profiles")
+    .update({ credits: credits - cost })
+    .eq("id", userId);
+
+  return { allowed: true, balance: credits - cost };
+}
+
+// ── Get credit balance ───────────────────────────────────────
+export async function getCreditBalance(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<number> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("credits")
+    .eq("id", userId)
+    .single();
+  return (data?.credits as number) ?? 0;
+}
+
+// ── Insufficient credits error response ─────────────────────
+export function insufficientCreditsError(
+  feature: Feature,
+  balance: number,
+  cost: number
+): Response {
+  const label = FEATURE_LABELS[feature];
+  return new Response(
+    JSON.stringify({
+      error: `Not enough credits for ${label} — you have ${balance} credit${balance !== 1 ? "s" : ""} but this action costs ${cost}. Buy more credits on the pricing page.`,
+      code: "INSUFFICIENT_CREDITS",
+      feature,
+      balance,
+      cost,
+    }),
+    { status: 403, headers: { "Content-Type": "application/json" } }
+  );
+}
+
+// ── Legacy token limit exports (kept for backward compat) ────
+// These allow PricingClient and other imports to still compile.
+
+export const FREE_TOKEN_LIMITS: Record<Feature, number> = {
+  exam_prediction:   80_000,
+  marking_scheme:    50_000,
+  ai_marking:       150_000,
+  exam_chat:         30_000,
+  study_chat:        30_000,
+  ai_writer:         15_000,
+  paper_prediction:  80_000,
+  paper_chat:        10_000,
+};
+
+export const PREMIUM_TOKEN_LIMITS: Record<Feature, number> = {
+  exam_prediction:  2_000_000,
+  marking_scheme:   1_200_000,
+  ai_marking:       4_000_000,
+  exam_chat:          600_000,
+  study_chat:         600_000,
+  ai_writer:          300_000,
+  paper_prediction: 2_000_000,
+  paper_chat:         300_000,
+};
 
 export interface TokenCheckResult {
   allowed: boolean;
@@ -62,130 +147,62 @@ export interface TokenCheckResult {
   isPremium: boolean;
 }
 
+/** @deprecated — use checkAndDeductCredits instead */
 export async function checkTokenLimit(
   supabase: SupabaseClient,
   userId: string,
   feature: Feature
 ): Promise<TokenCheckResult> {
-  const month = currentMonth();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("tier, subscription_status")
-    .eq("id", userId)
-    .single();
-
-  const isPremium =
-    profile?.tier === "premium" && profile?.subscription_status === "active";
-
-  const limit = isPremium
-    ? PREMIUM_TOKEN_LIMITS[feature]
-    : FREE_TOKEN_LIMITS[feature];
-
-  const { data: row } = await supabase
-    .from("token_usage_monthly")
-    .select("tokens")
-    .eq("user_id", userId)
-    .eq("month", month)
-    .eq("feature", feature)
-    .single();
-
-  const used = (row?.tokens as number) ?? 0;
-
+  const result = await checkAndDeductCredits(supabase, userId, feature);
   return {
-    allowed: used < limit,
-    used,
-    limit,
-    remaining: Math.max(0, limit - used),
-    isPremium,
+    allowed: result.allowed,
+    used: 0,
+    limit: CREDIT_COSTS[feature],
+    remaining: result.balance,
+    isPremium: false,
   };
 }
 
+/** @deprecated — no-op, credits are deducted atomically in checkAndDeductCredits */
 export async function recordTokenUsage(
-  supabase: SupabaseClient,
-  userId: string,
-  feature: Feature,
-  tokens: number
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _supabase: SupabaseClient,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _userId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _feature: Feature,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _tokens: number
 ): Promise<void> {
-  if (!tokens || tokens <= 0) return;
-  const month = currentMonth();
-
-  // Primary path: atomic increment via SECURITY DEFINER RPC
-  const { error: rpcError } = await supabase.rpc("increment_token_usage", {
-    p_user_id: userId,
-    p_month:   month,
-    p_feature: feature,
-    p_tokens:  tokens,
-  });
-
-  if (!rpcError) return;
-
-  // Fallback: read current value then upsert (non-atomic but correct for single-request cases)
-  const { data: row } = await supabase
-    .from("token_usage_monthly")
-    .select("tokens")
-    .eq("user_id", userId)
-    .eq("month", month)
-    .eq("feature", feature)
-    .maybeSingle();
-
-  await supabase
-    .from("token_usage_monthly")
-    .upsert(
-      { user_id: userId, month, feature, tokens: ((row?.tokens as number) ?? 0) + tokens },
-      { onConflict: "user_id,month,feature" }
-    );
+  // no-op: credits are deducted atomically before the AI call
 }
 
+/** @deprecated — use getCreditBalance */
 export async function getMonthlyUsage(
   supabase: SupabaseClient,
   userId: string
 ): Promise<{ usage: Record<Feature, number>; isPremium: boolean }> {
-  const month = currentMonth();
-
-  const [profileRes, usageRes] = await Promise.all([
-    supabase.from("profiles").select("tier, subscription_status").eq("id", userId).single(),
-    supabase.from("token_usage_monthly").select("feature, tokens").eq("user_id", userId).eq("month", month),
-  ]);
-
-  const isPremium =
-    profileRes.data?.tier === "premium" &&
-    profileRes.data?.subscription_status === "active";
-
+  void (await getCreditBalance(supabase, userId));
   const usage = Object.fromEntries(
-    (Object.keys(FREE_TOKEN_LIMITS) as Feature[]).map(k => [k, 0])
+    (Object.keys(FREE_TOKEN_LIMITS) as Feature[]).map((k) => [k, 0])
   ) as Record<Feature, number>;
-
-  for (const row of usageRes.data ?? []) {
-    if (row.feature in usage) usage[row.feature as Feature] = row.tokens as number;
-  }
-
-  return { usage, isPremium };
+  return { usage, isPremium: false };
 }
 
+/** @deprecated — use insufficientCreditsError */
 export function tokenLimitError(feature: Feature, used: number, limit: number): Response {
-  const label = FEATURE_LABELS[feature];
-  const kUsed  = (used  / 1000).toFixed(1);
-  const kLimit = (limit / 1000).toFixed(1);
-  return new Response(
-    JSON.stringify({
-      error: `Monthly token limit reached for ${label} — ${kUsed}k / ${kLimit}k tokens used. Upgrade to Premium for much higher limits.`,
-      code:  "TOKEN_LIMIT_REACHED",
-      feature,
-      used,
-      limit,
-    }),
-    { status: 403, headers: { "Content-Type": "application/json" } }
-  );
+  return insufficientCreditsError(feature, used, limit);
 }
 
-// Legacy alias — keeps old call-sites from breaking during migration
+// Legacy alias
 export { tokenLimitError as usageLimitError };
 
-/** @deprecated — kept so old study/route.ts still compiles. Remove after refactor. */
+/** @deprecated — kept so old study/route.ts still compiles */
 export async function checkAndIncrementUsage(
-  supabase: SupabaseClient,
-  userId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _supabase: SupabaseClient,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _userId: string,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _type: string
 ): Promise<{ allowed: boolean; used: number; limit: number }> {

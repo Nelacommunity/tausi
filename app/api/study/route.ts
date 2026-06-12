@@ -1,5 +1,5 @@
 import { createClient } from "@/app/lib/supabase/server";
-import { checkAndIncrementUsage, usageLimitError } from "@/app/lib/usage";
+
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 export async function GET(request: Request) {
