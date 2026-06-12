@@ -34,7 +34,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 function UploadIcon() {
   return (
-    <svg className="w-10 h-10 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg className="w-10 h-10 text-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
         d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
     </svg>
@@ -42,10 +42,10 @@ function UploadIcon() {
 }
 function LoadingDots() {
   return (
-    <span className="inline-flex items-center gap-1 ml-2">
+    <span className="inline-flex items-center gap-1 ml-2" aria-hidden>
       {[0, 1, 2].map((i) => (
-        <span key={i} className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce"
-          style={{ animationDelay: `${i * 0.15}s` }} />
+        <span key={i} className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse motion-reduce:animate-none"
+          style={{ animationDelay: `${i * 0.25}s` }} />
       ))}
     </span>
   );
@@ -77,6 +77,7 @@ export default function Home() {
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   // ── Library mode state ─────────────────────────────────────────────────────
   const [libraryPapers, setLibraryPapers] = useState<ExamPaper[]>([]);
@@ -95,6 +96,7 @@ export default function Home() {
   const [isSaving, setIsSaving] = useState(false);
   const [recentExams, setRecentExams] = useState<RecentExam[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(true);
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
 
   useEffect(() => {
     fetch("/api/exams")
@@ -150,8 +152,15 @@ export default function Home() {
   }, [addFiles]);
 
   // ── Streaming helper ───────────────────────────────────────────────────────
+  const cancelGeneration = useCallback(() => {
+    abortRef.current?.abort();
+    setStatus("idle");
+    setError("");
+  }, []);
+
   const streamResponse = async (url: string, init: RequestInit, onChunk: (t: string) => void) => {
-    const res = await fetch(url, init);
+    abortRef.current = new AbortController();
+    const res = await fetch(url, { ...init, signal: abortRef.current.signal });
     if (!res.ok) { const err = await res.json().catch(() => ({ error: res.statusText })); throw new Error(err.error); }
     const reader = res.body!.getReader();
     const decoder = new TextDecoder();
@@ -164,6 +173,7 @@ export default function Home() {
 
   // ── Generate ───────────────────────────────────────────────────────────────
   const generateExam = async () => {
+    setConfirmRegenerate(false);
     setError(""); setExamContent(""); setMarkingContent("");
     setStatus("generating-exam"); setActiveTab("exam");
 
@@ -183,7 +193,10 @@ export default function Home() {
         await streamResponse("/api/generate-exam", { method: "POST", body: fd }, c => setExamContent(p => p + c));
       }
       setStatus("done-exam");
-    } catch (err) { setError(err instanceof Error ? err.message : "Failed"); setStatus("idle"); }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") { setStatus("idle"); return; }
+      setError(err instanceof Error ? err.message : "Failed"); setStatus("idle");
+    }
   };
 
   const generateMarking = async () => {
@@ -195,7 +208,10 @@ export default function Home() {
         { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ examContent }) },
         c => setMarkingContent(p => p + c));
       setStatus("done-marking");
-    } catch (err) { setError(err instanceof Error ? err.message : "Failed"); setStatus("done-exam"); }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") { setStatus("done-exam"); return; }
+      setError(err instanceof Error ? err.message : "Failed"); setStatus("done-exam");
+    }
   };
 
   // ── Save ───────────────────────────────────────────────────────────────────
@@ -240,9 +256,10 @@ export default function Home() {
   const fromStructure = examContent.startsWith("<!--FROM_STRUCTURE-->");
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-ink text-snow">
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+        <h1 className="font-display text-xl font-bold text-snow">{D.pageHeading}</h1>
 
         {/* ── Input + controls ─────────────────────────────────────────────── */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -250,28 +267,28 @@ export default function Home() {
           {/* LEFT — source picker */}
           <div className="space-y-4">
             <div>
-              <h2 className="text-base font-semibold text-gray-200 mb-1">{D.sourceHeading}</h2>
-              <p className="text-sm text-gray-500">{D.sourceSub}</p>
+              <h2 className="text-base font-semibold text-body mb-1">{D.sourceHeading}</h2>
+              <p className="text-sm text-dim">{D.sourceSub}</p>
             </div>
 
             {/* Mode tabs */}
-            <div className="flex rounded-xl border border-gray-800 overflow-hidden bg-gray-900/40 p-1 gap-1">
+            <div className="flex rounded-xl border border-line overflow-hidden bg-ink-2/40 p-1 gap-1">
               {([
                 { mode: "upload" as InputMode, label: D.uploadTab, icon: "M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" },
                 { mode: "library" as InputMode, label: D.libraryTab, icon: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" },
               ] as const).map(({ mode, label, icon }) => (
                 <button key={mode} onClick={() => switchMode(mode)}
-                  className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all cursor-pointer ${
                     inputMode === mode
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-gray-400 hover:text-gray-200"
+                      ? "bg-teal text-ink shadow-sm"
+                      : "text-dim hover:text-snow"
                   }`}>
                   <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={icon} />
                   </svg>
                   {label}
                   {mode === "library" && selectedPaperIds.length > 0 && (
-                    <span className="ml-0.5 text-xs bg-indigo-400/30 text-indigo-200 px-1.5 py-0.5 rounded-full">
+                    <span className="ml-0.5 text-xs bg-teal/20 text-teal px-1.5 py-0.5 rounded-full">
                       {selectedPaperIds.length}
                     </span>
                   )}
@@ -283,9 +300,9 @@ export default function Home() {
             {inputMode === "upload" && (
               <>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">{D.filesCount(files.length, MAX_FILES)}</span>
+                  <span className="text-xs text-dim">{D.filesCount(files.length, MAX_FILES)}</span>
                   {files.length >= MAX_FILES && (
-                    <span className="text-xs text-amber-400">{D.limitReached}</span>
+                    <span className="text-xs text-gold">{D.limitReached}</span>
                   )}
                 </div>
                 <div
@@ -295,19 +312,19 @@ export default function Home() {
                   onDragLeave={() => setIsDragging(false)}
                   className={`rounded-xl border-2 border-dashed p-8 transition-all flex flex-col items-center justify-center gap-3 min-h-[160px] ${
                     files.length >= MAX_FILES || isGenerating
-                      ? "opacity-40 cursor-not-allowed border-gray-700 bg-gray-900/30"
+                      ? "opacity-40 cursor-not-allowed border-line bg-ink-2/30"
                       : isDragging
-                      ? "cursor-pointer border-indigo-400 bg-indigo-950/30"
-                      : "cursor-pointer border-gray-700 hover:border-gray-500 bg-gray-900/50 hover:bg-gray-900"
+                      ? "cursor-pointer border-teal bg-teal-deep/20"
+                      : "cursor-pointer border-line hover:border-line-2 bg-ink-2/50 hover:bg-ink-2"
                   }`}>
                   <UploadIcon />
                   <div className="text-center">
-                    <p className="text-sm text-gray-300 font-medium">
+                    <p className="text-sm text-body font-medium">
                       {files.length >= MAX_FILES
                         ? D.maxReached
-                        : <>{D.dropFiles} <span className="text-indigo-400 underline underline-offset-2">{D.browse}</span></>}
+                        : <>{D.dropFiles} <span className="text-teal underline underline-offset-2">{D.browse}</span></>}
                     </p>
-                    <p className="text-xs text-gray-600 mt-1">{D.dropSub(MAX_FILES)}</p>
+                    <p className="text-xs text-dim mt-1">{D.dropSub(MAX_FILES)}</p>
                   </div>
                   <input ref={fileInputRef} type="file" accept={ACCEPTED_EXTENSIONS} multiple
                     onChange={e => { if (e.target.files) { addFiles(Array.from(e.target.files)); e.target.value = ""; } }}
@@ -317,17 +334,17 @@ export default function Home() {
                   <ul className="space-y-2">
                     {files.map((file, i) => (
                       <li key={`${file.name}-${file.size}`}
-                        className="flex items-center gap-3 rounded-lg bg-gray-800/60 border border-gray-700 px-3 py-2">
-                        <svg className="w-5 h-5 shrink-0 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        className="flex items-center gap-3 rounded-lg bg-ink-3/60 border border-line px-3 py-2">
+                        <svg className="w-5 h-5 shrink-0 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-200 truncate font-medium">{file.name}</p>
-                          <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                          <p className="text-sm text-body truncate font-medium">{file.name}</p>
+                          <p className="text-xs text-dim">{formatFileSize(file.size)}</p>
                         </div>
                         <button onClick={() => removeFile(i)} disabled={isGenerating}
-                          className="text-gray-500 hover:text-red-400 disabled:opacity-50 p-0.5 transition-colors">
+                          className="text-dim hover:text-bad disabled:opacity-50 p-0.5 transition-colors">
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
@@ -344,19 +361,19 @@ export default function Home() {
               <div className="space-y-3">
                 {/* Selected papers */}
                 {selectedPaperIds.length > 0 && (
-                  <div className="rounded-xl bg-indigo-950/30 border border-indigo-800/50 p-3 space-y-2">
-                    <p className="text-xs font-semibold text-indigo-300">
+                  <div className="rounded-xl bg-teal-deep/30 border border-teal-deep p-3 space-y-2">
+                    <p className="text-xs font-semibold text-teal">
                       {D.selected(selectedPaperIds.length, MAX_FILES)}
                     </p>
                     {libraryPapers.filter(p => selectedPaperIds.includes(p.id)).map(p => (
-                      <div key={p.id} className="flex items-center gap-2 text-xs text-indigo-200">
+                      <div key={p.id} className="flex items-center gap-2 text-xs text-body">
                         <span className="flex-1 truncate">{p.name} — {p.subject} {p.year}</span>
                         {p.exam_structure
-                          ? <span className="text-emerald-400 shrink-0" title="Structure ready — instant generation">⚡</span>
-                          : <span className="text-gray-500 shrink-0" title="No structure yet — will download PDF">PDF</span>
+                          ? <span className="text-xs text-good shrink-0 font-medium">{D.structureReady}</span>
+                          : <span className="text-xs text-dim shrink-0">PDF</span>
                         }
                         <button onClick={() => togglePaper(p.id)}
-                          className="text-indigo-400 hover:text-red-400 shrink-0 transition-colors">✕</button>
+                          className="text-teal hover:text-bad shrink-0 transition-colors cursor-pointer">✕</button>
                       </div>
                     ))}
                   </div>
@@ -364,31 +381,31 @@ export default function Home() {
 
                 {/* Search */}
                 <div className="relative">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <input value={librarySearch} onChange={e => setLibrarySearch(e.target.value)}
                     placeholder={D.searchPlaceholder}
-                    className="w-full rounded-xl bg-gray-900 border border-gray-700 focus:border-indigo-500 text-gray-200 placeholder-gray-600 text-sm pl-9 pr-4 py-2.5 outline-none transition-colors" />
+                    className="w-full rounded-xl bg-ink border border-line focus:border-teal text-body placeholder-dim text-sm pl-9 pr-4 py-2.5 outline-none transition-colors" />
                 </div>
 
                 {/* Paper grid */}
                 {loadingLibrary ? (
                   <div className="grid grid-cols-1 gap-2">
-                    {[1,2,3].map(i => <div key={i} className="h-16 rounded-xl bg-gray-900/50 animate-pulse" />)}
+                    {[1,2,3].map(i => <div key={i} className="h-16 rounded-xl bg-ink-3/50 animate-pulse" />)}
                   </div>
                 ) : filteredLibrary.length === 0 ? (
-                  <div className="rounded-xl border border-gray-800 bg-gray-900/30 p-6 text-center">
+                  <div className="rounded-xl border border-line bg-ink-2/30 p-6 text-center">
                     {libraryPapers.length === 0 ? (
                       <>
-                        <p className="text-sm text-gray-500 mb-3">{D.emptyLibrary}</p>
+                        <p className="text-sm text-body mb-3">{D.emptyLibrary}</p>
                         <Link href="/papers/upload"
-                          className="text-xs text-indigo-400 hover:text-indigo-300 underline underline-offset-2">
+                          className="text-xs text-teal hover:text-snow underline underline-offset-2">
                           {D.uploadFirst}
                         </Link>
                       </>
                     ) : (
-                      <p className="text-sm text-gray-600">{D.noMatch}</p>
+                      <p className="text-sm text-dim">{D.noMatch}</p>
                     )}
                   </div>
                 ) : (
@@ -401,14 +418,14 @@ export default function Home() {
                           disabled={atMax}
                           className={`w-full text-left rounded-xl border px-3 py-2.5 transition-all flex items-center gap-3 ${
                             isSelected
-                              ? "border-indigo-600 bg-indigo-950/40"
+                              ? "border-teal bg-teal-deep/30"
                               : atMax
-                              ? "border-gray-800 bg-gray-900/20 opacity-40 cursor-not-allowed"
-                              : "border-gray-800 bg-gray-900/50 hover:border-gray-600 hover:bg-gray-900"
+                              ? "border-line bg-ink-2/20 opacity-40 cursor-not-allowed"
+                              : "border-line bg-ink-2/50 hover:border-line-2 hover:bg-ink-2"
                           }`}>
                           {/* Checkbox */}
                           <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                            isSelected ? "bg-indigo-600 border-indigo-600" : "border-gray-600"
+                            isSelected ? "bg-teal border-teal" : "border-line"
                           }`}>
                             {isSelected && (
                               <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -419,19 +436,19 @@ export default function Home() {
                           {/* Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-xs font-semibold text-gray-200 truncate">{paper.name}</span>
-                              <span className="text-xs text-gray-500 shrink-0">{paper.year}</span>
+                              <span className="text-xs font-semibold text-body truncate">{paper.name}</span>
+                              <span className="text-xs text-dim shrink-0">{paper.year}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500 truncate">{paper.subject}</span>
-                              <span className="text-xs text-gray-700 shrink-0">·</span>
-                              <span className="text-xs text-gray-600 shrink-0">{TYPE_LABELS[paper.exam_type] ?? paper.exam_type}</span>
+                              <span className="text-xs text-dim truncate">{paper.subject}</span>
+                              <span className="text-xs text-dim shrink-0">·</span>
+                              <span className="text-xs text-dim shrink-0">{TYPE_LABELS[paper.exam_type] ?? paper.exam_type}</span>
                             </div>
                           </div>
                           {/* Structure status */}
                           {paper.exam_structure
-                            ? <span className="text-xs text-emerald-500 shrink-0 font-medium">⚡ {D.structureReady}</span>
-                            : <span className="text-xs text-gray-600 shrink-0">{D.analysing}</span>
+                            ? <span className="text-xs text-good shrink-0 font-medium">{D.structureReady}</span>
+                            : <span className="text-xs text-dim shrink-0">{D.analysing}</span>
                           }
                         </button>
                       );
@@ -441,7 +458,7 @@ export default function Home() {
 
                 {libraryPapers.length > 0 && (
                   <Link href="/papers/upload"
-                    className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-indigo-400 transition-colors">
+                    className="flex items-center gap-1.5 text-xs text-dim hover:text-teal transition-colors">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
@@ -455,21 +472,37 @@ export default function Home() {
           {/* RIGHT — notes + actions ──────────────────────────────────────── */}
           <div className="space-y-4">
             <div>
-              <h2 className="text-base font-semibold text-gray-200 mb-1">{D.notesHeading}</h2>
-              <p className="text-sm text-gray-500">{D.notesSub}</p>
+              <h2 className="text-base font-semibold text-body mb-1">{D.notesHeading}</h2>
+              <p className="text-sm text-dim">{D.notesSub}</p>
             </div>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} disabled={isGenerating}
               placeholder={D.notesPlaceholder}
               rows={6}
-              className="w-full rounded-xl bg-gray-900 border border-gray-700 text-gray-200 placeholder-gray-600 text-sm px-4 py-3 resize-none focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-colors disabled:opacity-50" />
+              className="w-full rounded-xl bg-ink border border-line text-body placeholder-dim text-sm px-4 py-3 resize-none focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/30 transition-colors disabled:opacity-50" />
 
             {error && (
-              <div className="rounded-lg border border-red-800 bg-red-950/40 px-4 py-3 text-sm text-red-300">{error}</div>
+              <div className="rounded-lg border border-bad/50 bg-bad/10 px-4 py-3 text-sm text-bad">{error}</div>
+            )}
+
+            {confirmRegenerate && (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-800/60 bg-amber-950/30 px-4 py-2.5">
+                <p className="text-xs text-amber-300 flex-1">{D.replaceExam}</p>
+                <button onClick={generateExam}
+                  className="text-xs font-semibold text-white bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded-lg transition-colors shrink-0">
+                  {D.replaceBtn}
+                </button>
+                <button onClick={() => setConfirmRegenerate(false)}
+                  className="text-xs text-dim hover:text-snow px-2 py-1.5 transition-colors shrink-0 cursor-pointer">
+                  {T.common.cancel}
+                </button>
+              </div>
             )}
 
             <div className="flex flex-col gap-3">
-              <button onClick={generateExam} disabled={isGenerating || !canGenerate}
-                className="flex items-center justify-center gap-2 w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-800 disabled:text-gray-600 text-white font-semibold py-3 px-6 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+              <button
+                onClick={hasExam ? () => setConfirmRegenerate(true) : generateExam}
+                disabled={isGenerating || !canGenerate}
+                className="flex items-center justify-center gap-2 w-full rounded-xl bg-teal hover:bg-teal-deep text-ink disabled:bg-ink-3 disabled:text-dim font-semibold py-3 px-6 transition-all focus:outline-none cursor-pointer">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                     d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
@@ -481,9 +514,19 @@ export default function Home() {
                   : D.generateBtn}
               </button>
 
+              {isGenerating && (
+                <button onClick={cancelGeneration}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl border border-line hover:border-line-2 text-dim hover:text-snow font-medium py-3 px-6 transition-colors cursor-pointer">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  {T.common.cancel}
+                </button>
+              )}
+
               {hasExam && (
                 <button onClick={generateMarking} disabled={isGenerating}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-emerald-700 hover:bg-emerald-600 disabled:bg-gray-800 disabled:text-gray-600 text-white font-semibold py-3 px-6 transition-all">
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-good/20 hover:bg-good/30 disabled:bg-ink-3 disabled:text-dim text-good border border-good/30 font-semibold py-3 px-6 transition-all cursor-pointer">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                       d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -494,7 +537,7 @@ export default function Home() {
 
               {hasExam && !isGenerating && (
                 <button onClick={saveExam} disabled={isSaving}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl border border-indigo-700 hover:bg-indigo-950 disabled:opacity-50 text-indigo-300 font-semibold py-3 px-6 transition-all">
+                  className="flex items-center justify-center gap-2 w-full rounded-xl border border-teal-deep hover:bg-teal-deep/20 disabled:opacity-50 text-teal font-semibold py-3 px-6 transition-all cursor-pointer">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                       d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -516,10 +559,10 @@ export default function Home() {
                 if (isMarking && !hasMarking && status !== "generating-marking") return null;
                 return (
                   <button key={tab} onClick={() => setActiveTab(tab)}
-                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
                       isActive
-                        ? isMarking ? "text-emerald-300 border-emerald-500 bg-gray-900/50" : "text-indigo-300 border-indigo-500 bg-gray-900/50"
-                        : "text-gray-500 border-transparent hover:text-gray-300"
+                        ? isMarking ? "text-good border-good/50 bg-ink-3/50" : "text-teal border-teal/50 bg-ink-3/50"
+                        : "text-dim border-transparent hover:text-snow"
                     }`}>
                     {isMarking ? T.examViewer.markingScheme : T.examViewer.predictedExam}
                     {!isMarking && status === "generating-exam" && <LoadingDots />}
@@ -529,25 +572,25 @@ export default function Home() {
               })}
               {/* Structure badge */}
               {fromStructure && activeTab === "exam" && status !== "generating-exam" && (
-                <span className="ml-auto text-xs text-emerald-500 flex items-center gap-1 pr-2">
-                  <span>⚡</span> {D.fromStructureBadge}
+                <span className="ml-auto text-xs text-good flex items-center gap-1 pr-2">
+                  {D.fromStructureBadge}
                 </span>
               )}
             </div>
-            <div className="rounded-xl border border-gray-800 bg-gray-900/60 p-6 min-h-[300px]">
+            <div className="rounded-xl border border-line bg-ink-2/60 p-6 min-h-[300px]">
               {activeTab === "exam" && (
                 cleanExamContent
                   ? <ExamOutput content={cleanExamContent} isStreaming={status === "generating-exam"} />
-                  : <div className="flex flex-col items-center justify-center h-48 gap-3 text-gray-600">
-                      <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                  : <div className="flex flex-col items-center justify-center h-48 gap-3 text-dim">
+                      <div className="w-8 h-8 border-2 border-teal border-t-transparent rounded-full animate-spin" />
                       <p className="text-sm">{D.analysing2}</p>
                     </div>
               )}
               {activeTab === "marking" && (
                 markingContent
                   ? <ExamOutput content={markingContent} isStreaming={status === "generating-marking"} />
-                  : <div className="flex flex-col items-center justify-center h-48 gap-3 text-gray-600">
-                      <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                  : <div className="flex flex-col items-center justify-center h-48 gap-3 text-dim">
+                      <div className="w-8 h-8 border-2 border-good border-t-transparent rounded-full animate-spin" />
                       <p className="text-sm">{D.generatingScheme}</p>
                     </div>
               )}
@@ -558,43 +601,43 @@ export default function Home() {
         {/* ── My recent exams ──────────────────────────────────────────────── */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-300">{D.myExamsHeading}</h2>
+            <h2 className="text-base font-semibold text-body">{D.myExamsHeading}</h2>
             {!loadingRecent && recentExams.length > 0 && (
-              <span className="text-xs text-gray-600">{D.saved(recentExams.length)}</span>
+              <span className="text-xs text-dim">{D.saved(recentExams.length)}</span>
             )}
           </div>
 
           {loadingRecent ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-28 rounded-xl bg-gray-900/50 border border-gray-800 animate-pulse" />
+                <div key={i} className="h-28 rounded-xl bg-ink-3/50 border border-line animate-pulse" />
               ))}
             </div>
           ) : recentExams.length === 0 ? (
-            <div className="rounded-xl border border-gray-800 bg-gray-900/30 p-8 text-center">
-              <p className="text-sm text-gray-600">{D.noExams}</p>
+            <div className="rounded-xl border border-line bg-ink-2/30 p-8 text-center">
+              <p className="text-sm text-dim">{D.noExams}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {recentExams.map(exam => (
-                <a key={exam.id} href={`/exams/${exam.id}`}
-                  className="block rounded-xl border border-gray-800 bg-gray-900/50 hover:bg-gray-900 hover:border-gray-600 p-4 transition-all group">
+                <Link key={exam.id} href={`/exams/${exam.id}`}
+                  className="block rounded-xl border border-line bg-ink-3/50 hover:bg-ink-3 hover:border-line-2 p-4 transition-all group cursor-pointer">
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="text-sm font-semibold text-gray-200 group-hover:text-white line-clamp-2 leading-snug flex-1">
+                    <h3 className="text-sm font-semibold text-body group-hover:text-snow line-clamp-2 leading-snug flex-1">
                       {exam.title}
                     </h3>
                     <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded-full border mt-0.5 ${
-                      exam.is_public ? "text-emerald-400 border-emerald-800" : "text-gray-600 border-gray-700"
+                      exam.is_public ? "text-good border-teal-deep" : "text-dim border-line"
                     }`}>
                       {exam.is_public ? T.common.public : T.common.private}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600 mb-2 truncate">
+                  <p className="text-xs text-dim mb-2 truncate">
                     {exam.original_filenames.slice(0, 2).join(", ")}
                     {exam.original_filenames.length > 2 && ` +${exam.original_filenames.length - 2}`}
                   </p>
-                  <p className="text-xs text-gray-700" suppressHydrationWarning>{formatDate(exam.created_at)}</p>
-                </a>
+                  <p className="text-xs text-dim" suppressHydrationWarning>{formatDate(exam.created_at)}</p>
+                </Link>
               ))}
             </div>
           )}

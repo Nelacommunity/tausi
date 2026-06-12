@@ -1,0 +1,20 @@
+{
+  "id": "0400c537",
+  "phase": "completed",
+  "pageUrl": "/",
+  "sourceFile": "app/LandingClient.tsx",
+  "expectedVariants": 3,
+  "arrivedVariants": 3,
+  "visibleVariant": 1,
+  "paramValues": {},
+  "pendingEventSeq": null,
+  "pendingEvent": null,
+  "deliveryLease": null,
+  "checkpointRevision": 11,
+  "activeOwner": "7c286b05",
+  "sourceMarkers": {},
+  "fallbackMode": null,
+  "annotationArtifacts": [],
+  "diagnostics": [],
+  "updatedAt": "2026-06-01T18:53:32.514Z"
+}

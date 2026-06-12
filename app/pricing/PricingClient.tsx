@@ -49,7 +49,7 @@ function Icon({ d, className = "w-4 h-4 shrink-0" }: { d: string; className?: st
 
 function CheckIcon() {
   return (
-    <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg className="w-4 h-4 text-good shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4.5 12.75l6 6 9-13.5" />
     </svg>
   );
@@ -84,30 +84,27 @@ export function PricingClient({ products }: { products: PolarProduct[] }) {
   const PR = T.pricing;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-ink text-snow">
       <Header />
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-14">
 
         {/* Hero */}
         <div className="text-center">
-          <p className="text-xs font-semibold text-indigo-400 tracking-widest uppercase mb-3">Pricing</p>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">{PR.heading}</h1>
-          <p className="text-gray-500 max-w-xl mx-auto text-sm">{PR.subtitle}</p>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-snow mb-4">{PR.heading}</h1>
+          <p className="text-body max-w-xl mx-auto text-sm">{PR.subtitle}</p>
         </div>
 
         {/* Plan cards */}
         <div className={`grid grid-cols-1 gap-6 ${products.length > 0 ? "md:grid-cols-" + Math.min(products.length + 1, 3) : "md:grid-cols-2"}`}>
 
-          {/* Free — always shown */}
-          <div className="rounded-2xl border border-gray-800 bg-gray-900/50 p-7 flex flex-col">
+          {/* Free */}
+          <div className="rounded-2xl border border-line bg-ink-2 p-7 flex flex-col">
             <div className="mb-6">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">{PR.freeTitle}</p>
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-4xl font-extrabold">Free</span>
-              </div>
-              <p className="text-xs text-gray-600">{PR.freeSub}</p>
+              <p className="font-display text-base font-semibold text-body mb-2">{PR.freeTitle}</p>
+              <p className="font-display text-4xl font-bold mb-1">TZS 0</p>
+              <p className="text-xs text-dim">{PR.freeSub}</p>
             </div>
-            <ul className="space-y-2.5 text-sm text-gray-400 flex-1 mb-7">
+            <ul className="space-y-2.5 text-sm text-body flex-1 mb-7">
               {[
                 "AI-powered exam predictions",
                 "Auto-generated marking schemes",
@@ -121,7 +118,7 @@ export function PricingClient({ products }: { products: PolarProduct[] }) {
               ))}
             </ul>
             <Link href="/signup"
-              className="block text-center rounded-xl border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white font-semibold py-3 transition-colors text-sm">
+              className="block text-center rounded-xl border border-line-2 hover:border-teal text-body hover:text-snow font-semibold py-3 transition-colors text-sm">
               {PR.getStarted}
             </Link>
           </div>
@@ -135,42 +132,42 @@ export function PricingClient({ products }: { products: PolarProduct[] }) {
                 key={product.id}
                 className={`relative rounded-2xl p-7 flex flex-col ${
                   isFirst
-                    ? "border-2 border-indigo-600 bg-gray-900/80"
-                    : "border border-gray-700 bg-gray-900/50"
+                    ? "border-2 border-gold/70 bg-ink-2"
+                    : "border border-line bg-ink-2"
                 }`}
               >
                 {isFirst && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <span className="bg-indigo-600 text-white text-xs font-bold px-4 py-1 rounded-full">
+                    <span className="bg-gold text-on-gold text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
                       {PR.premiumBadge}
                     </span>
                   </div>
                 )}
 
                 <div className="mb-6">
-                  <p className={`text-xs font-semibold uppercase tracking-widest mb-2 ${isFirst ? "text-indigo-400" : "text-gray-400"}`}>
+                  <p className={`font-display text-base font-semibold mb-2 ${isFirst ? "text-gold" : "text-body"}`}>
                     {product.name}
                   </p>
                   {price ? (
                     <div className="flex items-baseline gap-1 mb-1">
-                      <span className="text-4xl font-extrabold">
+                      <span className="font-display text-4xl font-bold">
                         {formatPrice(price.priceAmount, price.priceCurrency)}
                       </span>
-                      <span className="text-gray-500 text-sm">
+                      <span className="text-dim text-sm">
                         {intervalLabel(product.recurringInterval)}
                       </span>
                     </div>
                   ) : (
                     <div className="flex items-baseline gap-1 mb-1">
-                      <span className="text-4xl font-extrabold">—</span>
+                      <span className="font-display text-4xl font-bold">—</span>
                     </div>
                   )}
                   {product.description && (
-                    <p className="text-xs text-gray-500 mt-1">{product.description}</p>
+                    <p className="text-xs text-dim mt-1">{product.description}</p>
                   )}
                 </div>
 
-                <ul className="space-y-2.5 text-sm text-gray-200 flex-1 mb-7">
+                <ul className="space-y-2.5 text-sm text-body flex-1 mb-7">
                   {[
                     "Everything in Free",
                     "25× higher monthly token limits",
@@ -186,8 +183,8 @@ export function PricingClient({ products }: { products: PolarProduct[] }) {
                   href={`/checkout?productId=${product.id}`}
                   className={`flex items-center justify-center gap-2 rounded-xl font-semibold py-3 transition-all text-sm ${
                     isFirst
-                      ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25"
-                      : "border border-indigo-700 hover:border-indigo-500 text-indigo-300 hover:text-white"
+                      ? "bg-gold hover:bg-gold-hover text-on-gold"
+                      : "border border-line hover:border-teal text-body hover:text-snow"
                   }`}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -201,9 +198,9 @@ export function PricingClient({ products }: { products: PolarProduct[] }) {
 
           {/* Fallback if Polar returned no products */}
           {products.length === 0 && (
-            <div className="relative rounded-2xl border-2 border-indigo-600 bg-gray-900/80 p-7 flex flex-col items-center justify-center text-center gap-3">
-              <p className="text-sm text-gray-400">Premium plans loading…</p>
-              <Link href="/signup" className="text-sm text-indigo-400 hover:text-indigo-300">{PR.getStarted}</Link>
+            <div className="relative rounded-2xl border-2 border-gold/70 bg-ink-2 p-7 flex flex-col items-center justify-center text-center gap-3">
+              <p className="text-sm text-dim">Premium plans loading…</p>
+              <Link href="/signup" className="text-sm text-teal hover:text-snow">{PR.getStarted}</Link>
             </div>
           )}
         </div>
@@ -211,12 +208,12 @@ export function PricingClient({ products }: { products: PolarProduct[] }) {
         {/* Detailed token breakdown */}
         <section>
           <div className="mb-5">
-            <h2 className="text-lg font-bold text-white mb-1">{PR.breakdownHeading}</h2>
-            <p className="text-sm text-gray-500">{PR.breakdownSub}</p>
+            <h2 className="font-display text-lg font-bold text-snow mb-1">{PR.breakdownHeading}</h2>
+            <p className="text-sm text-body">{PR.breakdownSub}</p>
           </div>
 
-          <div className="rounded-2xl border border-gray-800 overflow-hidden">
-            <div className="grid grid-cols-[1fr_1fr_1fr] bg-gray-900 border-b border-gray-800 px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          <div className="rounded-2xl border border-line overflow-hidden">
+            <div className="grid grid-cols-[1fr_1fr_1fr] bg-ink-2 border-b border-line px-5 py-3 text-xs font-semibold text-dim uppercase tracking-wider">
               <span>{PR.tableFeature}</span>
               <span>{PR.tableFree}</span>
               <span>{PR.tablePremium}</span>
@@ -228,50 +225,49 @@ export function PricingClient({ products }: { products: PolarProduct[] }) {
               const premium = PREMIUM_TOKEN_LIMITS[feature];
               const isLast  = i === FEATURE_ORDER.length - 1;
               return (
-                <div
-                  key={feature}
+                <div key={feature}
                   className={`grid grid-cols-[1fr_1fr_1fr] px-5 py-4 items-center gap-2 ${
-                    !isLast ? "border-b border-gray-800/60" : ""
-                  } hover:bg-gray-900/40 transition-colors`}
+                    !isLast ? "border-b border-line/60" : ""
+                  } hover:bg-ink-3/40 transition-colors`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-indigo-950/60 border border-indigo-900/40 flex items-center justify-center shrink-0">
-                      <Icon d={est.icon} className="w-3.5 h-3.5 text-indigo-400" />
+                    <div className="w-7 h-7 rounded-lg bg-teal-deep/60 border border-teal-deep flex items-center justify-center shrink-0">
+                      <Icon d={est.icon} className="w-3.5 h-3.5 text-teal" />
                     </div>
-                    <span className="text-sm font-medium text-gray-200 truncate">{FEATURE_LABELS[feature]}</span>
+                    <span className="text-sm font-medium text-body truncate">{FEATURE_LABELS[feature]}</span>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-300">{fmt(free)} tokens</p>
-                    <p className="text-xs text-gray-600">{est.free}</p>
+                    <p className="text-sm font-semibold text-body">{fmt(free)} tokens</p>
+                    <p className="text-xs text-dim">{est.free}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-indigo-400">{fmt(premium)} tokens</p>
-                    <p className="text-xs text-gray-600">{est.premium}</p>
+                    <p className="text-sm font-semibold text-teal">{fmt(premium)} tokens</p>
+                    <p className="text-xs text-dim">{est.premium}</p>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          <p className="mt-3 text-xs text-gray-700 text-center">{PR.resetNote}</p>
+          <p className="mt-3 text-xs text-dim text-center">{PR.resetNote}</p>
         </section>
 
         {/* Payment methods */}
-        <section className="rounded-2xl border border-gray-800 bg-gray-900/30 p-6">
-          <h2 className="text-sm font-semibold text-gray-300 mb-1">Secure checkout powered by Polar</h2>
-          <p className="text-xs text-gray-500 mb-4">Pay with card or any method supported by Polar. Your account upgrades instantly after payment.</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <section className="rounded-2xl border border-line bg-ink-2/40 p-6">
+          <h2 className="text-sm font-semibold text-body mb-4">{PR.paymentHeading}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             {["Visa", "Mastercard", "Apple Pay", "Google Pay"].map(m => (
-              <div key={m} className="flex items-center justify-center rounded-xl border border-gray-700 bg-gray-900 py-3 text-sm font-medium text-gray-400">
+              <div key={m} className="flex items-center justify-center rounded-xl border border-line bg-ink-2 py-3 text-sm font-medium text-body">
                 {m}
               </div>
             ))}
           </div>
+          <p className="text-xs text-dim">{PR.paymentNote}</p>
         </section>
 
         {/* FAQ */}
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-gray-300">{PR.faqHeading}</h2>
+          <h2 className="text-sm font-semibold text-body">{PR.faqHeading}</h2>
           {[
             { q: "What exactly is a token?", a: "A token is roughly ¾ of a word in English, or about 4 characters. A 10-page PDF exam paper is typically 5,000–15,000 input tokens. Each AI response adds output tokens on top." },
             { q: "When do token limits reset?", a: "Your token counters reset to zero on the 1st of every month, midnight UTC." },
@@ -279,9 +275,9 @@ export function PricingClient({ products }: { products: PolarProduct[] }) {
             { q: "What does Premium give me?", a: "More tokens per feature per month, priority AI processing, and priority support. Upgrade to unlock higher limits instantly." },
             { q: "How do I pay?", a: "Click the upgrade button on any plan above. You'll be taken to our secure Polar checkout where you can pay by card. Your account upgrades instantly after payment." },
           ].map(({ q, a }) => (
-            <details key={q} className="rounded-xl border border-gray-800 bg-gray-900/30">
-              <summary className="px-5 py-3.5 text-sm font-medium text-gray-300 cursor-pointer hover:text-white select-none">{q}</summary>
-              <p className="px-5 pb-4 text-sm text-gray-500 leading-relaxed">{a}</p>
+            <details key={q} className="rounded-xl border border-line bg-ink-2/40">
+              <summary className="px-5 py-3.5 text-sm font-medium text-body cursor-pointer hover:text-snow select-none">{q}</summary>
+              <p className="px-5 pb-4 text-sm text-dim leading-relaxed">{a}</p>
             </details>
           ))}
         </section>
