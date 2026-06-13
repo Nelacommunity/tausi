@@ -12,7 +12,7 @@ export interface SnippePaymentRequest {
   external_reference: string;  // our purchase ID
   description?: string;
   metadata?: Record<string, unknown>;
-  callback_url?: string;
+  webhook_url?: string;
 }
 
 export interface SnippePaymentResponse {
@@ -64,7 +64,7 @@ export async function createPayment(
       external_reference: params.external_reference,
       description: params.description ?? "Tausi credit purchase",
       metadata: params.metadata,
-      callback_url: params.callback_url,
+      webhook_url: params.webhook_url,
     }),
   });
 

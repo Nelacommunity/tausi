@@ -67,6 +67,7 @@ export async function POST(request: Request) {
         provider: provider as "mpesa" | "airtel" | "mixx" | "halotel",
         external_reference: purchaseId,
         description: `Tausi ${pack.label} Pack — ${pack.credits} credits`,
+        webhook_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/snippe`,
         metadata: {
           user_id:     user.id,
           pack:        packKey,

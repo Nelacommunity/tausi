@@ -9,7 +9,7 @@ export async function POST(request: Request) {
 
   const timestamp = request.headers.get("X-Webhook-Timestamp") ?? "";
   const signature = request.headers.get("X-Webhook-Signature") ?? "";
-  const event     = request.headers.get("X-Webhook-Event") ?? "";
+  const headerEvent = request.headers.get("X-Webhook-Event") ?? "";
 
   // Verify signature (skip if secret not configured — useful for dev)
   if (process.env.SNIPPE_WEBHOOK_SECRET) {
@@ -27,6 +27,9 @@ export async function POST(request: Request) {
     console.warn("[snippe-webhook] Could not parse JSON body");
     return new Response("Bad request", { status: 400 });
   }
+
+  // Support both envelope format (payload.type) and header fallback
+  const event = payload.type || headerEvent;
 
   const supabase = createAdminClient();
   const { reference, external_reference } = payload.data ?? {};
