@@ -248,7 +248,7 @@ function BackgroundCanvas() {
       c.clearRect(0, 0, w, h);
 
       // Background
-      c.fillStyle = "oklch(0.17 0.034 300)";
+      c.fillStyle = "oklch(0.14 0.008 240)";
       c.fillRect(0, 0, w, h);
 
       // Stars — cursor vortex + twinkling
@@ -288,7 +288,7 @@ function BackgroundCanvas() {
             + 33 * Math.sin((x / w) * Math.PI * 9 + t * 0.50);
           x === 0 ? c.moveTo(x, y) : c.lineTo(x, y);
         }
-        c.strokeStyle = "rgba(140,70,255,0.052)";
+        c.strokeStyle = "rgba(40,185,165,0.045)";
         c.stroke();
 
         // Purple wave
@@ -299,7 +299,7 @@ function BackgroundCanvas() {
             + 29 * Math.sin((x / w) * Math.PI * 7 + t * 0.43);
           x === 0 ? c.moveTo(x, y) : c.lineTo(x, y);
         }
-        c.strokeStyle = "rgba(164,90,220,0.043)";
+        c.strokeStyle = "rgba(40,185,165,0.036)";
         c.stroke();
 
         // Lissajous 3:2
@@ -314,7 +314,7 @@ function BackgroundCanvas() {
             i === 0 ? c.moveTo(px, py) : c.lineTo(px, py);
           }
           c.closePath();
-          c.strokeStyle = "rgba(185,155,255,0.028)";
+          c.strokeStyle = "rgba(40,185,165,0.022)";
           c.lineWidth = 0.85;
           c.stroke();
         }
@@ -331,7 +331,7 @@ function BackgroundCanvas() {
             const py = h / 2 + (R - r) * Math.sin(th) - d * Math.sin(((R - r) / r) * th + t * 0.06);
             i === 0 ? c.moveTo(px, py) : c.lineTo(px, py);
           }
-          c.strokeStyle = "rgba(200,175,255,0.018)";
+          c.strokeStyle = "rgba(40,185,165,0.015)";
           c.lineWidth = 0.7;
           c.stroke();
         }
@@ -448,7 +448,7 @@ function HeroProductWindow() {
         className="relative rounded-2xl border border-line/80 bg-ink-2 shadow-2xl shadow-black/70 overflow-hidden"
         style={
           hovering
-            ? { transform: `perspective(1100px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`, transition: "transform 0.08s ease-out", boxShadow: "0 40px 100px -20px rgba(0,0,0,0.85), 0 0 0 1px oklch(0.77 0.24 285 / 0.12)" }
+            ? { transform: `perspective(1100px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`, transition: "transform 0.08s ease-out", boxShadow: "0 40px 100px -20px rgba(0,0,0,0.85), 0 0 0 1px oklch(0.72 0.20 192 / 0.12)" }
             : { animation: "float-product 9s ease-in-out infinite" }
         }
       >
@@ -743,7 +743,7 @@ function HowItWorksCanvas({
         ctx.setLineDash([5, 11]);
         ctx.lineDashOffset = -(t * 22) % 16;
         const segActive = i === active || i + 1 === active;
-        ctx.strokeStyle = segActive ? "rgba(165,80,255,0.28)" : "rgba(165,80,255,0.08)";
+        ctx.strokeStyle = segActive ? "rgba(40,185,165,0.28)" : "rgba(40,185,165,0.08)";
         ctx.lineWidth = segActive ? 1.2 : 0.7;
         ctx.stroke();
         ctx.setLineDash([]);
@@ -758,12 +758,12 @@ function HowItWorksCanvas({
           const px = qbez(nodes[active - 1].x, cp[0] * W, nodes[active].x, u);
           const py = qbez(nodes[active - 1].y, cp[1] * H, nodes[active].y, u);
           const gp = ctx.createRadialGradient(px, py, 0, px, py, 10);
-          gp.addColorStop(0, "rgba(165,80,255,0.95)");
-          gp.addColorStop(1, "rgba(165,80,255,0)");
+          gp.addColorStop(0, "rgba(40,185,165,0.90)");
+          gp.addColorStop(1, "rgba(40,185,165,0)");
           ctx.beginPath(); ctx.arc(px, py, 10, 0, TAU);
           ctx.fillStyle = gp; ctx.fill();
           ctx.beginPath(); ctx.arc(px, py, 3, 0, TAU);
-          ctx.fillStyle = "rgba(230,210,255,1)"; ctx.fill();
+          ctx.fillStyle = "rgba(200,245,238,1)"; ctx.fill();
         }
       }
 
@@ -781,7 +781,7 @@ function HowItWorksCanvas({
           const a = alpha * (1 - phase / maxR);
           ctx.beginPath();
           ctx.arc(x, y, Math.max(0.5, phase), 0, TAU);
-          ctx.strokeStyle = `rgba(165,80,255,${a.toFixed(3)})`;
+          ctx.strokeStyle = `rgba(40,185,165,${a.toFixed(3)})`;
           ctx.lineWidth = isActive ? 1.1 : 0.6;
           ctx.stroke();
         }
@@ -789,18 +789,18 @@ function HowItWorksCanvas({
         // Core glow
         const coreR = isActive ? 9 : 5;
         const glow = ctx.createRadialGradient(x, y, 0, x, y, coreR * 2.5);
-        glow.addColorStop(0, isActive ? "rgba(165,80,255,0.95)" : "rgba(165,80,255,0.28)");
-        glow.addColorStop(1, "rgba(165,80,255,0)");
+        glow.addColorStop(0, isActive ? "rgba(40,185,165,0.90)" : "rgba(40,185,165,0.28)");
+        glow.addColorStop(1, "rgba(40,185,165,0)");
         ctx.beginPath(); ctx.arc(x, y, coreR * 2.5, 0, TAU);
         ctx.fillStyle = glow; ctx.fill();
         ctx.beginPath(); ctx.arc(x, y, coreR, 0, TAU);
-        ctx.fillStyle = isActive ? "rgba(210,170,255,1)" : "rgba(165,80,255,0.38)";
+        ctx.fillStyle = isActive ? "rgba(180,240,230,1)" : "rgba(40,185,165,0.38)";
         ctx.fill();
 
         // Step number
         ctx.font = `bold 10px monospace`;
         ctx.textAlign = "center";
-        ctx.fillStyle = isActive ? "rgba(190,130,255,1)" : "rgba(130,90,170,0.45)";
+        ctx.fillStyle = isActive ? "rgba(150,235,220,1)" : "rgba(40,140,130,0.45)";
         ctx.fillText(`0${i + 1}`, x, y - coreR - 10);
       }
 
@@ -965,7 +965,7 @@ function CreditCard({
           : "perspective(900px) rotateX(0deg) rotateY(0deg)",
         transition: "transform 0.09s ease-out, box-shadow 0.2s ease",
         boxShadow: hover && highlighted
-          ? "0 30px 80px -20px rgba(165,80,255,0.25)"
+          ? "0 30px 80px -20px rgba(40,185,165,0.18)"
           : undefined,
       }}
     >
