@@ -34,28 +34,24 @@ export default async function WritePage() {
     .limit(50);
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen bg-ink text-snow">
       <Header />
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white">AI Writer</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Write, edit, and create documents with AI assistance
-            </p>
+            <h1 className="font-display text-2xl font-bold text-snow">AI Writer</h1>
+            <p className="text-sm text-dim mt-1">Write, edit, and create documents with AI assistance</p>
           </div>
           <CreateDocButton label="New Document" />
         </div>
 
         {!docs || docs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gray-900 border border-gray-800 flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-ink-2 border border-line flex items-center justify-center mb-4 text-dim">
               <PenIcon />
             </div>
-            <p className="text-gray-300 font-medium mb-1">No documents yet</p>
-            <p className="text-sm text-gray-600 mb-6">
-              Create your first AI-powered document
-            </p>
+            <p className="text-body font-medium mb-1">No documents yet</p>
+            <p className="text-sm text-dim mb-6">Create your first AI-powered document</p>
             <CreateDocButton label="Create Document" />
           </div>
         ) : (
@@ -64,17 +60,17 @@ export default async function WritePage() {
               <Link
                 key={doc.id}
                 href={`/write/${doc.id}`}
-                className="group block bg-gray-900 border border-gray-800 hover:border-indigo-700 rounded-2xl p-5 transition-all hover:shadow-lg hover:shadow-indigo-950/40"
+                className="group block bg-ink-2 border border-line hover:border-teal/50 rounded-2xl p-5 transition-all hover:shadow-lg hover:shadow-black/50"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-950/60 border border-indigo-800/50 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-indigo-900/60 transition-colors">
+                  <div className="w-9 h-9 rounded-xl bg-teal-deep/60 border border-teal-deep flex items-center justify-center shrink-0 mt-0.5 text-teal group-hover:bg-teal-deep/80 transition-colors">
                     <PenIcon />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-200 truncate group-hover:text-white transition-colors">
+                    <p className="text-sm font-semibold text-body truncate group-hover:text-snow transition-colors">
                       {doc.title}
                     </p>
-                    <p className="text-xs text-gray-600 mt-0.5">
+                    <p className="text-xs text-dim mt-0.5">
                       Updated {formatDate(doc.updated_at)}
                     </p>
                   </div>

@@ -5,8 +5,6 @@ import Link from "next/link";
 import { Header } from "@/app/components/Header";
 import { useT } from "@/app/lib/language-context";
 import {
-  FREE_TOKEN_LIMITS,
-  PREMIUM_TOKEN_LIMITS,
   FEATURE_LABELS,
   CREDIT_COSTS,
   type Feature,
@@ -72,12 +70,6 @@ const FEATURE_ESTIMATES: Record<Feature, { free: string; premium: string; icon: 
   paper_prediction: { free: "≈ 4–6 predictions",    premium: "≈ 90–165 predictions",   icon: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" },
   paper_chat:       { free: "≈ 10 messages",         premium: "≈ 300 messages",         icon: "M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.068.157 2.148.279 3.238.364.466.037.893.281 1.153.671L12 21l2.652-3.978c.26-.39.687-.634 1.153-.671 1.09-.085 2.17-.207 3.238-.364 1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" },
 };
-
-function fmt(n: number) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000)     return `${Math.round(n / 1_000)}k`;
-  return n.toString();
-}
 
 function Icon({ d, className = "w-4 h-4 shrink-0" }: { d: string; className?: string }) {
   return (
@@ -418,50 +410,6 @@ export function PricingClient() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-dim">{est.free}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Legacy token breakdown (for reference) */}
-        <section>
-          <div className="mb-5">
-            <h2 className="font-display text-lg font-bold text-snow mb-1">{PR.breakdownHeading}</h2>
-            <p className="text-sm text-body">{PR.breakdownSub}</p>
-          </div>
-
-          <div className="rounded-2xl border border-line overflow-hidden">
-            <div className="grid grid-cols-[1fr_1fr_1fr] bg-ink-2 border-b border-line px-5 py-3 text-xs font-semibold text-dim uppercase tracking-wider">
-              <span>{PR.tableFeature}</span>
-              <span>Approx. uses (Starter)</span>
-              <span>Approx. uses (Champion)</span>
-            </div>
-
-            {FEATURE_ORDER.map((feature, i) => {
-              const est  = FEATURE_ESTIMATES[feature];
-              const cost = CREDIT_COSTS[feature];
-              const isLast = i === FEATURE_ORDER.length - 1;
-              return (
-                <div key={feature}
-                  className={`grid grid-cols-[1fr_1fr_1fr] px-5 py-4 items-center gap-2 ${
-                    !isLast ? "border-b border-line/60" : ""
-                  } hover:bg-ink-3/40 transition-colors`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-teal-deep/60 border border-teal-deep flex items-center justify-center shrink-0">
-                      <Icon d={est.icon} className="w-3.5 h-3.5 text-teal" />
-                    </div>
-                    <span className="text-sm font-medium text-body truncate">{FEATURE_LABELS[feature]}</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-body">{Math.floor(20 / cost)} uses</p>
-                    <p className="text-xs text-dim">{fmt(FREE_TOKEN_LIMITS[feature])} tokens est.</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-teal">{Math.floor(175 / cost)} uses</p>
-                    <p className="text-xs text-dim">{fmt(PREMIUM_TOKEN_LIMITS[feature])} tokens est.</p>
                   </div>
                 </div>
               );
