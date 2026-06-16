@@ -5,6 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const PUBLIC_API_PATTERNS = [
   /^\/api\/exams\/[0-9a-f-]+$/,        // public exam data (GET)
   /^\/api\/webhook\/polar$/,            // Polar webhook (POST, validated by secret)
+  /^\/api\/webhooks\/snippe$/,          // Snippe webhook (POST, validated by signature)
 ];
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -30,7 +31,7 @@ function isPublicApiPath(pathname: string, method: string) {
   return PUBLIC_API_PATTERNS.some((re) => re.test(pathname));
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
   // Supabase OAuth sometimes redirects to the site root with ?code= instead of
@@ -88,8 +89,9 @@ export async function middleware(request: NextRequest) {
 
   // ── Reject non-UUID path segments on resource endpoints ──────────────────
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const idSegment = pathname.match(/\/api\/[^/]+\/([^/]+)/)?.[1];
-  if (idSegment && idSegment !== "generate" && idSegment !== "ai" && !UUID_RE.test(idSegment)) {
+  const uuidResourceMatch = pathname.match(/^\/api\/exams\/([^/]+)$/);
+  const idSegment = uuidResourceMatch?.[1];
+  if (idSegment && !UUID_RE.test(idSegment)) {
     const deny = new Response(
       JSON.stringify({ error: "Invalid resource ID" }),
       { status: 400, headers: { "Content-Type": "application/json" } }

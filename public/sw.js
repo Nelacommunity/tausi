@@ -1,4 +1,4 @@
-const CACHE = "tausi-v1";
+const CACHE = "tausi-v2";
 const PRECACHE = ["/", "/offline"];
 
 self.addEventListener("install", (event) => {
@@ -33,23 +33,24 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  const offlineFallback = () =>
+    caches.match("/offline").then((r) => r || caches.match("/"));
+
   // Network-first for navigation; cache-first for assets
   if (event.request.mode === "navigate") {
-    event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match("/offline").then((r) => r || caches.match("/"))
-      )
-    );
+    event.respondWith(fetch(event.request).catch(offlineFallback));
   } else {
     event.respondWith(
       caches.match(event.request).then(
         (cached) =>
           cached ||
           fetch(event.request).then((response) => {
+            if (!response || response.status >= 400) return response;
+
             const clone = response.clone();
             caches.open(CACHE).then((cache) => cache.put(event.request, clone));
             return response;
-          })
+          }).catch(offlineFallback)
       )
     );
   }
