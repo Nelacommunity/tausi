@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     async start(controller) {
       const enc = new TextEncoder();
       try {
-        const result = await model.generateContentStream(userMessage);
+        const result = await model.generateContentStream({ contents: [{ role: "user", parts: [{ text: userMessage }] }], generationConfig: { maxOutputTokens: 8192 } });
         for await (const chunk of result.stream) {
           const text = chunk.text();
           if (text) controller.enqueue(enc.encode(text));

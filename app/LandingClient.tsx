@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "./lib/language-context";
+import { CREDIT_COSTS } from "./lib/usage";
 
 /* ── Scroll reveal + progress bar ──────────────────────────────────────────
    Injected client-side only so SSR HTML never contains them. */
@@ -922,10 +923,10 @@ function LissajousDecor({ a, b, delta, className }: { a: number; b: number; delt
 
 /* ── Individual credit card ────────────────────────────────────────────── */
 function CreditCard({
-  title, credits, price, badge, highlighted,
+  title, credits, packCredits, price, badge, highlighted,
   la, lb, ldelta, accentClass, borderClass, ctaClass,
 }: {
-  title: string; credits: string; price: string; badge?: string; highlighted: boolean;
+  title: string; credits: string; packCredits: number; price: string; badge?: string; highlighted: boolean;
   la: number; lb: number; ldelta: number;
   accentClass: string; borderClass: string; ctaClass: string;
 }) {
@@ -947,10 +948,10 @@ function CreditCard({
   const handleLeave = () => { setTilt({ rx: 0, ry: 0 }); setHover(false); };
 
   const costs: [string, number][] = [
-    [L.costPredict, 4],
-    [L.costMark, 3],
-    [L.costTutor, 2],
-    [L.costPaper, 1],
+    [L.costPredict, CREDIT_COSTS.exam_prediction],
+    [L.costMark,    CREDIT_COSTS.ai_marking],
+    [L.costTutor,   CREDIT_COSTS.study_chat],
+    [L.costPaper,   CREDIT_COSTS.paper_prediction],
   ];
 
   return (
@@ -988,7 +989,9 @@ function CreditCard({
         {costs.map(([label, cost]) => (
           <div key={label} className="flex items-center justify-between py-2.5 border-b border-line/30">
             <span className="text-sm text-body">{label}</span>
-            <span className={`font-mono text-xs font-bold ${accentClass}`}>{cost} {L.creditUnit}</span>
+            <span className={`font-mono text-xs font-bold ${accentClass}`}>
+              {cost} {L.creditUnit} · ≈{Math.floor(packCredits / cost)} uses
+            </span>
           </div>
         ))}
       </div>
@@ -1322,6 +1325,7 @@ export function LandingClient() {
               <CreditCard
                 title={L.starterTitle}
                 credits={L.starterCredits}
+                packCredits={20}
                 price="2,500"
                 highlighted={false}
                 la={1} lb={2} ldelta={Math.PI / 2}
@@ -1332,6 +1336,7 @@ export function LandingClient() {
               <CreditCard
                 title={L.scholarTitle}
                 credits={L.scholarCredits}
+                packCredits={60}
                 price="6,000"
                 badge={L.scholarBadge}
                 highlighted={true}
@@ -1343,6 +1348,7 @@ export function LandingClient() {
               <CreditCard
                 title={L.championTitle}
                 credits={L.championCredits}
+                packCredits={175}
                 price="15,000"
                 highlighted={false}
                 la={3} lb={5} ldelta={Math.PI / 3}

@@ -60,15 +60,17 @@ const FEATURE_ORDER: Feature[] = [
   "exam_chat", "study_chat", "ai_writer", "paper_prediction", "paper_chat",
 ];
 
+// Usage ranges computed from actual pack credits ÷ credit cost:
+// Starter (20 cr) → Scholar (60 cr) → Champion (175 cr)
 const FEATURE_ESTIMATES: Record<Feature, { free: string; premium: string; icon: string }> = {
-  exam_prediction:  { free: "≈ 4–6 predictions",   premium: "≈ 90–165 predictions",  icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" },
-  marking_scheme:   { free: "≈ 4–7 schemes",        premium: "≈ 85–170 schemes",       icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
-  ai_marking:       { free: "≈ 4–7 markings",       premium: "≈ 100–200 markings",     icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" },
-  exam_chat:        { free: "≈ 6–15 messages",      premium: "≈ 120–300 messages",     icon: "M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" },
-  study_chat:       { free: "≈ 6–15 messages",      premium: "≈ 120–300 messages",     icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
-  ai_writer:        { free: "≈ 5–15 AI requests",   premium: "≈ 100–300 AI requests",  icon: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" },
-  paper_prediction: { free: "≈ 4–6 predictions",    premium: "≈ 90–165 predictions",   icon: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" },
-  paper_chat:       { free: "≈ 10 messages",         premium: "≈ 300 messages",         icon: "M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.068.157 2.148.279 3.238.364.466.037.893.281 1.153.671L12 21l2.652-3.978c.26-.39.687-.634 1.153-.671 1.09-.085 2.17-.207 3.238-.364 1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" },
+  exam_prediction:  { free: "5 (Starter) · 15 (Scholar) · 43 (Champion)",  premium: "≈ 43 predictions",   icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" },
+  marking_scheme:   { free: "6 (Starter) · 20 (Scholar) · 58 (Champion)",  premium: "≈ 58 schemes",       icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
+  ai_marking:       { free: "6 (Starter) · 20 (Scholar) · 58 (Champion)",  premium: "≈ 58 markings",      icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" },
+  exam_chat:        { free: "10 (Starter) · 30 (Scholar) · 87 (Champion)", premium: "≈ 87 messages",      icon: "M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" },
+  study_chat:       { free: "10 (Starter) · 30 (Scholar) · 87 (Champion)", premium: "≈ 87 messages",      icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
+  ai_writer:        { free: "20 (Starter) · 60 (Scholar) · 175 (Champion)", premium: "≈ 175 requests",    icon: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" },
+  paper_prediction: { free: "5 (Starter) · 15 (Scholar) · 43 (Champion)",  premium: "≈ 43 predictions",   icon: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" },
+  paper_chat:       { free: "20 (Starter) · 60 (Scholar) · 175 (Champion)", premium: "≈ 175 messages",    icon: "M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.068.157 2.148.279 3.238.364.466.037.893.281 1.153.671L12 21l2.652-3.978c.26-.39.687-.634 1.153-.671 1.09-.085 2.17-.207 3.238-.364 1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" },
 };
 
 function Icon({ d, className = "w-4 h-4 shrink-0" }: { d: string; className?: string }) {
@@ -338,20 +340,20 @@ export function PricingClient() {
               {/* Credit cost breakdown */}
               <ul className="space-y-2 text-xs text-dim flex-1 mb-6">
                 <li className="flex items-center justify-between">
-                  <span>Exam Predict</span>
+                  <span>Predict Exam</span>
                   <span className="text-body font-medium">{CREDIT_COSTS.exam_prediction} cr · ≈{Math.floor(pack.credits / CREDIT_COSTS.exam_prediction)} uses</span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span>AI Mark</span>
+                  <span>Mark Answers</span>
                   <span className="text-body font-medium">{CREDIT_COSTS.ai_marking} cr · ≈{Math.floor(pack.credits / CREDIT_COSTS.ai_marking)} uses</span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span>Chat / Tutor</span>
-                  <span className="text-body font-medium">{CREDIT_COSTS.exam_chat} cr · ≈{Math.floor(pack.credits / CREDIT_COSTS.exam_chat)} msgs</span>
+                  <span>AI Tutor</span>
+                  <span className="text-body font-medium">{CREDIT_COSTS.study_chat} cr · ≈{Math.floor(pack.credits / CREDIT_COSTS.study_chat)} msgs</span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span>AI Writer</span>
-                  <span className="text-body font-medium">{CREDIT_COSTS.ai_writer} cr · ≈{pack.credits} uses</span>
+                  <span>Past Papers</span>
+                  <span className="text-body font-medium">{CREDIT_COSTS.paper_prediction} cr · ≈{Math.floor(pack.credits / CREDIT_COSTS.paper_prediction)} uses</span>
                 </li>
               </ul>
 
@@ -383,7 +385,7 @@ export function PricingClient() {
             <div className="grid grid-cols-[1fr_auto_1fr] bg-ink-2 border-b border-line px-5 py-3 text-xs font-semibold text-dim uppercase tracking-wider">
               <span>Feature</span>
               <span className="text-center">Credits</span>
-              <span className="text-right">Approximate usage</span>
+              <span className="text-right">Uses per pack</span>
             </div>
 
             {FEATURE_ORDER.map((feature, i) => {

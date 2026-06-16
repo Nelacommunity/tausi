@@ -88,7 +88,7 @@ export async function POST(request: Request, ctx: Ctx) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const result = await model.generateContentStream({ contents });
+        const result = await model.generateContentStream({ contents, generationConfig: { maxOutputTokens: 8192 } });
         for await (const chunk of result.stream) {
           const text = chunk.text();
           if (text) { reply += text; controller.enqueue(new TextEncoder().encode(text)); }
