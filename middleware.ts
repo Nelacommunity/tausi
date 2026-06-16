@@ -31,7 +31,7 @@ function isPublicApiPath(pathname: string, method: string) {
   return PUBLIC_API_PATTERNS.some((re) => re.test(pathname));
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
   // Supabase OAuth sometimes redirects to the site root with ?code= instead of
@@ -87,7 +87,7 @@ export async function proxy(request: NextRequest) {
 
   const method = request.method;
 
-  // ── Reject non-UUID path segments on resource endpoints ──────────────────
+  // ── Reject non-UUID path segments on /api/exams/:id only ─────────────────
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const uuidResourceMatch = pathname.match(/^\/api\/exams\/([^/]+)$/);
   const idSegment = uuidResourceMatch?.[1];
