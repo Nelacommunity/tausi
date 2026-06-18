@@ -45,14 +45,20 @@ const CREDIT_PACKS = [
 ] as const;
 
 type PackKey = "starter" | "scholar" | "champion";
-type Provider = "mpesa" | "airtel" | "mixx" | "halotel";
 
-const PROVIDERS: { key: Provider; label: string }[] = [
-  { key: "mpesa",   label: "M-Pesa"   },
-  { key: "airtel",  label: "Airtel"   },
-  { key: "mixx",    label: "Mixx"     },
-  { key: "halotel", label: "Halotel"  },
-];
+// Auto-detect the Tanzanian carrier from the phone number prefix.
+// Snippe handles the actual detection server-side — this is purely a UI hint.
+function detectCarrier(phone: string): string | null {
+  const d = phone.replace(/\D/g, "");
+  const local = d.startsWith("255") ? "0" + d.slice(3) : d;
+  if (!local.startsWith("0") || local.length < 4) return null;
+  const pre3 = local.slice(0, 3);
+  if (["074", "075", "076"].includes(pre3)) return "M-Pesa (Vodacom)";
+  if (["078", "068", "069"].includes(pre3)) return "Airtel Money";
+  if (["071", "065", "067"].includes(pre3)) return "Mixx by Yas (Tigo)";
+  if (["061", "062"].includes(pre3)) return "Halotel";
+  return null;
+}
 
 // Feature order for the breakdown table
 const FEATURE_ORDER: Feature[] = [
@@ -102,9 +108,8 @@ function BuyModal({
   pack: typeof CREDIT_PACKS[number];
   onClose: () => void;
 }) {
-  const [phone, setPhone]       = useState("");
-  const [provider, setProvider] = useState<Provider>("mpesa");
-  const [loading, setLoading]   = useState(false);
+  const [phone, setPhone]   = useState("");
+  const [loading, setLoading] = useState(false);
   const [state, setState]       = useState<ModalState>({ step: "form" });
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -141,7 +146,7 @@ function BuyModal({
       const res = await fetch("/api/checkout/snippe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pack: pack.key, phone: phone.trim(), provider }),
+        body: JSON.stringify({ pack: pack.key, phone: phone.trim() }),
       });
       const data = await res.json() as { reference?: string; error?: string; message?: string };
 
@@ -192,25 +197,19 @@ function BuyModal({
                 required
                 className="w-full rounded-xl border border-line bg-ink px-3 py-2.5 text-sm text-snow placeholder:text-dim outline-none focus:border-teal transition-colors"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-body mb-1.5">Mobile money provider</label>
-              <div className="grid grid-cols-2 gap-2">
-                {PROVIDERS.map(({ key, label }) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setProvider(key)}
-                    className={`py-2 px-3 rounded-xl border text-xs font-semibold transition-colors ${
-                      provider === key
-                        ? "border-teal bg-teal-deep/60 text-teal"
-                        : "border-line text-dim hover:text-snow hover:border-line-2"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+              {/* Auto-detect carrier from phone prefix */}
+              {(() => {
+                const carrier = detectCarrier(phone);
+                return carrier ? (
+                  <p className="mt-1.5 text-xs text-teal flex items-center gap-1">
+                    <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    Detected: {carrier}
+                  </p>
+                ) : null;
+              })()}
+              <p className="mt-1 text-xs text-dim">Supports M-Pesa, Airtel, Mixx by Yas, and Halotel</p>
             </div>
             <button
               type="submit"
@@ -229,7 +228,7 @@ function BuyModal({
             <div>
               <p className="text-sm font-semibold text-snow">Check your phone</p>
               <p className="text-xs text-dim mt-1">
-                A payment prompt has been sent to <span className="text-body font-medium">{phone}</span> via {PROVIDERS.find(p => p.key === provider)?.label}. Confirm it to receive your credits.
+                A payment prompt has been sent to <span className="text-body font-medium">{phone}</span>. Confirm it on your phone to receive your credits.
               </p>
             </div>
             <p className="text-xs text-dim">Waiting for confirmation...</p>
@@ -423,8 +422,8 @@ export function PricingClient() {
         <section className="rounded-2xl border border-line bg-ink-2/40 p-6">
           <h2 className="text-sm font-semibold text-body mb-4">Payment methods</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-            {PROVIDERS.map(({ key, label }) => (
-              <div key={key} className="flex items-center justify-center rounded-xl border border-line bg-ink-2 py-3 text-sm font-medium text-body">
+            {["M-Pesa", "Airtel", "Mixx by Yas", "Halotel"].map((label) => (
+              <div key={label} className="flex items-center justify-center rounded-xl border border-line bg-ink-2 py-3 text-sm font-medium text-body">
                 {label}
               </div>
             ))}

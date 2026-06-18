@@ -1,5 +1,5 @@
 import { createClient } from "@/app/lib/supabase/server";
-import { createPayment } from "@/lib/snippe";
+import { createMobilePayment } from "@/lib/snippe";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 // ── Credit packs ──────────────────────────────────────────────
@@ -21,11 +21,11 @@ export async function POST(request: Request) {
   const rl = checkRateLimit(`${user.id}:checkout`, LIMITS.standard);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
-  let body: { pack?: string; phone?: string; provider?: string };
+  let body: { pack?: string; phone?: string };
   try { body = await request.json(); }
   catch { return jsonErr("Invalid JSON body", 400); }
 
-  const { pack: packKey, phone, provider } = body;
+  const { pack: packKey, phone } = body;
 
   if (!packKey || !(packKey in CREDIT_PACKS)) {
     return jsonErr(`Invalid pack. Choose one of: ${Object.keys(CREDIT_PACKS).join(", ")}`, 400);
@@ -33,11 +33,20 @@ export async function POST(request: Request) {
   if (!phone?.trim()) {
     return jsonErr("Phone number is required", 400);
   }
-  if (!provider || !["mpesa", "airtel", "mixx", "halotel"].includes(provider)) {
-    return jsonErr("Provider must be one of: mpesa, airtel, mixx, halotel", 400);
-  }
 
   const pack = CREDIT_PACKS[packKey as PackKey];
+
+  // Get user's display name for the Snippe customer object
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .single();
+
+  const fullName = ((profile?.full_name as string | null) ?? "").trim();
+  const nameParts = fullName.split(/\s+/);
+  const firstname = nameParts[0] || "Tausi";
+  const lastname = nameParts.slice(1).join(" ") || "User";
 
   // Create a pending purchase record first
   const { data: purchase, error: insertError } = await supabase
@@ -60,14 +69,17 @@ export async function POST(request: Request) {
   const purchaseId = purchase.id as string;
 
   try {
-    const result = await createPayment(
+    // Snippe auto-detects the carrier from the phone number — no provider field needed
+    const snippeData = await createMobilePayment(
       {
         amount: pack.amount_tzs,
-        phone: phone.trim(),
-        provider: provider as "mpesa" | "airtel" | "mixx" | "halotel",
-        external_reference: purchaseId,
-        description: `Tausi ${pack.label} Pack — ${pack.credits} credits`,
-        webhook_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/snippe`,
+        phoneNumber: phone.trim(),
+        customer: {
+          firstname,
+          lastname,
+          email: user.email ?? "user@tausi.app",
+        },
+        webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/snippe`,
         metadata: {
           user_id:     user.id,
           pack:        packKey,
@@ -78,12 +90,12 @@ export async function POST(request: Request) {
       purchaseId // idempotency key
     );
 
-    const snippeRef = result.data?.reference;
+    const snippeRef = snippeData.reference;
     if (!snippeRef) {
       throw new Error("Snippe did not return a reference");
     }
 
-    // Update the purchase record with the real snippe reference
+    // Update the purchase record with the real Snippe reference
     await supabase
       .from("credit_purchases")
       .update({ snippe_ref: snippeRef })
@@ -92,14 +104,15 @@ export async function POST(request: Request) {
     return Response.json({
       reference:   snippeRef,
       purchase_id: purchaseId,
-      status:      result.data?.status ?? "pending",
-      payment_url: result.data?.payment_url ?? null,
+      status:      snippeData.status ?? "pending",
+      payment_url: snippeData.payment_url ?? null,
       message:     "Check your phone to confirm payment",
     });
   } catch (err) {
     // Clean up the pending purchase record on failure
     await supabase.from("credit_purchases").delete().eq("id", purchaseId);
-    return jsonErr(err instanceof Error ? err.message : "Payment initiation failed", 502);
+    const msg = err instanceof Error ? err.message : "Payment initiation failed";
+    return jsonErr(msg, 502);
   }
 }
 
