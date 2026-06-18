@@ -1,5 +1,5 @@
 import { createClient } from "@/app/lib/supabase/server";
-import { createMobilePayment } from "@/lib/snippe";
+import { createMobilePayment, toIdempKey } from "@/lib/snippe";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 // ── Credit packs ──────────────────────────────────────────────
@@ -36,12 +36,24 @@ export async function POST(request: Request) {
 
   const pack = CREDIT_PACKS[packKey as PackKey];
 
+  // Get display name for the Snippe customer object
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .single();
+
+  const fullName = ((profile?.full_name as string | null) ?? "").trim();
+  const nameParts = fullName.split(/\s+/);
+  const firstname = nameParts[0] || "Tausi";
+  const lastname  = nameParts.slice(1).join(" ") || "User";
+
   // Create a pending purchase record first
   const { data: purchase, error: insertError } = await supabase
     .from("credit_purchases")
     .insert({
       user_id:    user.id,
-      snippe_ref: `pending-${Date.now()}`, // temp ref, updated after Snippe responds
+      snippe_ref: `pending-${Date.now()}`,
       pack:       packKey,
       credits:    pack.credits,
       amount_tzs: pack.amount_tzs,
@@ -57,14 +69,16 @@ export async function POST(request: Request) {
   const purchaseId = purchase.id as string;
 
   try {
-    // Provider is auto-detected from the phone number prefix in createMobilePayment
     const snippeData = await createMobilePayment(
       {
-        amount:             pack.amount_tzs,
-        phone:              phone.trim(),
-        external_reference: purchaseId,
-        description:        `Tausi ${pack.label} Pack — ${pack.credits} credits`,
-        webhook_url:        `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/snippe`,
+        amount:      pack.amount_tzs,
+        phoneNumber: phone.trim(),
+        customer: {
+          firstname,
+          lastname,
+          email: user.email ?? "user@tausi.app",
+        },
+        webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/snippe`,
         metadata: {
           user_id:     user.id,
           pack:        packKey,
@@ -72,7 +86,7 @@ export async function POST(request: Request) {
           purchase_id: purchaseId,
         },
       },
-      purchaseId // idempotency key
+      toIdempKey(purchaseId) // UUID → 30-char hex string
     );
 
     const snippeRef = snippeData.reference;
@@ -80,7 +94,6 @@ export async function POST(request: Request) {
       throw new Error("Snippe did not return a reference");
     }
 
-    // Update the purchase record with the real Snippe reference
     await supabase
       .from("credit_purchases")
       .update({ snippe_ref: snippeRef })
@@ -94,7 +107,6 @@ export async function POST(request: Request) {
       message:     "Check your phone to confirm payment",
     });
   } catch (err) {
-    // Clean up the pending purchase record on failure
     await supabase.from("credit_purchases").delete().eq("id", purchaseId);
     const msg = err instanceof Error ? err.message : "Payment initiation failed";
     return jsonErr(msg, 502);
