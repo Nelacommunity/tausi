@@ -36,18 +36,6 @@ export async function POST(request: Request) {
 
   const pack = CREDIT_PACKS[packKey as PackKey];
 
-  // Get user's display name for the Snippe customer object
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name")
-    .eq("id", user.id)
-    .single();
-
-  const fullName = ((profile?.full_name as string | null) ?? "").trim();
-  const nameParts = fullName.split(/\s+/);
-  const firstname = nameParts[0] || "Tausi";
-  const lastname = nameParts.slice(1).join(" ") || "User";
-
   // Create a pending purchase record first
   const { data: purchase, error: insertError } = await supabase
     .from("credit_purchases")
@@ -69,17 +57,14 @@ export async function POST(request: Request) {
   const purchaseId = purchase.id as string;
 
   try {
-    // Snippe auto-detects the carrier from the phone number — no provider field needed
+    // Provider is auto-detected from the phone number prefix in createMobilePayment
     const snippeData = await createMobilePayment(
       {
-        amount: pack.amount_tzs,
-        phoneNumber: phone.trim(),
-        customer: {
-          firstname,
-          lastname,
-          email: user.email ?? "user@tausi.app",
-        },
-        webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/snippe`,
+        amount:             pack.amount_tzs,
+        phone:              phone.trim(),
+        external_reference: purchaseId,
+        description:        `Tausi ${pack.label} Pack — ${pack.credits} credits`,
+        webhook_url:        `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/snippe`,
         metadata: {
           user_id:     user.id,
           pack:        packKey,

@@ -4,15 +4,15 @@ const SNIPPE_BASE_URL = "https://api.snippe.sh";
 
 // ── Types ─────────────────────────────────────────────────────
 
+export type SnippeProvider = "mpesa" | "airtel" | "mixx" | "halotel";
+
 export interface SnippeMobilePaymentRequest {
   amount: number;
-  phoneNumber: string;
-  customer: {
-    firstname: string;
-    lastname: string;
-    email: string;
-  };
-  webhookUrl?: string;
+  phone: string;
+  provider?: SnippeProvider;   // auto-detected from phone prefix if omitted
+  external_reference: string;
+  description?: string;
+  webhook_url?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -50,6 +50,22 @@ export function formatPhone(phone: string): string {
   return p;
 }
 
+/**
+ * Detect the Snippe provider key from a TZ phone number prefix.
+ * Returns null if the prefix is unrecognised.
+ */
+export function detectProvider(phone: string): SnippeProvider | null {
+  const d = phone.replace(/\D/g, "");
+  const local = d.startsWith("255") ? "0" + d.slice(3) : d;
+  if (!local.startsWith("0") || local.length < 4) return null;
+  const pre3 = local.slice(0, 3);
+  if (["074", "075", "076"].includes(pre3)) return "mpesa";
+  if (["078", "068", "069"].includes(pre3)) return "airtel";
+  if (["071", "065", "067"].includes(pre3)) return "mixx";
+  if (["061", "062"].includes(pre3)) return "halotel";
+  return null;
+}
+
 /** Alphanumeric idempotency key, max 30 chars */
 function idempotencyKey(prefix = ""): string {
   return (prefix + Date.now().toString(36) + Math.random().toString(36).slice(2))
@@ -57,16 +73,11 @@ function idempotencyKey(prefix = ""): string {
     .slice(0, 30);
 }
 
-/** Snippe rejects http:// webhook URLs — omit them in dev */
-function httpsWebhook(url?: string): string | undefined {
-  return url?.startsWith("https://") ? url : undefined;
-}
-
 // ── Payment functions ──────────────────────────────────────────
 
 /**
  * Initiate a mobile-money USSD push payment.
- * Snippe auto-detects the carrier from the phone number — no provider field is sent.
+ * Provider is auto-detected from the phone prefix if not explicitly supplied.
  */
 export async function createMobilePayment(
   params: SnippeMobilePaymentRequest,
@@ -75,7 +86,12 @@ export async function createMobilePayment(
   const apiKey = process.env.SNIPPE_API_KEY;
   if (!apiKey) throw new Error("SNIPPE_API_KEY is not configured");
 
-  const webhook = httpsWebhook(params.webhookUrl);
+  const provider = params.provider ?? detectProvider(params.phone);
+  if (!provider) {
+    throw new Error(
+      "Could not detect mobile provider from this number. Please use a Tanzanian Vodacom, Airtel, Tigo/Mixx, or Halotel number."
+    );
+  }
 
   const res = await fetch(`${SNIPPE_BASE_URL}/v1/payments`, {
     method: "POST",
@@ -85,15 +101,13 @@ export async function createMobilePayment(
       "Idempotency-Key": idempKey ?? idempotencyKey("mob"),
     },
     body: JSON.stringify({
-      payment_type: "mobile",
-      details: { amount: Math.round(params.amount), currency: "TZS" },
-      phone_number: formatPhone(params.phoneNumber),
-      customer: {
-        firstname: params.customer.firstname,
-        lastname: params.customer.lastname,
-        email: params.customer.email,
-      },
-      ...(webhook && { webhook_url: webhook }),
+      amount: Math.round(params.amount),
+      currency: "TZS",
+      phone: formatPhone(params.phone),
+      provider,
+      external_reference: params.external_reference,
+      description: params.description ?? "Tausi credit purchase",
+      ...(params.webhook_url && { webhook_url: params.webhook_url }),
       metadata: params.metadata ?? {},
     }),
   });
@@ -143,7 +157,7 @@ export function verifyWebhookSignature(
   signature: string
 ): boolean {
   const secret = process.env.SNIPPE_WEBHOOK_SECRET;
-  if (!secret) return true; // dev: skip verification
+  if (!secret) return true;
 
   if (!timestamp || !signature) return false;
 
