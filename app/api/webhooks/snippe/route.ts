@@ -4,17 +4,14 @@ import { verifyWebhookSignature, type SnippeWebhookPayload } from "@/lib/snippe"
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  // Read raw body for signature verification
   const rawBody = await request.text();
 
-  const timestamp = request.headers.get("X-Webhook-Timestamp") ?? "";
-  const signature = request.headers.get("X-Webhook-Signature") ?? "";
+  const timestamp   = request.headers.get("X-Webhook-Timestamp") ?? "";
+  const signature   = request.headers.get("X-Webhook-Signature") ?? "";
   const headerEvent = request.headers.get("X-Webhook-Event") ?? "";
 
-  // Verify signature (skip if secret not configured — useful for dev)
   if (process.env.SNIPPE_WEBHOOK_SECRET) {
-    const valid = verifyWebhookSignature(rawBody, timestamp, signature);
-    if (!valid) {
+    if (!verifyWebhookSignature(rawBody, timestamp, signature)) {
       console.warn("[snippe-webhook] Invalid signature");
       return new Response("Invalid signature", { status: 401 });
     }
@@ -28,28 +25,45 @@ export async function POST(request: Request) {
     return new Response("Bad request", { status: 400 });
   }
 
-  // Support both envelope format (payload.type) and header fallback
   const event = payload.type || headerEvent;
+  const { reference } = payload.data ?? {};
+  // purchase_id is always injected in metadata at payment creation time
+  const metaPurchaseId = payload.data?.metadata?.purchase_id as string | undefined;
+
+  console.log(`[snippe-webhook] event=${event} ref=${reference} purchase=${metaPurchaseId}`);
+
+  // Always ack immediately so Snippe doesn't retry due to slow processing
+  const ack = new Response("ok", { status: 200 });
 
   const supabase = createAdminClient();
-  const { reference, external_reference } = payload.data ?? {};
-  const lookupRef = reference || external_reference;
-
-  console.log(`[snippe-webhook] event=${event} ref=${lookupRef}`);
 
   switch (event) {
     case "payment.completed": {
-      if (!lookupRef) break;
+      if (!reference && !metaPurchaseId) break;
 
-      // Find the purchase by snippe reference OR external_reference (our purchase ID)
-      const { data: purchase } = await supabase
-        .from("credit_purchases")
-        .select("id, user_id, credits, status")
-        .or(`snippe_ref.eq.${reference},snippe_ref.eq.${external_reference}`)
-        .single();
+      // Prefer lookup by snippe_ref; fall back to metadata.purchase_id
+      let purchase: { id: string; user_id: string; credits: number; status: string } | null = null;
+
+      if (reference) {
+        const { data } = await supabase
+          .from("credit_purchases")
+          .select("id, user_id, credits, status")
+          .eq("snippe_ref", reference)
+          .single();
+        purchase = data;
+      }
+
+      if (!purchase && metaPurchaseId) {
+        const { data } = await supabase
+          .from("credit_purchases")
+          .select("id, user_id, credits, status")
+          .eq("id", metaPurchaseId)
+          .single();
+        purchase = data;
+      }
 
       if (!purchase) {
-        console.warn(`[snippe-webhook] No purchase found for ref=${lookupRef}`);
+        console.warn(`[snippe-webhook] No purchase found for ref=${reference} purchase=${metaPurchaseId}`);
         break;
       }
 
@@ -58,59 +72,75 @@ export async function POST(request: Request) {
         break;
       }
 
-      // Add credits atomically via RPC
+      // Mark completed atomically first (guards against double-processing from
+      // concurrent webhook retries or status-poll completing it simultaneously)
+      const { data: claimed } = await supabase
+        .from("credit_purchases")
+        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .eq("id", purchase.id)
+        .eq("status", "pending")   // only succeeds if still pending
+        .select("id, user_id, credits")
+        .single();
+
+      if (!claimed) {
+        // Another process already completed it
+        console.log(`[snippe-webhook] Purchase ${purchase.id} already claimed — skipping credits`);
+        break;
+      }
+
+      // Add credits only after we've claimed ownership
       const { error: rpcError } = await supabase.rpc("add_credits", {
-        p_user_id: purchase.user_id,
-        p_credits: purchase.credits as number,
+        p_user_id: claimed.user_id,
+        p_credits: claimed.credits as number,
       });
 
       if (rpcError) {
-        console.warn(`[snippe-webhook] RPC add_credits failed, using manual fallback: ${rpcError.message}`);
-        // Fallback: read current credits + update directly
-        const { data: profileData } = await supabase
+        console.warn(`[snippe-webhook] RPC add_credits failed, using direct fallback: ${rpcError.message}`);
+        const { data: profile } = await supabase
           .from("profiles")
           .select("credits")
-          .eq("id", purchase.user_id)
+          .eq("id", claimed.user_id)
           .single();
-        const currentCredits = (profileData?.credits as number) ?? 0;
+        const current = (profile?.credits as number) ?? 0;
         const { error: updateError } = await supabase
           .from("profiles")
-          .update({ credits: currentCredits + (purchase.credits as number) })
-          .eq("id", purchase.user_id);
+          .update({ credits: current + (claimed.credits as number) })
+          .eq("id", claimed.user_id);
         if (updateError) {
           console.error(`[snippe-webhook] Failed to add credits: ${updateError.message}`);
-          // Don't break — still mark purchase completed so we can investigate
         }
       }
 
-      await supabase
-        .from("credit_purchases")
-        .update({ status: "completed", completed_at: new Date().toISOString() })
-        .eq("id", purchase.id);
-
-      console.log(`[snippe-webhook] Added ${purchase.credits} credits to user ${purchase.user_id}`);
+      console.log(`[snippe-webhook] +${claimed.credits} credits → user ${claimed.user_id}`);
       break;
     }
 
     case "payment.failed":
     case "payment.voided":
     case "payment.expired": {
-      if (!lookupRef) break;
+      if (!reference && !metaPurchaseId) break;
 
-      await supabase
-        .from("credit_purchases")
-        .update({ status: "failed" })
-        .or(`snippe_ref.eq.${reference},snippe_ref.eq.${external_reference}`)
-        .eq("status", "pending");
+      if (reference) {
+        await supabase
+          .from("credit_purchases")
+          .update({ status: "failed" })
+          .eq("snippe_ref", reference)
+          .eq("status", "pending");
+      } else if (metaPurchaseId) {
+        await supabase
+          .from("credit_purchases")
+          .update({ status: "failed" })
+          .eq("id", metaPurchaseId)
+          .eq("status", "pending");
+      }
 
-      console.log(`[snippe-webhook] Marked purchase failed for ref=${lookupRef}`);
+      console.log(`[snippe-webhook] Marked failed — ref=${reference} purchase=${metaPurchaseId}`);
       break;
     }
 
     default:
-      console.log(`[snippe-webhook] Unhandled event type: ${event}`);
+      console.log(`[snippe-webhook] Unhandled event: ${event}`);
   }
 
-  // Always return 200 to prevent retries
-  return new Response("ok", { status: 200 });
+  return ack;
 }
