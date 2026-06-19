@@ -22,7 +22,7 @@ const PACK_LABELS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, { label: string; class: string }> = {
   completed: { label: "Paid",    class: "bg-good/10 text-good border-good/30" },
-  pending:   { label: "Pending", class: "bg-amber-900/30 text-amber-400 border-amber-700/40" },
+  pending:   { label: "Pending", class: "bg-gold/10 text-gold border-gold/30" },
   failed:    { label: "Failed",  class: "bg-bad/10 text-bad border-bad/30" },
 };
 
@@ -58,7 +58,7 @@ export default function PurchasesPage() {
   return (
     <div className="min-h-screen bg-ink text-snow">
       <Header />
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 pb-bottom-nav md:pb-8 space-y-6">
 
         {/* Header row */}
         <div className="flex items-center justify-between">

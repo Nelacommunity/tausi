@@ -373,6 +373,57 @@ html.tausi-js .reveal.is-in .pricing-lissajous {
   }
 }
 
+/* ── Glassmorphism & app UI utilities ───────────────────────── */
+
+.glass {
+  background: oklch(0.19 0.010 238 / 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid oklch(0.31 0.015 234 / 0.6);
+}
+.glass-2 {
+  background: oklch(0.24 0.013 236 / 0.80);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid oklch(0.41 0.019 230 / 0.5);
+}
+
+.glow-teal {
+  box-shadow: 0 0 24px -6px oklch(0.72 0.20 192 / 0.35),
+              0 0 8px -2px oklch(0.72 0.20 192 / 0.20);
+}
+.glow-gold {
+  box-shadow: 0 0 24px -6px oklch(0.82 0.17 72 / 0.40),
+              0 0 8px -2px oklch(0.82 0.17 72 / 0.20);
+}
+
+.pb-bottom-nav { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+
+.card-accent-teal { box-shadow: inset 0 1px 0 0 oklch(0.72 0.20 192 / 0.50); }
+.card-accent-gold  { box-shadow: inset 0 1px 0 0 oklch(0.82 0.17 72 / 0.50); }
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.page-in { animation: page-in 0.28s var(--ease-out-quart) both; }
+
+@keyframes tab-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.20); }
+  100% { transform: scale(1); }
+}
+.tab-pop { animation: tab-pop 0.22s var(--ease-out-expo) both; }
+
+/* Override default focus ring with teal */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 1px oklch(0.72 0.20 192 / 0.8),
+              0 0 0 3px oklch(0.72 0.20 192 / 0.15);
+}
+
 /* ── Tiptap editor content styles ───────────────────────────── */
 .tiptap-content {
   outline: none;

@@ -15,50 +15,8 @@ function Icon({ d, size = 5 }: { d: string; size?: number }) {
   );
 }
 
-function SidebarLangToggle({ onClose }: { onClose: () => void }) {
-  const { lang, setLang } = useT();
-  return (
-    <div className="px-5 py-3 border-t border-line shrink-0">
-      <p className="text-xs text-dim mb-2">Language / Lugha</p>
-      <div className="flex gap-2">
-        {(["en", "sw"] as const).map((l) => (
-          <button
-            key={l}
-            onClick={() => { setLang(l); onClose(); }}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
-              lang === l
-                ? "bg-teal border-teal text-ink"
-                : "border-line text-dim hover:text-snow hover:border-line-2"
-            }`}
-          >
-            {l === "en" ? "English" : "Kiswahili"}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function LangToggle() {
-  const { lang, setLang } = useT();
-  return (
-    <div className="flex items-center rounded-lg border border-line overflow-hidden shrink-0">
-      {(["en", "sw"] as const).map((l) => (
-        <button
-          key={l}
-          onClick={() => setLang(l)}
-          className={`px-2.5 py-1 text-xs font-bold uppercase transition-colors cursor-pointer ${
-            lang === l ? "bg-teal text-ink" : "text-dim hover:text-snow"
-          }`}
-        >
-          {l === "en" ? "EN" : "SW"}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-const NAV_LINK_KEYS = [
+// Nav items shown in desktop header + mobile bottom bar
+const PRIMARY_NAV = [
   {
     href: "/dashboard",
     key: "myExams",
@@ -84,12 +42,35 @@ const NAV_LINK_KEYS = [
     key: "examLibrary",
     d: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z",
   },
+] as const;
+
+// Secondary items only in the slide-out panel
+const SECONDARY_NAV = [
   {
     href: "/discover",
     key: "discover",
     d: "M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c-.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z",
   },
 ] as const;
+
+function LangToggle() {
+  const { lang, setLang } = useT();
+  return (
+    <div className="flex items-center rounded-lg border border-line overflow-hidden shrink-0">
+      {(["en", "sw"] as const).map((l) => (
+        <button
+          key={l}
+          onClick={() => setLang(l)}
+          className={`px-2.5 py-1 text-xs font-bold uppercase transition-colors cursor-pointer ${
+            lang === l ? "bg-teal text-ink" : "text-dim hover:text-snow"
+          }`}
+        >
+          {l === "en" ? "EN" : "SW"}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function Header() {
   const [user, setUser] = useState<User | null>(null);
@@ -106,7 +87,6 @@ export function Header() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch credits balance when user is authenticated
   useEffect(() => {
     if (!user) { setCredits(null); return; }
     fetch("/api/credits")
@@ -141,96 +121,170 @@ export function Header() {
   return (
     <>
       {/* ── Top bar ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-30 border-b border-line bg-ink/90 backdrop-blur-sm">
-        <div className="px-4 sm:px-6 py-3 flex items-center gap-3">
-          <button
-            onClick={() => setOpen(true)}
-            aria-label="Open menu"
-            className="flex items-center justify-center w-9 h-9 rounded-lg text-dim hover:text-snow hover:bg-ink-3 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+      <header className="sticky top-0 z-30 border-b border-line bg-ink/90 backdrop-blur-md">
+        <div className="px-4 sm:px-6 h-14 flex items-center gap-3">
 
-          <Link href="/" className="flex items-center gap-2.5">
+          {/* Logo — always visible */}
+          <Link href="/" className="flex items-center gap-2.5 shrink-0 mr-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo/android-chrome-192x192.png" alt="Tausi" className="w-8 h-8 rounded-lg" />
-            <span className="font-display text-base font-bold text-snow tracking-tight hidden sm:block">Tausi</span>
+            <img src="/logo/android-chrome-192x192.png" alt="Tausi" className="w-7 h-7 rounded-md" />
+            <span className="font-display text-sm font-bold text-snow tracking-tight hidden sm:block">Tausi</span>
           </Link>
 
-          <div className="flex-1" />
-
-          <LangToggle />
-
-          {user ? (
-            <div className="flex items-center gap-2">
-              {/* Credits chip */}
-              {credits !== null && (
-                <Link href="/pricing"
-                  className="hidden sm:flex items-center gap-1.5 rounded-lg border border-line bg-ink-2 hover:border-teal/60 px-2.5 py-1.5 transition-colors">
-                  <svg className="w-3.5 h-3.5 text-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                  </svg>
-                  <span className="text-xs font-bold text-teal">{credits}</span>
-                  <span className="text-xs text-dim">cr</span>
+          {/* Desktop primary nav — hidden on mobile (use bottom bar) */}
+          <nav className="hidden md:flex items-center gap-0.5 flex-1">
+            {PRIMARY_NAV.map(({ href, key, d }) => {
+              const active = isActive(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
+                    active
+                      ? "bg-teal-deep/70 text-teal"
+                      : "text-dim hover:text-snow hover:bg-ink-3"
+                  }`}
+                >
+                  <Icon d={d} size={4} />
+                  <span>{T.nav[key]}</span>
                 </Link>
-              )}
-              <Link href="/profile"
-                className="flex items-center gap-2 rounded-xl border border-line hover:border-line-2 bg-ink-2 hover:bg-ink-3 px-3 py-1.5 transition-colors">
-                <div className="w-6 h-6 rounded-md bg-teal-deep flex items-center justify-center text-xs font-bold text-teal select-none">
-                  {initials}
-                </div>
-                <span className="text-sm text-body hidden sm:block max-w-[130px] truncate">{user.email}</span>
-              </Link>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link href="/login" className="text-sm text-body hover:text-snow px-3 py-1.5 rounded-lg hover:bg-ink-3 transition-colors">
-                Sign in
-              </Link>
-              <Link href="/signup" className="text-sm font-semibold text-on-gold bg-gold hover:bg-gold-hover px-3 py-1.5 rounded-lg transition-colors">
-                Sign up
-              </Link>
-            </div>
-          )}
+              );
+            })}
+            {SECONDARY_NAV.map(({ href, key, d }) => {
+              const active = isActive(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
+                    active
+                      ? "bg-teal-deep/70 text-teal"
+                      : "text-dim hover:text-snow hover:bg-ink-3"
+                  }`}
+                >
+                  <Icon d={d} size={4} />
+                  <span>{T.nav[key]}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="flex-1 md:hidden" />
+
+          {/* Right side: lang toggle + credits + avatar / auth buttons */}
+          <div className="flex items-center gap-2 shrink-0">
+            <LangToggle />
+
+            {user ? (
+              <>
+                {/* Credits chip */}
+                {credits !== null && (
+                  <Link
+                    href="/pricing"
+                    className="hidden sm:flex items-center gap-1.5 rounded-lg border border-line bg-ink-2 hover:border-teal/60 hover:bg-teal-deep/20 px-2.5 py-1.5 transition-all"
+                  >
+                    <svg className="w-3.5 h-3.5 text-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                    </svg>
+                    <span className="text-xs font-bold text-teal">{credits}</span>
+                    <span className="text-xs text-dim">cr</span>
+                  </Link>
+                )}
+
+                {/* Avatar / profile — taps to open panel */}
+                <button
+                  onClick={() => setOpen(true)}
+                  aria-label="Open menu"
+                  className="flex items-center gap-2 rounded-xl border border-line hover:border-line-2 bg-ink-2 hover:bg-ink-3 px-2.5 py-1.5 transition-all cursor-pointer"
+                >
+                  <div className="w-6 h-6 rounded-md bg-teal-deep border border-teal/30 flex items-center justify-center text-xs font-bold text-teal select-none">
+                    {initials}
+                  </div>
+                  <span className="text-xs text-body hidden sm:block max-w-[120px] truncate">{user.email}</span>
+                  <svg className="w-3.5 h-3.5 text-dim hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="text-xs text-body hover:text-snow px-3 py-1.5 rounded-lg hover:bg-ink-3 transition-colors">
+                  Sign in
+                </Link>
+                <Link href="/signup" className="text-xs font-semibold text-on-gold bg-gold hover:bg-gold-hover px-3 py-1.5 rounded-lg transition-colors">
+                  Sign up
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* ── Sidebar overlay ─────────────────────────────────── */}
+      {/* ── Slide-out panel (avatar dropdown) ───────────────── */}
       <div
         aria-hidden={!open}
         className={`fixed inset-0 z-50 transition-opacity duration-200 ${
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
       >
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
 
-        <aside className={`absolute left-0 top-0 bottom-0 w-72 bg-ink border-r border-line flex flex-col shadow-2xl shadow-black/60 transition-transform duration-200 ${
-          open ? "translate-x-0" : "-translate-x-full"
+        <aside className={`absolute right-0 top-0 bottom-0 w-72 bg-ink border-l border-line flex flex-col shadow-2xl shadow-black/70 transition-transform duration-200 ${
+          open ? "translate-x-0" : "translate-x-full"
         }`}>
-          {/* Sidebar header */}
+          {/* Panel header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-line shrink-0">
-            <Link href="/" onClick={() => setOpen(false)} className="flex items-center gap-2.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo/android-chrome-192x192.png" alt="Tausi" className="w-8 h-8 rounded-lg" />
-              <span className="font-display text-base font-bold text-snow">Tausi</span>
-            </Link>
-            <button onClick={() => setOpen(false)} aria-label="Close menu"
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-dim hover:text-snow hover:bg-ink-3 transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-teal-deep border border-teal/30 flex items-center justify-center text-sm font-bold text-teal select-none">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-dim">{T.nav.signedInAs}</p>
+                <p className="text-sm text-snow font-medium truncate max-w-[160px]">{user?.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Close menu"
+              className="flex items-center justify-center w-8 h-8 rounded-lg text-dim hover:text-snow hover:bg-ink-3 transition-colors cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          {/* Nav links */}
-          <nav className="flex-1 overflow-y-auto py-3">
-            {NAV_LINK_KEYS.map(({ href, key, d }) => {
+          {/* Credits summary */}
+          {credits !== null && (
+            <Link
+              href="/pricing"
+              onClick={() => setOpen(false)}
+              className="mx-4 mt-4 flex items-center justify-between rounded-xl border border-teal/30 bg-teal-deep/20 hover:bg-teal-deep/30 px-4 py-3 transition-all"
+            >
+              <div>
+                <p className="text-xs text-dim mb-0.5">Credit balance</p>
+                <p className="text-lg font-bold text-teal">{credits} <span className="text-sm font-normal text-dim">credits</span></p>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-teal border border-teal/40 rounded-lg px-2.5 py-1.5">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Buy
+              </div>
+            </Link>
+          )}
+
+          {/* Navigation (all nav items, visible on mobile) */}
+          <nav className="flex-1 overflow-y-auto py-3 px-2">
+            <p className="px-3 text-xs font-semibold text-dim/70 uppercase tracking-wider mb-2">Navigate</p>
+            {[...PRIMARY_NAV, ...SECONDARY_NAV].map(({ href, key, d }) => {
               const active = isActive(href);
               return (
-                <Link key={href} href={href} onClick={() => setOpen(false)}
-                  className={`flex items-center gap-3 mx-2 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                     active
                       ? "bg-teal-deep/60 text-teal"
                       : "text-dim hover:text-snow hover:bg-ink-3"
@@ -241,54 +295,96 @@ export function Header() {
                 </Link>
               );
             })}
+
+            <div className="mt-4 pt-3 border-t border-line">
+              <p className="px-3 text-xs font-semibold text-dim/70 uppercase tracking-wider mb-2">Account</p>
+              <Link
+                href="/profile"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-dim hover:text-snow hover:bg-ink-3 transition-colors"
+              >
+                <Icon d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                {T.nav.profile}
+              </Link>
+              <Link
+                href="/purchases"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-dim hover:text-snow hover:bg-ink-3 transition-colors"
+              >
+                <Icon d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                Purchase history
+              </Link>
+            </div>
           </nav>
 
-          <SidebarLangToggle onClose={() => setOpen(false)} />
-
-          {/* Bottom user section */}
-          <div className="border-t border-line p-3 shrink-0 space-y-1">
-            {user ? (
-              <>
-                <div className="px-3 py-2">
-                  <p className="text-xs text-dim">{T.nav.signedInAs}</p>
-                  <p className="text-sm text-body font-medium truncate">{user.email}</p>
-                </div>
-
-                <Link href="/profile" onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-dim hover:text-snow hover:bg-ink-3 transition-colors">
-                  <Icon d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                  {T.nav.profile}
-                </Link>
-
-                <Link href="/pricing" onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-teal hover:bg-teal/10 transition-colors">
-                  <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                  </svg>
-                  {credits !== null ? `${credits} credits · Buy more` : "Buy credits"}
-                </Link>
-
-                <button onClick={signOut}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-bad hover:text-red-300 hover:bg-bad/10 transition-colors">
-                  <Icon d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
-                  {T.nav.signOut}
-                </button>
-              </>
-            ) : (
-              <div className="space-y-2 px-1">
-                <Link href="/login" onClick={() => setOpen(false)}
-                  className="flex items-center justify-center px-4 py-2.5 rounded-xl text-sm text-body border border-line hover:border-line-2 hover:text-snow transition-colors">
-                  {T.nav.signIn}
-                </Link>
-                <Link href="/signup" onClick={() => setOpen(false)}
-                  className="flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-on-gold bg-gold hover:bg-gold-hover transition-colors">
-                  {T.nav.signUp}
-                </Link>
-              </div>
-            )}
+          {/* Bottom: lang + sign out */}
+          <div className="border-t border-line p-4 shrink-0 space-y-3">
+            <div>
+              <p className="text-xs text-dim mb-2">Language / Lugha</p>
+              <BottomLangToggle onClose={() => setOpen(false)} />
+            </div>
+            <button
+              onClick={signOut}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-bad hover:text-red-300 hover:bg-bad/10 transition-colors cursor-pointer"
+            >
+              <Icon d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+              {T.nav.signOut}
+            </button>
           </div>
         </aside>
       </div>
+
+      {/* ── Mobile bottom tab bar ────────────────────────────── */}
+      {user && (
+        <nav
+          className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-ink/95 backdrop-blur-md border-t border-line"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          <div className="grid grid-cols-5 h-16">
+            {PRIMARY_NAV.map(({ href, key, d }) => {
+              const active = isActive(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex flex-col items-center justify-center gap-1 transition-colors ${
+                    active ? "text-teal" : "text-dim hover:text-snow"
+                  }`}
+                >
+                  <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 2 : 1.5} d={d} />
+                  </svg>
+                  <span className="text-[10px] font-medium leading-none">{T.nav[key]?.split(" ")[0]}</span>
+                  {active && (
+                    <span className="absolute bottom-0 w-8 h-0.5 bg-teal rounded-full" style={{ position: "relative" }} />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </>
+  );
+}
+
+function BottomLangToggle({ onClose }: { onClose: () => void }) {
+  const { lang, setLang } = useT();
+  return (
+    <div className="flex gap-2">
+      {(["en", "sw"] as const).map((l) => (
+        <button
+          key={l}
+          onClick={() => { setLang(l); onClose(); }}
+          className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+            lang === l
+              ? "bg-teal border-teal text-ink"
+              : "border-line text-dim hover:text-snow hover:border-line-2"
+          }`}
+        >
+          {l === "en" ? "English" : "Kiswahili"}
+        </button>
+      ))}
+    </div>
   );
 }

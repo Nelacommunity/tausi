@@ -36,7 +36,7 @@ export default async function WritePage() {
   return (
     <div className="min-h-screen bg-ink text-snow">
       <Header />
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10 pb-bottom-nav md:pb-10">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-display text-2xl font-bold text-snow">AI Writer</h1>

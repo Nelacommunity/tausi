@@ -323,7 +323,7 @@ export function PricingClient() {
   return (
     <div className="min-h-screen bg-ink text-snow">
       <Header />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-14">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-12 pb-bottom-nav md:pb-12 space-y-14">
 
         {/* Hero */}
         <div className="text-center">

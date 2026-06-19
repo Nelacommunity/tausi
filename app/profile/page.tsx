@@ -78,7 +78,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-ink text-snow">
       <Header />
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 pb-bottom-nav md:pb-8 space-y-6">
 
         {/* Identity card */}
         <div className="rounded-2xl border border-line bg-ink-2/50 p-6">
@@ -120,18 +120,18 @@ export default function ProfilePage() {
         </div>
 
         {/* Credits balance */}
-        <div className={`rounded-2xl border p-6 ${lowCredits ? "border-amber-700/60 bg-amber-950/20" : "border-teal/40 bg-teal-deep/20"}`}>
+        <div className={`rounded-2xl border p-6 ${lowCredits ? "border-gold/40 bg-gold/5" : "border-teal/40 bg-teal-deep/20"}`}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-sm font-semibold text-body mb-1">Credit Balance</h2>
               <div className="flex items-baseline gap-2">
-                <span className={`font-display text-5xl font-bold ${lowCredits ? "text-amber-400" : "text-teal"}`}>
+                <span className={`font-display text-5xl font-bold ${lowCredits ? "text-gold" : "text-teal"}`}>
                   {credits}
                 </span>
                 <span className="text-body text-lg">credits</span>
               </div>
               {lowCredits && (
-                <p className="text-xs text-amber-400 mt-1">Running low — consider buying more credits</p>
+                <p className="text-xs text-gold mt-1">Running low — consider buying more credits</p>
               )}
             </div>
             <Link href="/pricing"

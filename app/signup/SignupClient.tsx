@@ -28,14 +28,8 @@ export default function SignupClient() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (password !== confirm) {
-      setError("Passwords do not match.");
-      return;
-    }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
+    if (password !== confirm) { setError("Passwords do not match."); return; }
+    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     setLoading(true);
     const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({ email, password });
@@ -43,11 +37,9 @@ export default function SignupClient() {
       setError(error.message);
       setLoading(false);
     } else if (data.session) {
-      // Email confirmation disabled — logged in immediately
       router.push("/dashboard");
       router.refresh();
     } else {
-      // Email confirmation required
       setCheckEmail(true);
       setLoading(false);
     }
@@ -55,32 +47,19 @@ export default function SignupClient() {
 
   if (checkEmail) {
     return (
-      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-indigo-950 border border-indigo-800 flex items-center justify-center mb-6">
-          <svg
-            className="w-8 h-8 text-indigo-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
-            />
+      <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-4 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-teal-deep border border-teal/30 flex items-center justify-center mb-6">
+          <svg className="w-8 h-8 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+              d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
           </svg>
         </div>
-        <h1 className="text-xl font-bold text-white mb-2">Check your email</h1>
-        <p className="text-sm text-gray-400 mb-6 max-w-xs">
+        <h1 className="font-display text-2xl font-bold text-snow mb-2">Check your email</h1>
+        <p className="text-sm text-dim mb-6 max-w-xs">
           We sent a confirmation link to{" "}
-          <span className="text-white font-medium">{email}</span>. Click it to
-          activate your account.
+          <span className="text-snow font-medium">{email}</span>. Click it to activate your account.
         </p>
-        <Link
-          href="/login"
-          className="text-sm text-indigo-400 hover:text-indigo-300"
-        >
+        <Link href="/login" className="text-sm text-teal hover:text-snow transition-colors">
           Back to sign in
         </Link>
       </div>
@@ -88,30 +67,63 @@ export default function SignupClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4">
-      {/* Logo */}
-      <Link href="/" className="flex items-center gap-1 mb-4">
-        <img
-          src="/logo/android-chrome-192x192.png"
-          alt="Tausi"
-          className="w-20 h-20 rounded-lg"
-        />
-        <span className="text-2xl font-bold text-white tracking-tight">
-          Tausi
-        </span>
-      </Link>
+    <div className="min-h-screen bg-ink flex">
 
-      <div className="w-full max-w-sm">
-        <div className="rounded-2xl border border-gray-800 bg-gray-900/60 backdrop-blur-sm p-8">
-          <h1 className="text-xl font-bold text-white mb-1">
-            {A.createAccount}
-          </h1>
-          <p className="text-sm text-gray-500 mb-6">{A.signUpSubtitle}</p>
+      {/* Left panel — branding (desktop only) */}
+      <div className="hidden lg:flex flex-col justify-between w-[420px] shrink-0 border-r border-line bg-ink-2/60 p-10">
+        <Link href="/" className="flex items-center gap-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/android-chrome-192x192.png" alt="Tausi" className="w-10 h-10 rounded-xl" />
+          <span className="font-display text-xl font-bold text-snow tracking-tight">Tausi</span>
+        </Link>
+
+        <div>
+          <p className="font-display text-2xl font-bold text-snow leading-snug mb-3">
+            Join thousands of East African students acing their exams
+          </p>
+          <p className="text-sm text-dim leading-relaxed">
+            Sign up free and get your first credits to try AI exam prediction, marking, and study chat.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-line bg-ink-3/50 p-5">
+          <p className="text-xs text-dim mb-3 uppercase tracking-wider font-semibold">Free to start</p>
+          <div className="space-y-2">
+            {[
+              "AI Exam Prediction",
+              "Marking Scheme Generator",
+              "AI Answer Marking",
+              "24/7 Study Chat",
+              "Discover Public Exams",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                <span className="text-sm text-body">{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+        {/* Mobile logo */}
+        <Link href="/" className="flex items-center gap-2 mb-8 lg:hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/android-chrome-192x192.png" alt="Tausi" className="w-9 h-9 rounded-lg" />
+          <span className="font-display text-lg font-bold text-snow">Tausi</span>
+        </Link>
+
+        <div className="w-full max-w-sm">
+          <h1 className="font-display text-2xl font-bold text-snow mb-1">{A.createAccount}</h1>
+          <p className="text-sm text-dim mb-7">{A.signUpSubtitle}</p>
 
           <button
             type="button"
             onClick={handleGoogle}
-            className="w-full flex items-center justify-center gap-3 rounded-xl border border-gray-700 bg-gray-900 hover:bg-gray-800 text-gray-200 font-medium py-2.5 text-sm transition-colors mb-4"
+            className="w-full flex items-center justify-center gap-3 rounded-xl border border-line bg-ink-2 hover:bg-ink-3 hover:border-line-2 text-body font-medium py-2.5 text-sm transition-all mb-5 cursor-pointer"
           >
             <svg viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -122,20 +134,15 @@ export default function SignupClient() {
             {A.continueWithGoogle}
           </button>
 
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px bg-gray-800" />
-            <span className="text-xs text-gray-600">{A.or}</span>
-            <div className="flex-1 h-px bg-gray-800" />
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex-1 h-px bg-line" />
+            <span className="text-xs text-dim">{A.or}</span>
+            <div className="flex-1 h-px bg-line" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label
-                className="text-xs font-medium text-gray-400"
-                htmlFor="email"
-              >
-                {A.emailLabel}
-              </label>
+              <label className="text-xs font-medium text-dim block" htmlFor="email">{A.emailLabel}</label>
               <input
                 id="email"
                 type="email"
@@ -144,16 +151,11 @@ export default function SignupClient() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={A.emailPlaceholder}
-                className="w-full rounded-xl bg-gray-900 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 text-gray-200 placeholder-gray-600 text-sm px-4 py-2.5 outline-none transition-colors"
+                className="w-full rounded-xl bg-ink-2 border border-line hover:border-line-2 text-snow placeholder-dim/50 text-sm px-4 py-2.5 outline-none transition-all"
               />
             </div>
             <div className="space-y-1.5">
-              <label
-                className="text-xs font-medium text-gray-400"
-                htmlFor="password"
-              >
-                {A.passwordLabel}
-              </label>
+              <label className="text-xs font-medium text-dim block" htmlFor="password">{A.passwordLabel}</label>
               <input
                 id="password"
                 type="password"
@@ -162,16 +164,11 @@ export default function SignupClient() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={A.passwordNew}
-                className="w-full rounded-xl bg-gray-900 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 text-gray-200 placeholder-gray-600 text-sm px-4 py-2.5 outline-none transition-colors"
+                className="w-full rounded-xl bg-ink-2 border border-line hover:border-line-2 text-snow placeholder-dim/50 text-sm px-4 py-2.5 outline-none transition-all"
               />
             </div>
             <div className="space-y-1.5">
-              <label
-                className="text-xs font-medium text-gray-400"
-                htmlFor="confirm"
-              >
-                {A.passwordLabel} (confirm)
-              </label>
+              <label className="text-xs font-medium text-dim block" htmlFor="confirm">Confirm password</label>
               <input
                 id="confirm"
                 type="password"
@@ -180,33 +177,30 @@ export default function SignupClient() {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl bg-gray-900 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 text-gray-200 placeholder-gray-600 text-sm px-4 py-2.5 outline-none transition-colors"
+                className="w-full rounded-xl bg-ink-2 border border-line hover:border-line-2 text-snow placeholder-dim/50 text-sm px-4 py-2.5 outline-none transition-all"
               />
             </div>
             {error && (
-              <div className="rounded-lg border border-red-800 bg-red-950/40 px-3 py-2.5 text-sm text-red-300">
+              <div className="rounded-xl border border-bad/40 bg-bad/10 px-4 py-2.5 text-sm text-bad">
                 {error}
               </div>
             )}
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-800 disabled:text-gray-600 text-white font-semibold py-2.5 text-sm transition-colors mt-2"
+              className="w-full rounded-xl bg-teal hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-ink font-bold py-2.5 text-sm transition-all mt-2 cursor-pointer"
             >
               {loading ? A.creatingAccount : T.nav.signUp}
             </button>
           </form>
-        </div>
 
-        <p className="text-center text-sm text-gray-600 mt-4">
-          {A.haveAccount}{" "}
-          <Link
-            href="/login"
-            className="text-indigo-400 hover:text-indigo-300 font-medium"
-          >
-            {T.nav.signIn}
-          </Link>
-        </p>
+          <p className="text-center text-sm text-dim mt-6">
+            {A.haveAccount}{" "}
+            <Link href="/login" className="text-teal hover:text-snow font-medium transition-colors">
+              {T.nav.signIn}
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
