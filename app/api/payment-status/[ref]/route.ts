@@ -5,8 +5,12 @@ import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 type Ctx = { params: Promise<{ ref: string }> };
 
-export async function GET(_req: Request, ctx: Ctx) {
-  const { ref } = await ctx.params;
+export async function GET(req: Request, ctx: Ctx) {
+  // [ref] is the purchase UUID (stable, created before the Snippe call).
+  // ?snippe_ref=SN... is the real Snippe reference passed from the frontend
+  // so we can heal the DB row if the UPDATE after checkout silently failed.
+  const { ref: purchaseId } = await ctx.params;
+  const snippeRefParam = new URL(req.url).searchParams.get("snippe_ref") ?? "";
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -17,8 +21,8 @@ export async function GET(_req: Request, ctx: Ctx) {
 
   const { data: purchase, error } = await supabase
     .from("credit_purchases")
-    .select("id, user_id, status, credits, pack, completed_at")
-    .eq("snippe_ref", ref)
+    .select("id, user_id, status, credits, pack, completed_at, snippe_ref")
+    .eq("id", purchaseId)
     .eq("user_id", user.id)
     .single();
 
@@ -28,17 +32,25 @@ export async function GET(_req: Request, ctx: Ctx) {
 
   let status = purchase.status as "pending" | "completed" | "failed" | "expired";
 
-  // If still pending, poll Snippe directly.
-  // This is the fallback path for when webhooks haven't fired yet
-  // (dev environments, delivery delays, webhook failures).
-  if (status === "pending") {
+  // Heal stale snippe_ref — if the UPDATE after checkout failed the DB row
+  // still holds "pending-xxx". Use the ref the frontend got from the checkout
+  // response to fix it so subsequent webhook lookups also work.
+  let snippeRef = purchase.snippe_ref as string;
+  if (snippeRef.startsWith("pending-") && snippeRefParam) {
+    snippeRef = snippeRefParam;
+    const admin = createAdminClient();
+    await admin
+      .from("credit_purchases")
+      .update({ snippe_ref: snippeRef })
+      .eq("id", purchaseId);
+  }
+
+  if (status === "pending" && snippeRef && !snippeRef.startsWith("pending-")) {
     try {
-      const snippeData = await getPaymentStatus(ref);
+      const snippeData = await getPaymentStatus(snippeRef);
       const snippeStatus = snippeData.status;
 
       if (snippeStatus === "completed") {
-        // Atomically claim the completion — .eq("status","pending") ensures
-        // only one concurrent caller (this or the webhook) actually adds credits.
         const admin = createAdminClient();
         const { data: claimed } = await admin
           .from("credit_purchases")
@@ -49,7 +61,6 @@ export async function GET(_req: Request, ctx: Ctx) {
           .single();
 
         if (claimed) {
-          // We claimed it — add credits now
           const { error: rpcError } = await admin.rpc("add_credits", {
             p_user_id: claimed.user_id,
             p_credits: claimed.credits as number,
@@ -82,7 +93,6 @@ export async function GET(_req: Request, ctx: Ctx) {
         status = "failed";
       }
     } catch (err) {
-      // Log so server logs show what Snippe actually returned
       console.error("[payment-status] Snippe status check failed:", err instanceof Error ? err.message : err);
     }
   }

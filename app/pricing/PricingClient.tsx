@@ -16,7 +16,7 @@ const CREDIT_PACKS = [
     key: "starter" as const,
     name: "Starter",
     credits: 20,
-    amount_tzs: 500,
+    amount_tzs: 100,
     badge: null,
     description: "Perfect to try Tausi AI",
     color: "border-line",
@@ -120,7 +120,7 @@ function BuyModal({
     };
   }, []);
 
-  const startPolling = (reference: string) => {
+  const startPolling = (purchaseId: string, snippeRef: string) => {
     let attempts = 0;
     // Poll for up to ~10 minutes (200 × 3 s). After that, show a "check manually" state.
     const MAX_ATTEMPTS = 200;
@@ -138,7 +138,10 @@ function BuyModal({
       }
 
       try {
-        const res = await fetch(`/api/payment-status/${encodeURIComponent(reference)}`);
+        // Poll by purchase UUID (stable). Pass snippe_ref so the server can
+        // heal the DB row if the snippe_ref UPDATE after checkout failed.
+        const url = `/api/payment-status/${encodeURIComponent(purchaseId)}?snippe_ref=${encodeURIComponent(snippeRef)}`;
+        const res = await fetch(url);
         if (!res.ok) return;
         const data = await res.json() as { status: string; credits?: number; pack?: string };
         if (data.status === "completed") {
@@ -163,16 +166,16 @@ function BuyModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pack: pack.key, phone: phone.trim() }),
       });
-      const data = await res.json() as { reference?: string; error?: string; message?: string };
+      const data = await res.json() as { reference?: string; purchase_id?: string; error?: string; message?: string };
 
-      if (!res.ok || !data.reference) {
+      if (!res.ok || !data.reference || !data.purchase_id) {
         setState({ step: "error", message: data.error ?? "Failed to initiate payment." });
         setLoading(false);
         return;
       }
 
       setState({ step: "waiting", reference: data.reference });
-      startPolling(data.reference);
+      startPolling(data.purchase_id, data.reference);
     } catch (err) {
       setState({ step: "error", message: err instanceof Error ? err.message : "Network error. Please try again." });
     }
