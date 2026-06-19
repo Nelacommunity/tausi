@@ -99,13 +99,17 @@ export async function POST(request: Request) {
       throw new Error("Snippe did not return a reference");
     }
 
-    // Use admin client — the user-auth client is blocked by RLS on UPDATE,
-    // causing this to silently no-op and leave snippe_ref as "pending-xxx".
-    const admin = createAdminClient();
-    await admin
-      .from("credit_purchases")
-      .update({ snippe_ref: snippeRef })
-      .eq("id", purchaseId);
+    // Use admin client — the user-auth client is blocked by RLS on UPDATE.
+    // Non-fatal: if this fails, the poll endpoint heals the row on first check.
+    try {
+      const admin = createAdminClient();
+      await admin
+        .from("credit_purchases")
+        .update({ snippe_ref: snippeRef })
+        .eq("id", purchaseId);
+    } catch (adminErr) {
+      console.error("[checkout] snippe_ref update failed:", adminErr instanceof Error ? adminErr.message : adminErr);
+    }
 
     return Response.json({
       reference:   snippeRef,
