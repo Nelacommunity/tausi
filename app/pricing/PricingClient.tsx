@@ -166,10 +166,11 @@ function BuyModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pack: pack.key, phone: phone.trim() }),
       });
-      const data = await res.json() as { reference?: string; purchase_id?: string; error?: string; message?: string };
+      let data: { reference?: string; purchase_id?: string; error?: string; message?: string } = {};
+      try { data = await res.json(); } catch { /* empty / non-JSON response */ }
 
       if (!res.ok || !data.reference || !data.purchase_id) {
-        setState({ step: "error", message: data.error ?? "Failed to initiate payment." });
+        setState({ step: "error", message: data.error ?? "Failed to initiate payment. Please try again." });
         setLoading(false);
         return;
       }

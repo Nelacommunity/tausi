@@ -115,8 +115,10 @@ export async function POST(request: Request) {
       message:     "Check your phone to confirm payment",
     });
   } catch (err) {
-    const admin = createAdminClient();
-    await admin.from("credit_purchases").delete().eq("id", purchaseId);
+    try {
+      const admin = createAdminClient();
+      await admin.from("credit_purchases").delete().eq("id", purchaseId);
+    } catch { /* ignore cleanup errors */ }
     const msg = err instanceof Error ? err.message : "Payment initiation failed";
     return jsonErr(msg, 502);
   }
