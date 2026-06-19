@@ -26,7 +26,7 @@ const CREDIT_PACKS = [
     key: "scholar" as const,
     name: "Scholar",
     credits: 60,
-    amount_tzs: 6_000,
+    amount_tzs: 500,
     badge: "Best Value",
     description: "Great for regular studying",
     color: "border-gold/70",
