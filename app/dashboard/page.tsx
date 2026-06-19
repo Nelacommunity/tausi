@@ -256,10 +256,22 @@ export default function Home() {
   const fromStructure = examContent.startsWith("<!--FROM_STRUCTURE-->");
 
   return (
-    <div className="min-h-screen bg-ink text-snow">
+    <div className="min-h-screen bg-ink text-snow md:pl-56">
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 pb-bottom-nav md:pb-8 space-y-8">
-        <h1 className="font-display text-xl font-bold text-snow">{D.pageHeading}</h1>
+        {/* Page header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-bold text-snow">{D.pageHeading}</h1>
+            <p className="text-sm text-dim mt-0.5">Upload past papers — get AI-predicted exam questions</p>
+          </div>
+          <div className="hidden sm:flex items-center gap-2 rounded-xl border border-teal/30 bg-teal-deep/20 px-3 py-2">
+            <svg className="w-4 h-4 text-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            </svg>
+            <span className="text-xs text-dim">AI-powered</span>
+          </div>
+        </div>
 
         {/* ── Input + controls ─────────────────────────────────────────────── */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -614,14 +626,21 @@ export default function Home() {
               ))}
             </div>
           ) : recentExams.length === 0 ? (
-            <div className="rounded-xl border border-line bg-ink-2/30 p-8 text-center">
-              <p className="text-sm text-dim">{D.noExams}</p>
+            <div className="rounded-xl border border-line bg-ink-2/40 p-10 text-center">
+              <div className="w-12 h-12 rounded-xl bg-teal-deep/40 border border-teal/20 flex items-center justify-center mx-auto mb-3">
+                <svg className="w-6 h-6 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                    d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                </svg>
+              </div>
+              <p className="text-sm font-semibold text-body mb-1">{D.noExams}</p>
+              <p className="text-xs text-dim">Upload a past paper above to generate your first AI exam</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {recentExams.map(exam => (
                 <Link key={exam.id} href={`/exams/${exam.id}`}
-                  className="block rounded-xl border border-line bg-ink-3/50 hover:bg-ink-3 hover:border-line-2 p-4 transition-all group cursor-pointer">
+                  className="block rounded-xl border border-line bg-ink-2/60 hover:bg-ink-2 hover:border-teal/40 p-4 transition-all group cursor-pointer card-accent-teal">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <h3 className="text-sm font-semibold text-body group-hover:text-snow line-clamp-2 leading-snug flex-1">
                       {exam.title}

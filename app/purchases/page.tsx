@@ -56,7 +56,7 @@ export default function PurchasesPage() {
     .reduce((s, p) => s + p.credits, 0) ?? 0;
 
   return (
-    <div className="min-h-screen bg-ink text-snow">
+    <div className="min-h-screen bg-ink text-snow md:pl-56">
       <Header />
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 pb-bottom-nav md:pb-8 space-y-6">
 

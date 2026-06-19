@@ -65,7 +65,7 @@ export default function ProfilePage() {
   const initials = (profile?.full_name || profile?.email || "?").slice(0, 2).toUpperCase();
 
   if (loading) return (
-    <div className="min-h-screen bg-ink">
+    <div className="min-h-screen bg-ink md:pl-56">
       <Header />
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-teal border-t-transparent rounded-full animate-spin" />
@@ -76,7 +76,7 @@ export default function ProfilePage() {
   const lowCredits = credits <= 5;
 
   return (
-    <div className="min-h-screen bg-ink text-snow">
+    <div className="min-h-screen bg-ink text-snow md:pl-56">
       <Header />
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 pb-bottom-nav md:pb-8 space-y-6">
 

@@ -173,7 +173,7 @@ export default function MarkPage() {
   const canSubmit = answerFiles.length > 0 && questionFiles.length > 0;
 
   return (
-    <div className="min-h-screen bg-ink text-snow">
+    <div className="min-h-screen bg-ink text-snow md:pl-56">
       <Header />
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 pb-bottom-nav md:pb-8 space-y-8">
 
