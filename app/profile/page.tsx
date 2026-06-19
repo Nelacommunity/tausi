@@ -184,12 +184,13 @@ export default function ProfilePage() {
         </div>
 
         {/* Quick links */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[
             { href: "/dashboard",  label: T.nav.myExams,   color: "text-teal"  },
             { href: "/mark",       label: T.nav.aiMarker,  color: "text-body"  },
             { href: "/study",      label: T.nav.studyRoom, color: "text-body"  },
             { href: "/pricing",    label: "Buy credits",   color: "text-gold"  },
+            { href: "/purchases",  label: "Purchase history", color: "text-body" },
           ].map(({ href, label, color }) => (
             <Link key={href} href={href}
               className="flex items-center justify-center rounded-xl border border-line bg-ink-2/50 hover:bg-ink-2 hover:border-line-2 py-3 text-xs font-medium transition-all">

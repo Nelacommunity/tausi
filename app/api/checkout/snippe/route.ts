@@ -44,9 +44,13 @@ export async function POST(request: Request) {
     .single();
 
   const fullName = ((profile?.full_name as string | null) ?? "").trim();
-  const nameParts = fullName.split(/\s+/);
+  // Fall back to email username (e.g. "john.doe" from "john.doe@gmail.com") so
+  // the Snippe dashboard shows a real identifier instead of the generic "Tausi User".
+  const emailUsername = (user.email ?? "").split("@")[0].replace(/[._+]/g, " ").trim();
+  const displayName = fullName || emailUsername || "Tausi User";
+  const nameParts = displayName.split(/\s+/);
   const firstname = nameParts[0] || "Tausi";
-  const lastname  = nameParts.slice(1).join(" ") || "User";
+  const lastname  = nameParts.slice(1).join(" ") || "";
 
   // Create a pending purchase record first
   const { data: purchase, error: insertError } = await supabase

@@ -12,8 +12,10 @@ export async function POST(request: Request) {
 
   if (process.env.SNIPPE_WEBHOOK_SECRET) {
     if (!verifyWebhookSignature(rawBody, timestamp, signature)) {
-      console.warn("[snippe-webhook] Invalid signature");
-      return new Response("Invalid signature", { status: 401 });
+      // verifyWebhookSignature already logs the specific reason (missing headers /
+      // stale timestamp / HMAC mismatch). Most likely cause: SNIPPE_WEBHOOK_SECRET
+      // in your deployment env doesn't match the secret in the Snippe dashboard.
+      return new Response("Invalid signature — check SNIPPE_WEBHOOK_SECRET env var", { status: 401 });
     }
   }
 

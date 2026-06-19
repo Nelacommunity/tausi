@@ -154,11 +154,15 @@ export function verifyWebhookSignature(
   const secret = process.env.SNIPPE_WEBHOOK_SECRET;
   if (!secret) return true;
 
-  if (!timestamp || !signature) return false;
+  if (!timestamp || !signature) {
+    console.warn(`[snippe] Missing webhook headers — timestamp="${timestamp}" signature="${signature ? "<present>" : "<missing>"}"`);
+    return false;
+  }
 
   const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - parseInt(timestamp, 10)) > 300) {
-    console.warn("[snippe] Rejected stale webhook (timestamp too old)");
+  const ts  = parseInt(timestamp, 10);
+  if (Math.abs(now - ts) > 300) {
+    console.warn(`[snippe] Stale webhook timestamp — ts=${ts} now=${now} diff=${now - ts}s`);
     return false;
   }
 
@@ -168,11 +172,18 @@ export function verifyWebhookSignature(
     .digest("hex");
 
   try {
-    return crypto.timingSafeEqual(
+    const ok = crypto.timingSafeEqual(
       Buffer.from(signature, "utf8"),
       Buffer.from(expected, "utf8")
     );
-  } catch {
+    if (!ok) {
+      // Log first 8 chars only — enough to compare prefixes without leaking the full value
+      console.warn(`[snippe] Signature mismatch — received="${signature.slice(0, 8)}..." expected="${expected.slice(0, 8)}..."`);
+    }
+    return ok;
+  } catch (e) {
+    // timingSafeEqual throws when buffer lengths differ (different hash lengths — usually a key encoding issue)
+    console.warn(`[snippe] timingSafeEqual threw (length mismatch?) — ${e}`);
     return false;
   }
 }

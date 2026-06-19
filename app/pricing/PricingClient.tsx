@@ -121,7 +121,22 @@ function BuyModal({
   }, []);
 
   const startPolling = (reference: string) => {
+    let attempts = 0;
+    // Poll for up to ~10 minutes (200 × 3 s). After that, show a "check manually" state.
+    const MAX_ATTEMPTS = 200;
+
     pollRef.current = setInterval(async () => {
+      attempts++;
+
+      if (attempts > MAX_ATTEMPTS) {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setState({
+          step: "error",
+          message: "Confirmation is taking longer than expected. If you paid, your credits will appear shortly — check your purchase history.",
+        });
+        return;
+      }
+
       try {
         const res = await fetch(`/api/payment-status/${encodeURIComponent(reference)}`);
         if (!res.ok) return;
@@ -257,6 +272,9 @@ function BuyModal({
                 Close
               </button>
             </div>
+            <Link href="/purchases" className="block text-xs text-dim hover:text-body transition-colors">
+              View purchase history →
+            </Link>
           </div>
         )}
 
@@ -269,7 +287,7 @@ function BuyModal({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-bold text-snow">Payment failed</p>
+              <p className="text-sm font-bold text-snow">Payment issue</p>
               <p className="text-xs text-dim mt-1">{state.message}</p>
             </div>
             <div className="flex gap-2">
@@ -283,6 +301,9 @@ function BuyModal({
                 Cancel
               </button>
             </div>
+            <Link href="/purchases" className="block text-xs text-dim hover:text-body transition-colors">
+              View purchase history →
+            </Link>
           </div>
         )}
       </div>
