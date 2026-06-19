@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   const displayName = fullName || emailUsername || "Tausi User";
   const nameParts = displayName.split(/\s+/);
   const firstname = nameParts[0] || "Tausi";
-  const lastname  = nameParts.slice(1).join(" ") || "";
+  const lastname  = nameParts.slice(1).join(" ") || "User";
 
   // Create a pending purchase record first
   const { data: purchase, error: insertError } = await supabase
