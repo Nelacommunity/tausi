@@ -81,8 +81,9 @@ export async function GET(_req: Request, ctx: Ctx) {
 
         status = "failed";
       }
-    } catch {
-      // Non-fatal — return the current DB status and let the frontend retry
+    } catch (err) {
+      // Log so server logs show what Snippe actually returned
+      console.error("[payment-status] Snippe status check failed:", err instanceof Error ? err.message : err);
     }
   }
 
