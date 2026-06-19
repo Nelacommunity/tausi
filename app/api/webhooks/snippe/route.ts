@@ -10,13 +10,17 @@ export async function POST(request: Request) {
   const signature   = request.headers.get("X-Webhook-Signature") ?? "";
   const headerEvent = request.headers.get("X-Webhook-Event") ?? "";
 
-  if (process.env.SNIPPE_WEBHOOK_SECRET) {
+  const bypass = process.env.SNIPPE_WEBHOOK_SECRET_BYPASS === "true";
+  if (!bypass && process.env.SNIPPE_WEBHOOK_SECRET) {
     if (!verifyWebhookSignature(rawBody, timestamp, signature)) {
       // verifyWebhookSignature already logs the specific reason (missing headers /
       // stale timestamp / HMAC mismatch). Most likely cause: SNIPPE_WEBHOOK_SECRET
       // in your deployment env doesn't match the secret in the Snippe dashboard.
       return new Response("Invalid signature — check SNIPPE_WEBHOOK_SECRET env var", { status: 401 });
     }
+  }
+  if (bypass) {
+    console.warn("[snippe-webhook] Signature verification BYPASSED — disable SNIPPE_WEBHOOK_SECRET_BYPASS in production");
   }
 
   let payload: SnippeWebhookPayload;
