@@ -1,4 +1,5 @@
 import { createClient } from "@/app/lib/supabase/server";
+import { createAdminClient } from "@/app/lib/supabase/admin";
 import { createMobilePayment, toIdempKey } from "@/lib/snippe";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
@@ -98,7 +99,10 @@ export async function POST(request: Request) {
       throw new Error("Snippe did not return a reference");
     }
 
-    await supabase
+    // Use admin client — the user-auth client is blocked by RLS on UPDATE,
+    // causing this to silently no-op and leave snippe_ref as "pending-xxx".
+    const admin = createAdminClient();
+    await admin
       .from("credit_purchases")
       .update({ snippe_ref: snippeRef })
       .eq("id", purchaseId);
@@ -111,7 +115,8 @@ export async function POST(request: Request) {
       message:     "Check your phone to confirm payment",
     });
   } catch (err) {
-    await supabase.from("credit_purchases").delete().eq("id", purchaseId);
+    const admin = createAdminClient();
+    await admin.from("credit_purchases").delete().eq("id", purchaseId);
     const msg = err instanceof Error ? err.message : "Payment initiation failed";
     return jsonErr(msg, 502);
   }
