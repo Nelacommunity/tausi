@@ -373,6 +373,44 @@ html.tausi-js .reveal.is-in .pricing-lissajous {
   }
 }
 
+/* ── Collapsible sidebar layout shell ───────────────────────── */
+
+/* Pages use .page-shell instead of md:pl-56 */
+.page-shell {
+  transition: padding-left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (min-width: 768px) {
+  .page-shell { padding-left: 224px; }
+  html.sidebar-collapsed .page-shell { padding-left: 56px; }
+}
+
+/* ── Card entrance stagger animations ────────────────────────── */
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+.card-enter   { animation: card-enter 0.35s var(--ease-out-quart) both; }
+.card-enter-1 { animation-delay: 0.04s; }
+.card-enter-2 { animation-delay: 0.09s; }
+.card-enter-3 { animation-delay: 0.14s; }
+.card-enter-4 { animation-delay: 0.19s; }
+.card-enter-5 { animation-delay: 0.24s; }
+
+/* ── Shimmer skeleton ────────────────────────────────────────── */
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg,
+    oklch(0.24 0.013 236) 25%,
+    oklch(0.29 0.013 236) 50%,
+    oklch(0.24 0.013 236) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 8px;
+}
+
 /* ── Glassmorphism & app UI utilities ───────────────────────── */
 
 .glass {

@@ -321,25 +321,31 @@ export function PricingClient() {
   const [selectedPack, setSelectedPack] = useState<typeof CREDIT_PACKS[number] | null>(null);
 
   return (
-    <div className="min-h-screen bg-ink text-snow md:pl-56">
+    <div className="min-h-screen bg-ink text-snow page-shell">
       <Header />
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-12 pb-bottom-nav md:pb-12 space-y-14">
 
-        {/* Hero */}
-        <div className="text-center">
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-snow mb-4">Buy Credits</h1>
-          <p className="text-body max-w-xl mx-auto text-sm">
-            Pay-as-you-go credits for AI exam predictions, marking, tutoring, and more. No subscriptions — buy what you need.
+        {/* ── Hero ──────────────────────────────────────────── */}
+        <div className="text-center page-in">
+          <div className="inline-flex items-center gap-2 rounded-xl border border-teal/25 bg-teal/8 px-3 py-1.5 text-xs font-semibold text-teal mb-5">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
+            No subscriptions — pay as you go
+          </div>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-snow mb-3">Buy Credits</h1>
+          <p className="text-body max-w-lg mx-auto text-sm leading-relaxed">
+            Fuel your AI exam prep. Credits work across all features — predictions, marking, tutoring, and writing.
           </p>
-          <p className="text-xs text-dim mt-2">New accounts get 5 free starter credits to try the platform.</p>
+          <p className="text-xs text-dim mt-2">5 free credits on every new account.</p>
         </div>
 
-        {/* Credit pack cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {CREDIT_PACKS.map((pack) => (
+        {/* ── Credit pack cards ─────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 card-enter card-enter-1">
+          {CREDIT_PACKS.map((pack, i) => (
             <div
               key={pack.key}
-              className={`relative rounded-2xl border-2 bg-ink-2 p-7 flex flex-col ${pack.color}`}
+              className={`relative rounded-2xl border-2 bg-ink-2/60 p-7 flex flex-col transition-all hover:bg-ink-2 card-enter card-enter-${i + 1} ${pack.color}`}
             >
               {pack.badge && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
@@ -349,44 +355,39 @@ export function PricingClient() {
                 </div>
               )}
 
-              <div className="mb-5">
-                <p className={`font-display text-base font-semibold mb-2 ${pack.accent}`}>{pack.name}</p>
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="font-display text-4xl font-bold text-snow">
+              <div className="mb-6">
+                <p className={`text-xs font-bold uppercase tracking-widest mb-3 ${pack.accent}`}>{pack.name}</p>
+                <div className="flex items-baseline gap-1.5 mb-2">
+                  <span className="font-display text-5xl font-bold text-snow leading-none">
                     {pack.credits}
                   </span>
-                  <span className="text-dim text-sm ml-1">credits</span>
+                  <span className="text-dim text-base">credits</span>
                 </div>
-                <p className="text-lg font-semibold text-body">TZS {pack.amount_tzs.toLocaleString()}</p>
-                <p className="text-xs text-dim mt-1">{pack.description}</p>
+                <p className="text-2xl font-bold text-body">TZS {pack.amount_tzs.toLocaleString()}</p>
+                <p className="text-xs text-dim mt-2 leading-relaxed">{pack.description}</p>
               </div>
 
-              {/* Credit cost breakdown */}
-              <ul className="space-y-2 text-xs text-dim flex-1 mb-6">
-                <li className="flex items-center justify-between">
-                  <span>Predict Exam</span>
-                  <span className="text-body font-medium">{CREDIT_COSTS.exam_prediction} cr · ≈{Math.floor(pack.credits / CREDIT_COSTS.exam_prediction)} uses</span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span>Mark Answers</span>
-                  <span className="text-body font-medium">{CREDIT_COSTS.ai_marking} cr · ≈{Math.floor(pack.credits / CREDIT_COSTS.ai_marking)} uses</span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span>AI Tutor</span>
-                  <span className="text-body font-medium">{CREDIT_COSTS.study_chat} cr · ≈{Math.floor(pack.credits / CREDIT_COSTS.study_chat)} msgs</span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span>Past Papers</span>
-                  <span className="text-body font-medium">{CREDIT_COSTS.paper_prediction} cr · ≈{Math.floor(pack.credits / CREDIT_COSTS.paper_prediction)} uses</span>
-                </li>
+              {/* What you can do */}
+              <ul className="space-y-2.5 text-xs flex-1 mb-7">
+                {[
+                  { label: "Predict Exam", cost: CREDIT_COSTS.exam_prediction, uses: Math.floor(pack.credits / CREDIT_COSTS.exam_prediction) },
+                  { label: "Mark Answers", cost: CREDIT_COSTS.ai_marking, uses: Math.floor(pack.credits / CREDIT_COSTS.ai_marking) },
+                  { label: "AI Tutor msgs", cost: CREDIT_COSTS.study_chat, uses: Math.floor(pack.credits / CREDIT_COSTS.study_chat) },
+                  { label: "Past Papers", cost: CREDIT_COSTS.paper_prediction, uses: Math.floor(pack.credits / CREDIT_COSTS.paper_prediction) },
+                ].map(({ label, cost, uses }) => (
+                  <li key={label} className="flex items-center justify-between gap-2">
+                    <span className="text-dim">{label}</span>
+                    <span className="text-body font-semibold whitespace-nowrap">{cost} cr · ≈{uses}×</span>
+                  </li>
+                ))}
               </ul>
 
               <button
                 onClick={() => setSelectedPack(pack)}
-                className={`flex items-center justify-center gap-2 rounded-xl font-semibold py-3 transition-all text-sm ${
+                className={`flex items-center justify-center gap-2 rounded-xl font-bold py-3.5 transition-all text-sm cursor-pointer ${
                   pack.key === "scholar"
-                    ? "bg-gold hover:bg-gold-hover text-on-gold"
-                    : "border border-line hover:border-teal text-body hover:text-snow"
+                    ? "bg-gold hover:opacity-90 text-on-gold"
+                    : "border border-line hover:border-teal/50 hover:bg-teal/5 text-body hover:text-snow"
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -398,17 +399,17 @@ export function PricingClient() {
           ))}
         </div>
 
-        {/* Detailed credit breakdown table */}
-        <section>
+        {/* ── Credit breakdown table ────────────────────────── */}
+        <section className="card-enter card-enter-2">
           <div className="mb-5">
-            <h2 className="font-display text-lg font-bold text-snow mb-1">Credit costs per action</h2>
+            <h2 className="text-xs font-bold text-dim uppercase tracking-widest mb-1">Credit costs per action</h2>
             <p className="text-sm text-body">Each AI action deducts credits from your balance. Credits never expire.</p>
           </div>
 
           <div className="rounded-2xl border border-line overflow-hidden">
-            <div className="grid grid-cols-[1fr_auto_1fr] bg-ink-2 border-b border-line px-5 py-3 text-xs font-semibold text-dim uppercase tracking-wider">
+            <div className="grid grid-cols-[1fr_auto_1fr] bg-ink-2 border-b border-line px-5 py-3 text-xs font-bold text-dim uppercase tracking-widest">
               <span>Feature</span>
-              <span className="text-center">Credits</span>
+              <span className="text-center">Cost</span>
               <span className="text-right">Uses per pack</span>
             </div>
 
@@ -419,19 +420,19 @@ export function PricingClient() {
               return (
                 <div key={feature}
                   className={`grid grid-cols-[1fr_auto_1fr] px-5 py-4 items-center gap-4 ${
-                    !isLast ? "border-b border-line/60" : ""
-                  } hover:bg-ink-3/40 transition-colors`}
+                    !isLast ? "border-b border-line/50" : ""
+                  } hover:bg-ink-3/30 transition-colors`}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-teal-deep/60 border border-teal-deep flex items-center justify-center shrink-0">
-                      <Icon d={est.icon} className="w-3.5 h-3.5 text-teal" />
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-teal/10 border border-teal/20 flex items-center justify-center shrink-0">
+                      <Icon d={est.icon} className="w-4 h-4 text-teal" />
                     </div>
-                    <span className="text-sm font-medium text-body truncate">{FEATURE_LABELS[feature]}</span>
+                    <span className="text-sm font-semibold text-body truncate">{FEATURE_LABELS[feature]}</span>
                   </div>
                   <div className="text-center">
-                    <span className="inline-flex items-center gap-1 text-sm font-bold text-gold">
+                    <span className="inline-flex items-baseline gap-0.5 text-base font-bold text-gold">
                       {cost}
-                      <span className="text-xs font-normal text-dim">cr</span>
+                      <span className="text-xs font-normal text-dim ml-0.5">cr</span>
                     </span>
                   </div>
                   <div className="text-right">
@@ -443,22 +444,27 @@ export function PricingClient() {
           </div>
         </section>
 
-        {/* Mobile money payment methods */}
-        <section className="rounded-2xl border border-line bg-ink-2/40 p-6">
-          <h2 className="text-sm font-semibold text-body mb-4">Payment methods</h2>
+        {/* ── Payment methods ───────────────────────────────── */}
+        <section className="rounded-2xl border border-line bg-ink-2/40 p-6 card-enter card-enter-3">
+          <p className="text-xs font-bold text-dim uppercase tracking-widest mb-4">Payment methods</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-            {["M-Pesa", "Airtel", "Mixx by Yas", "Halotel"].map((label) => (
-              <div key={label} className="flex items-center justify-center rounded-xl border border-line bg-ink-2 py-3 text-sm font-medium text-body">
-                {label}
+            {[
+              { label: "M-Pesa", color: "text-good" },
+              { label: "Airtel", color: "text-bad" },
+              { label: "Mixx by Yas", color: "text-teal" },
+              { label: "Halotel", color: "text-gold" },
+            ].map(({ label, color }) => (
+              <div key={label} className="flex items-center justify-center rounded-xl border border-line bg-ink-2 py-3 text-sm font-bold text-body">
+                <span className={color}>{label}</span>
               </div>
             ))}
           </div>
-          <p className="text-xs text-dim">All payments processed securely via Snippe mobile money gateway. Credits are added instantly after payment confirmation.</p>
+          <p className="text-xs text-dim">Processed securely via Snippe. Credits are added instantly after payment confirmation.</p>
         </section>
 
-        {/* FAQ */}
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-body">{PR.faqHeading}</h2>
+        {/* ── FAQ ───────────────────────────────────────────── */}
+        <section className="space-y-2 card-enter card-enter-4">
+          <p className="text-xs font-bold text-dim uppercase tracking-widest mb-4">{PR.faqHeading}</p>
           {[
             { q: "What is a credit?", a: "A credit is a unit of AI usage. Each AI action costs a fixed number of credits — exam predictions cost 4, marking 3, chat messages 2, writing 1. This is simpler and fairer than tracking tokens." },
             { q: "Do credits expire?", a: "No. Credits never expire. Buy a pack and use them whenever you need." },
@@ -466,9 +472,16 @@ export function PricingClient() {
             { q: "How do new accounts get started?", a: "Every new account starts with 5 free credits — enough for 1 exam prediction or a few study chat messages, so you can try the platform before buying." },
             { q: "Which mobile money providers are supported?", a: "We support M-Pesa, Airtel Money, Mixx by Yas, and Halotel. More providers coming soon." },
           ].map(({ q, a }) => (
-            <details key={q} className="rounded-xl border border-line bg-ink-2/40">
-              <summary className="px-5 py-3.5 text-sm font-medium text-body cursor-pointer hover:text-snow select-none">{q}</summary>
-              <p className="px-5 pb-4 text-sm text-dim leading-relaxed">{a}</p>
+            <details key={q} className="rounded-2xl border border-line bg-ink-2/40 overflow-hidden group">
+              <summary className="flex items-center justify-between px-5 py-4 text-sm font-semibold text-body cursor-pointer hover:text-snow select-none transition-colors">
+                {q}
+                <svg className="w-4 h-4 text-dim group-open:rotate-180 transition-transform shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </summary>
+              <div className="px-5 pb-5 border-t border-line/50">
+                <p className="text-sm text-dim leading-relaxed pt-3">{a}</p>
+              </div>
             </details>
           ))}
         </section>

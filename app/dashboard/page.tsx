@@ -256,30 +256,37 @@ export default function Home() {
   const fromStructure = examContent.startsWith("<!--FROM_STRUCTURE-->");
 
   return (
-    <div className="min-h-screen bg-ink text-snow md:pl-56">
+    <div className="min-h-screen bg-ink text-snow page-shell">
       <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 pb-bottom-nav md:pb-8 space-y-8">
-        {/* Page header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-display text-2xl font-bold text-snow">{D.pageHeading}</h1>
-            <p className="text-sm text-dim mt-0.5">Upload past papers — get AI-predicted exam questions</p>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10 pb-bottom-nav md:pb-10 space-y-8">
+        {/* ── Page header ─────────────────────────────────── */}
+        <div className="flex items-start justify-between gap-4 page-in">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-teal/15 border border-teal/25 flex items-center justify-center shrink-0">
+              <svg className="w-[18px] h-[18px] text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="font-display text-2xl font-bold text-snow leading-none">{D.pageHeading}</h1>
+              <p className="text-sm text-dim mt-0.5">Upload past papers — get AI-predicted exam questions</p>
+            </div>
           </div>
-          <div className="hidden sm:flex items-center gap-2 rounded-xl border border-teal/30 bg-teal-deep/20 px-3 py-2">
-            <svg className="w-4 h-4 text-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-teal border border-teal/30 bg-teal/5 px-2.5 py-1.5 rounded-lg shrink-0">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
             </svg>
-            <span className="text-xs text-dim">AI-powered</span>
-          </div>
+            AI-powered
+          </span>
         </div>
 
         {/* ── Input + controls ─────────────────────────────────────────────── */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-5 card-enter card-enter-1">
 
           {/* LEFT — source picker */}
-          <div className="space-y-4">
+          <div className="rounded-2xl border border-line bg-ink-2/40 p-6 space-y-5">
             <div>
-              <h2 className="text-base font-semibold text-body mb-1">{D.sourceHeading}</h2>
+              <p className="text-xs font-bold text-dim uppercase tracking-widest mb-1">{D.sourceHeading}</p>
               <p className="text-sm text-dim">{D.sourceSub}</p>
             </div>
 
@@ -322,19 +329,26 @@ export default function Home() {
                   onDrop={handleDrop}
                   onDragOver={e => { e.preventDefault(); if (files.length < MAX_FILES) setIsDragging(true); }}
                   onDragLeave={() => setIsDragging(false)}
-                  className={`rounded-xl border-2 border-dashed p-8 transition-all flex flex-col items-center justify-center gap-3 min-h-[160px] ${
+                  className={`rounded-2xl border-2 border-dashed p-8 transition-all flex flex-col items-center justify-center gap-3 min-h-[160px] select-none ${
                     files.length >= MAX_FILES || isGenerating
-                      ? "opacity-40 cursor-not-allowed border-line bg-ink-2/30"
+                      ? "opacity-40 cursor-not-allowed border-line bg-ink-2/20"
                       : isDragging
-                      ? "cursor-pointer border-teal bg-teal-deep/20"
-                      : "cursor-pointer border-line hover:border-line-2 bg-ink-2/50 hover:bg-ink-2"
+                      ? "cursor-pointer border-teal bg-teal/5 scale-[1.01]"
+                      : "cursor-pointer border-line hover:border-teal/40 bg-ink-2/20"
                   }`}>
-                  <UploadIcon />
+                  <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center transition-colors ${
+                    isDragging ? "bg-teal/20 border-teal/40" : "bg-ink-3 border-line"
+                  }`}>
+                    <svg className={`w-6 h-6 transition-colors ${isDragging ? "text-teal" : "text-dim"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2}
+                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                  </div>
                   <div className="text-center">
-                    <p className="text-sm text-body font-medium">
+                    <p className="text-sm text-body font-semibold">
                       {files.length >= MAX_FILES
                         ? D.maxReached
-                        : <>{D.dropFiles} <span className="text-teal underline underline-offset-2">{D.browse}</span></>}
+                        : <>{D.dropFiles} <span className="text-teal">{D.browse}</span></>}
                     </p>
                     <p className="text-xs text-dim mt-1">{D.dropSub(MAX_FILES)}</p>
                   </div>
@@ -346,17 +360,19 @@ export default function Home() {
                   <ul className="space-y-2">
                     {files.map((file, i) => (
                       <li key={`${file.name}-${file.size}`}
-                        className="flex items-center gap-3 rounded-lg bg-ink-3/60 border border-line px-3 py-2">
-                        <svg className="w-5 h-5 shrink-0 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+                        className="flex items-center gap-3 rounded-xl bg-ink border border-line px-3 py-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-teal/10 border border-teal/20 flex items-center justify-center shrink-0">
+                          <svg className="w-4 h-4 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                          </svg>
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-body truncate font-medium">{file.name}</p>
                           <p className="text-xs text-dim">{formatFileSize(file.size)}</p>
                         </div>
                         <button onClick={() => removeFile(i)} disabled={isGenerating}
-                          className="text-dim hover:text-bad disabled:opacity-50 p-0.5 transition-colors">
+                          className="p-1 rounded-md text-dim hover:text-bad hover:bg-bad/10 disabled:opacity-50 transition-colors cursor-pointer">
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
@@ -482,25 +498,30 @@ export default function Home() {
           </div>
 
           {/* RIGHT — notes + actions ──────────────────────────────────────── */}
-          <div className="space-y-4">
+          <div className="rounded-2xl border border-line bg-ink-2/40 p-6 space-y-5">
             <div>
-              <h2 className="text-base font-semibold text-body mb-1">{D.notesHeading}</h2>
+              <p className="text-xs font-bold text-dim uppercase tracking-widest mb-1">{D.notesHeading}</p>
               <p className="text-sm text-dim">{D.notesSub}</p>
             </div>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} disabled={isGenerating}
               placeholder={D.notesPlaceholder}
               rows={6}
-              className="w-full rounded-xl bg-ink border border-line text-body placeholder-dim text-sm px-4 py-3 resize-none focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/30 transition-colors disabled:opacity-50" />
+              className="w-full rounded-xl bg-ink border border-line text-body placeholder:text-dim/50 text-sm px-4 py-3 resize-none outline-none focus:border-teal transition-colors disabled:opacity-50" />
 
             {error && (
-              <div className="rounded-lg border border-bad/50 bg-bad/10 px-4 py-3 text-sm text-bad">{error}</div>
+              <div className="flex items-center gap-3 rounded-xl border border-bad/30 bg-bad/8 px-4 py-3 text-sm text-bad">
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                {error}
+              </div>
             )}
 
             {confirmRegenerate && (
-              <div className="flex items-center gap-2 rounded-lg border border-gold/40 bg-gold/10 px-4 py-2.5">
+              <div className="flex items-center gap-2 rounded-xl border border-gold/30 bg-gold/8 px-4 py-3">
                 <p className="text-xs text-gold flex-1">{D.replaceExam}</p>
                 <button onClick={generateExam}
-                  className="text-xs font-semibold text-on-gold bg-gold hover:bg-gold-hover px-3 py-1.5 rounded-lg transition-colors shrink-0">
+                  className="text-xs font-bold text-ink bg-gold hover:opacity-90 px-3 py-1.5 rounded-lg transition-opacity cursor-pointer shrink-0">
                   {D.replaceBtn}
                 </button>
                 <button onClick={() => setConfirmRegenerate(false)}
@@ -514,16 +535,22 @@ export default function Home() {
               <button
                 onClick={hasExam ? () => setConfirmRegenerate(true) : generateExam}
                 disabled={isGenerating || !canGenerate}
-                className="flex items-center justify-center gap-2 w-full rounded-xl bg-teal hover:bg-teal-deep text-ink disabled:bg-ink-3 disabled:text-dim font-semibold py-3 px-6 transition-all focus:outline-none cursor-pointer">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                    d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                </svg>
-                {status === "generating-exam"
-                  ? (<>{D.generatingBtn}<LoadingDots /></>)
-                  : inputMode === "library" && selectedPaperIds.length > 0
-                  ? D.generateFrom(selectedPaperIds.length)
-                  : D.generateBtn}
+                className="flex items-center justify-center gap-2.5 w-full rounded-xl bg-teal hover:opacity-90 text-ink disabled:bg-ink-3 disabled:text-dim disabled:cursor-not-allowed font-bold py-4 text-base transition-all focus:outline-none cursor-pointer">
+                {status === "generating-exam" ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-ink/40 border-t-ink rounded-full animate-spin" />
+                    {D.generatingBtn}
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                    </svg>
+                    {inputMode === "library" && selectedPaperIds.length > 0
+                      ? D.generateFrom(selectedPaperIds.length)
+                      : D.generateBtn}
+                  </>
+                )}
               </button>
 
               {isGenerating && (
@@ -538,7 +565,7 @@ export default function Home() {
 
               {hasExam && (
                 <button onClick={generateMarking} disabled={isGenerating}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-good/20 hover:bg-good/30 disabled:bg-ink-3 disabled:text-dim text-good border border-good/30 font-semibold py-3 px-6 transition-all cursor-pointer">
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-good/10 hover:bg-good/20 disabled:opacity-40 text-good border border-good/30 font-semibold py-3 px-6 transition-all cursor-pointer">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                       d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -549,7 +576,7 @@ export default function Home() {
 
               {hasExam && !isGenerating && (
                 <button onClick={saveExam} disabled={isSaving}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl border border-teal-deep hover:bg-teal-deep/20 disabled:opacity-50 text-teal font-semibold py-3 px-6 transition-all cursor-pointer">
+                  className="flex items-center justify-center gap-2 w-full rounded-xl border border-teal/30 hover:border-teal hover:bg-teal/5 disabled:opacity-50 text-teal font-semibold py-3 px-6 transition-all cursor-pointer">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                       d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -563,33 +590,35 @@ export default function Home() {
 
         {/* ── Output preview ───────────────────────────────────────────────── */}
         {(hasExam || status === "generating-exam") && (
-          <section className="space-y-4">
-            <div className="flex items-center gap-1 border-b border-line">
+          <section className="rounded-2xl border border-line bg-ink-2/40 overflow-hidden card-enter card-enter-2">
+            <div className="flex items-center gap-1 px-2 pt-2 border-b border-line">
               {(["exam", "marking"] as Tab[]).map(tab => {
                 const isActive = activeTab === tab;
-                const isMarking = tab === "marking";
-                if (isMarking && !hasMarking && status !== "generating-marking") return null;
+                const isMarkingTab = tab === "marking";
+                if (isMarkingTab && !hasMarking && status !== "generating-marking") return null;
                 return (
-                  <button key={tab} onClick={() => setActiveTab(tab)}
-                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  <button key={tab} onClick={() => setActiveTab(tab)} cursor-pointer
+                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 -mb-px transition-all cursor-pointer ${
                       isActive
-                        ? isMarking ? "text-good border-good/50 bg-ink-3/50" : "text-teal border-teal/50 bg-ink-3/50"
+                        ? isMarkingTab ? "text-good border-good bg-good/5" : "text-teal border-teal bg-teal/5"
                         : "text-dim border-transparent hover:text-snow"
                     }`}>
-                    {isMarking ? T.examViewer.markingScheme : T.examViewer.predictedExam}
-                    {!isMarking && status === "generating-exam" && <LoadingDots />}
-                    {isMarking && status === "generating-marking" && <LoadingDots />}
+                    {isMarkingTab ? T.examViewer.markingScheme : T.examViewer.predictedExam}
+                    {!isMarkingTab && status === "generating-exam" && <LoadingDots />}
+                    {isMarkingTab && status === "generating-marking" && <LoadingDots />}
                   </button>
                 );
               })}
-              {/* Structure badge */}
               {fromStructure && activeTab === "exam" && status !== "generating-exam" && (
-                <span className="ml-auto text-xs text-good flex items-center gap-1 pr-2">
+                <span className="ml-auto text-xs font-semibold text-good flex items-center gap-1 pr-3">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                   {D.fromStructureBadge}
                 </span>
               )}
             </div>
-            <div className="rounded-xl border border-line bg-ink-2/60 p-6 min-h-[300px]">
+            <div className="p-6 min-h-[300px]">
               {activeTab === "exam" && (
                 cleanExamContent
                   ? <ExamOutput content={cleanExamContent} isStreaming={status === "generating-exam"} />
@@ -613,40 +642,38 @@ export default function Home() {
         {/* ── My recent exams ──────────────────────────────────────────────── */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-body">{D.myExamsHeading}</h2>
+            <h2 className="text-xs font-bold text-dim uppercase tracking-widest">{D.myExamsHeading}</h2>
             {!loadingRecent && recentExams.length > 0 && (
-              <span className="text-xs text-dim">{D.saved(recentExams.length)}</span>
+              <span className="text-xs font-semibold text-dim bg-ink-3 border border-line rounded-full px-2 py-0.5">{D.saved(recentExams.length)}</span>
             )}
           </div>
 
           {loadingRecent ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-28 rounded-xl bg-ink-3/50 border border-line animate-pulse" />
-              ))}
+              {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl skeleton" />)}
             </div>
           ) : recentExams.length === 0 ? (
-            <div className="rounded-xl border border-line bg-ink-2/40 p-10 text-center">
-              <div className="w-12 h-12 rounded-xl bg-teal-deep/40 border border-teal/20 flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+            <div className="rounded-2xl border border-line bg-ink-2/30 p-12 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-teal/10 border border-teal/20 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2}
                     d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                 </svg>
               </div>
-              <p className="text-sm font-semibold text-body mb-1">{D.noExams}</p>
+              <p className="text-sm font-bold text-body mb-1">{D.noExams}</p>
               <p className="text-xs text-dim">Upload a past paper above to generate your first AI exam</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {recentExams.map(exam => (
+              {recentExams.map((exam, i) => (
                 <Link key={exam.id} href={`/exams/${exam.id}`}
-                  className="block rounded-xl border border-line bg-ink-2/60 hover:bg-ink-2 hover:border-teal/40 p-4 transition-all group cursor-pointer card-accent-teal">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="text-sm font-semibold text-body group-hover:text-snow line-clamp-2 leading-snug flex-1">
+                  className={`group block rounded-2xl border border-line bg-ink-2/50 hover:bg-ink-2 hover:border-teal/40 p-5 transition-all cursor-pointer card-enter card-enter-${Math.min(i + 1, 5)}`}>
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <h3 className="text-sm font-bold text-body group-hover:text-snow line-clamp-2 leading-snug flex-1 transition-colors">
                       {exam.title}
                     </h3>
-                    <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded-full border mt-0.5 ${
-                      exam.is_public ? "text-good border-teal-deep" : "text-dim border-line"
+                    <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border mt-0.5 ${
+                      exam.is_public ? "text-good border-good/30 bg-good/10" : "text-dim border-line"
                     }`}>
                       {exam.is_public ? T.common.public : T.common.private}
                     </span>
@@ -655,7 +682,12 @@ export default function Home() {
                     {exam.original_filenames.slice(0, 2).join(", ")}
                     {exam.original_filenames.length > 2 && ` +${exam.original_filenames.length - 2}`}
                   </p>
-                  <p className="text-xs text-dim" suppressHydrationWarning>{formatDate(exam.created_at)}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-dim/60" suppressHydrationWarning>{formatDate(exam.created_at)}</p>
+                    <svg className="w-4 h-4 text-dim group-hover:text-teal transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </div>
                 </Link>
               ))}
             </div>

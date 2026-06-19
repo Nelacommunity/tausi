@@ -55,35 +55,43 @@ export default async function PapersPage() {
   const list = (papers ?? []) as ExamPaper[];
 
   return (
-    <div className="min-h-screen bg-ink text-snow md:pl-56">
+    <div className="min-h-screen bg-ink text-snow page-shell">
       <Header />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-bottom-nav md:pb-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10 pb-bottom-nav md:pb-10">
 
-        <PapersHeader />
+        {/* ── Page header ─────────────────────────────────── */}
+        <div className="page-in mb-10">
+          <PapersHeader />
+        </div>
 
         {list.length === 0 ? (
           <PapersEmpty />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {list.map(paper => (
+            {list.map((paper, i) => (
               <div key={paper.id}
-                className="bg-ink-2 border border-line rounded-2xl p-5 flex flex-col gap-3 hover:border-line-2 transition-colors">
+                className={`group bg-ink-2/50 border border-line rounded-2xl p-5 flex flex-col gap-4 hover:border-teal/30 hover:bg-ink-2 transition-all card-enter card-enter-${Math.min(i + 1, 5)}`}>
 
                 {/* Top: badge + year */}
                 <div className="flex items-center justify-between gap-2">
                   <TypeBadge type={paper.exam_type} />
-                  <span className="text-sm font-bold text-body">{paper.year}</span>
+                  <span className="text-xs font-bold text-dim bg-ink-3 border border-line rounded-lg px-2.5 py-1">{paper.year}</span>
                 </div>
 
                 {/* Name + subject */}
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-snow leading-snug mb-0.5">{paper.name}</p>
+                  <p className="text-sm font-bold text-snow leading-snug mb-1">{paper.name}</p>
                   <p className="text-xs text-dim">{paper.subject}</p>
                 </div>
 
                 {/* Files + date */}
-                <div className="flex items-center justify-between text-xs text-dim">
-                  <span>{paper.original_filenames.length} file{paper.original_filenames.length !== 1 ? "s" : ""}</span>
+                <div className="flex items-center justify-between text-xs text-dim border-t border-line/60 pt-3">
+                  <span className="flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    {paper.original_filenames.length} file{paper.original_filenames.length !== 1 ? "s" : ""}
+                  </span>
                   <span>{formatDate(paper.created_at)}</span>
                 </div>
 

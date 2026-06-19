@@ -76,7 +76,7 @@ export default async function DiscoverPage() {
     <>
       <JsonLd data={itemListSchema} />
       <JsonLd data={breadcrumbSchema} />
-    <div className="min-h-screen bg-ink text-snow md:pl-56">
+    <div className="min-h-screen bg-ink text-snow page-shell">
       <Header />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-bottom-nav md:pb-8">
 

@@ -56,87 +56,98 @@ export default function PurchasesPage() {
     .reduce((s, p) => s + p.credits, 0) ?? 0;
 
   return (
-    <div className="min-h-screen bg-ink text-snow md:pl-56">
+    <div className="min-h-screen bg-ink text-snow page-shell">
       <Header />
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 pb-bottom-nav md:pb-8 space-y-6">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 pb-bottom-nav md:pb-10 space-y-6">
 
-        {/* Header row */}
-        <div className="flex items-center justify-between">
+        {/* ── Page header ────────────────────────────────── */}
+        <div className="flex items-start justify-between page-in">
           <div>
-            <h1 className="font-display text-xl font-bold text-snow">Purchase History</h1>
-            <p className="text-xs text-dim mt-0.5">All your credit top-ups</p>
+            <h1 className="font-display text-2xl font-bold text-snow">Purchase History</h1>
+            <p className="text-sm text-dim mt-1">All your credit top-ups</p>
           </div>
           <Link href="/pricing"
-            className="rounded-xl border border-teal/60 hover:border-teal bg-teal-deep/40 hover:bg-teal-deep/60 text-teal font-semibold px-4 py-2 text-sm transition-all">
+            className="flex items-center gap-2 rounded-xl border border-teal/40 hover:border-teal bg-teal/10 hover:bg-teal/15 text-teal font-bold px-4 py-2.5 text-sm transition-all shrink-0">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
             Buy credits
           </Link>
         </div>
 
-        {/* Summary cards */}
+        {/* ── Summary ────────────────────────────────────── */}
         {purchases && purchases.filter((p) => p.status === "completed").length > 0 && (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-line bg-ink-2/50 p-4 text-center">
-              <p className="text-xs text-dim mb-1">Total spent</p>
-              <p className="text-xl font-bold text-snow">TZS {totalPaid.toLocaleString()}</p>
+          <div className="grid grid-cols-2 gap-3 card-enter card-enter-1">
+            <div className="rounded-2xl border border-line bg-ink-2/50 p-5">
+              <p className="text-xs font-bold text-dim uppercase tracking-widest mb-2">Total spent</p>
+              <p className="font-display text-2xl font-bold text-snow">TZS {totalPaid.toLocaleString()}</p>
             </div>
-            <div className="rounded-xl border border-teal/30 bg-teal-deep/20 p-4 text-center">
-              <p className="text-xs text-dim mb-1">Credits purchased</p>
-              <p className="text-xl font-bold text-teal">{totalCredits}</p>
+            <div className="rounded-2xl border border-teal/30 bg-teal/5 p-5">
+              <p className="text-xs font-bold text-dim uppercase tracking-widest mb-2">Credits purchased</p>
+              <p className="font-display text-2xl font-bold text-teal">{totalCredits}</p>
             </div>
           </div>
         )}
 
-        {/* Loading */}
+        {/* ── Loading ────────────────────────────────────── */}
         {purchases === null && !error && (
-          <div className="flex justify-center py-16">
-            <div className="w-8 h-8 border-2 border-teal border-t-transparent rounded-full animate-spin" />
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => <div key={i} className="h-20 rounded-2xl skeleton" />)}
           </div>
         )}
 
-        {/* Error */}
+        {/* ── Error ──────────────────────────────────────── */}
         {error && (
-          <div className="rounded-xl border border-bad/30 bg-bad/10 p-4 text-sm text-bad text-center">
+          <div className="flex items-center gap-3 rounded-xl border border-bad/30 bg-bad/8 px-4 py-4 text-sm text-bad">
+            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
             {error}
           </div>
         )}
 
-        {/* Empty state */}
+        {/* ── Empty state ────────────────────────────────── */}
         {purchases?.length === 0 && (
-          <div className="rounded-xl border border-line bg-ink-2/50 p-10 text-center">
-            <p className="text-body mb-1">No purchases yet</p>
-            <p className="text-xs text-dim mb-4">Buy your first credit pack to get started.</p>
+          <div className="rounded-2xl border border-line bg-ink-2/30 p-12 text-center card-enter card-enter-1">
+            <div className="w-14 h-14 rounded-2xl bg-ink-3 border border-line flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+              </svg>
+            </div>
+            <h2 className="text-base font-bold text-body mb-1">No purchases yet</h2>
+            <p className="text-sm text-dim mb-6">Buy your first credit pack to get started.</p>
             <Link href="/pricing"
-              className="inline-block rounded-xl bg-teal hover:bg-teal/90 text-ink font-semibold px-5 py-2.5 text-sm transition-colors">
+              className="inline-flex items-center gap-2 rounded-xl bg-teal hover:opacity-90 text-ink font-bold px-6 py-3 text-sm transition-opacity">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+              </svg>
               Buy credits
             </Link>
           </div>
         )}
 
-        {/* Table */}
+        {/* ── Purchase list ──────────────────────────────── */}
         {purchases && purchases.length > 0 && (
-          <div className="rounded-2xl border border-line overflow-hidden">
-            <div className="grid grid-cols-[1fr_auto_auto_auto] bg-ink-2 border-b border-line px-5 py-3 text-xs font-semibold text-dim uppercase tracking-wider gap-4">
-              <span>Pack</span>
-              <span className="text-right">Credits</span>
-              <span className="text-right">Amount</span>
-              <span className="text-right">Status</span>
-            </div>
-
+          <div className="space-y-3 card-enter card-enter-2">
             {purchases.map((p, i) => {
               const st = STATUS_STYLES[p.status] ?? STATUS_STYLES.failed;
-              const isLast = i === purchases.length - 1;
               return (
                 <div key={p.id}
-                  className={`grid grid-cols-[1fr_auto_auto_auto] px-5 py-4 items-center gap-4 ${!isLast ? "border-b border-line/50" : ""} hover:bg-ink-3/30 transition-colors`}>
-                  <div>
-                    <p className="text-sm font-semibold text-snow">{PACK_LABELS[p.pack] ?? p.pack}</p>
+                  className="flex items-center gap-4 rounded-2xl border border-line bg-ink-2/50 hover:bg-ink-2 hover:border-line-2 px-5 py-4 transition-all">
+                  <div className="w-10 h-10 rounded-xl bg-ink-3 border border-line flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5 text-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-snow">{PACK_LABELS[p.pack] ?? p.pack}</p>
                     <p className="text-xs text-dim mt-0.5">{fmt(p.created_at)}</p>
                   </div>
-                  <p className="text-sm font-bold text-teal text-right">{p.credits} cr</p>
-                  <p className="text-sm text-body text-right whitespace-nowrap">
-                    TZS {p.amount_tzs.toLocaleString()}
-                  </p>
-                  <span className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${st.class}`}>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold text-teal">{p.credits} cr</p>
+                    <p className="text-xs text-dim mt-0.5">TZS {p.amount_tzs.toLocaleString()}</p>
+                  </div>
+                  <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-nowrap shrink-0 ${st.class}`}>
                     {st.label}
                   </span>
                 </div>
@@ -145,9 +156,12 @@ export default function PurchasesPage() {
           </div>
         )}
 
-        <div className="pt-2">
-          <Link href="/profile" className="text-xs text-dim hover:text-body transition-colors">
-            ← Back to profile
+        <div>
+          <Link href="/profile" className="text-xs text-dim hover:text-body transition-colors flex items-center gap-1">
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+            Back to profile
           </Link>
         </div>
       </main>
