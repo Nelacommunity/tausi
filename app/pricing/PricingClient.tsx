@@ -16,7 +16,7 @@ const CREDIT_PACKS = [
     key: "starter" as const,
     name: "Starter",
     credits: 20,
-    amount_tzs: 100,
+    amount_tzs: 500,
     badge: null,
     description: "Perfect to try Tausi AI",
     color: "border-line",

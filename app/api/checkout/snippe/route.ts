@@ -5,7 +5,7 @@ import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 // ── Credit packs ──────────────────────────────────────────────
 export const CREDIT_PACKS = {
-  starter:  { credits: 20,  amount_tzs: 100,    label: "Starter"  },
+  starter:  { credits: 20,  amount_tzs: 500,    label: "Starter"  },
   scholar:  { credits: 60,  amount_tzs: 500,    label: "Scholar"  },
   champion: { credits: 175, amount_tzs: 15_000, label: "Champion" },
 } as const;
