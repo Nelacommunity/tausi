@@ -3,8 +3,11 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/app/components/Header";
+import { PageHero } from "@/app/components/PageHero";
 import { useT } from "@/app/lib/language-context";
 import type { MarkingSession } from "@/app/lib/types";
+
+const MARK_ICON = "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z";
 
 const ACCEPTED = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
 const ACCEPT_STR = ".pdf,.png,.jpg,.jpeg,.webp";
@@ -185,27 +188,31 @@ export default function MarkPage() {
   };
 
   const canSubmit = answerFiles.length > 0 && questionFiles.length > 0;
+  const graded = sessions.filter((s) => s.percentage !== null);
+  const avgPct = graded.length
+    ? Math.round(graded.reduce((sum, s) => sum + (s.percentage ?? 0), 0) / graded.length)
+    : null;
 
   return (
     <div className="min-h-screen bg-ink text-snow page-shell">
       <Header />
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10 pb-bottom-nav md:pb-10">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7 pb-bottom-nav md:pb-10 space-y-5">
 
-        {/* ── Page header ─────────────────────────────────── */}
-        <div className="flex items-center gap-3 mb-10 page-in">
-          <div className="w-9 h-9 rounded-xl bg-teal/15 border border-teal/25 flex items-center justify-center shrink-0">
-            <svg className="w-[18px] h-[18px] text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="font-display text-2xl font-bold text-snow leading-none">{M.heading}</h1>
-            <p className="text-sm text-dim mt-0.5">{M.subtitle}</p>
-          </div>
-        </div>
+        {/* ── Page hero ───────────────────────────────────── */}
+        <PageHero d={MARK_ICON} accent="teal" title={M.heading} subtitle={M.subtitle}
+          action={
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-teal border border-teal/30 bg-teal/5 px-2.5 py-1.5 rounded-lg">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Instant grading
+            </span>
+          }
+        />
 
-        {/* ── Marking form ────────────────────────────────── */}
-        <div className="rounded-2xl border border-line bg-ink-2/40 p-6 sm:p-8 space-y-6 card-enter card-enter-1">
+        {/* ── Marking form + side panel (bento) ───────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 card-enter card-enter-1">
+        <div className="lg:col-span-2 rounded-2xl border border-line bg-ink-2/40 p-6 sm:p-8 space-y-6">
 
           {/* Title */}
           <div>
@@ -237,15 +244,6 @@ export default function MarkPage() {
               onRemove={(i) => setAnswerFiles((p) => p.filter((_, j) => j !== i))}
               disabled={isMarking}
             />
-          </div>
-
-          {/* Info */}
-          <div className="flex items-start gap-3 rounded-xl border border-teal/20 bg-teal/5 px-4 py-3">
-            <svg className="w-4 h-4 text-teal shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-            </svg>
-            <p className="text-xs text-teal/80 leading-relaxed">{M.howItWorksNote}</p>
           </div>
 
           {error && (
@@ -285,8 +283,57 @@ export default function MarkPage() {
           )}
         </div>
 
+          {/* ── Side panel (bento) ─────────────────────────── */}
+          <div className="rounded-2xl border border-line overflow-hidden relative">
+            <div className="absolute inset-0"
+              style={{ background: "linear-gradient(160deg, oklch(0.30 0.10 192 / 0.45) 0%, oklch(0.19 0.010 238) 50%, oklch(0.24 0.08 158 / 0.35) 100%)" }} />
+            <div className="relative p-5 flex flex-col gap-4 h-full">
+              <p className="text-xs font-bold text-dim uppercase tracking-widest">At a glance</p>
+
+              {/* Stat tiles */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="rounded-xl border border-teal/20 bg-teal/10 text-teal p-3.5 flex flex-col gap-1">
+                  <span className="font-display text-2xl font-bold leading-none">
+                    {loadingSessions ? "—" : sessions.length}
+                  </span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">Marked</span>
+                </div>
+                <div className="rounded-xl border border-good/20 bg-good/10 text-good p-3.5 flex flex-col gap-1">
+                  <span className="font-display text-2xl font-bold leading-none">
+                    {avgPct !== null ? `${avgPct}%` : "—"}
+                  </span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">Avg score</span>
+                </div>
+              </div>
+
+              {/* How it works */}
+              <div className="rounded-xl border border-white/10 bg-ink/40 p-4 space-y-3 flex-1">
+                <p className="text-xs font-semibold text-snow">How it works</p>
+                {[
+                  { n: "1", t: "Upload the question paper & your answers" },
+                  { n: "2", t: "AI matches answers to each question" },
+                  { n: "3", t: "Get marks, grade & detailed feedback" },
+                ].map(({ n, t }) => (
+                  <div key={n} className="flex items-start gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-teal/15 border border-teal/25 text-teal text-[10px] font-bold flex items-center justify-center shrink-0">{n}</span>
+                    <p className="text-xs text-dim leading-relaxed">{t}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-start gap-2.5 rounded-xl border border-teal/20 bg-teal/5 px-3.5 py-3">
+                <svg className="w-4 h-4 text-teal shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                    d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                </svg>
+                <p className="text-[11px] text-teal/80 leading-relaxed">{M.howItWorksNote}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* ── Past sessions ───────────────────────────────── */}
-        <section className="mt-10 space-y-4">
+        <section className="space-y-4">
           <div className="flex items-center gap-3">
             <h2 className="text-xs font-bold text-dim uppercase tracking-widest">{M.prevMarkings}</h2>
             {sessions.length > 0 && (

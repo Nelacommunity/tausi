@@ -57,12 +57,10 @@ export default async function PapersPage() {
   return (
     <div className="min-h-screen bg-ink text-snow page-shell">
       <Header />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10 pb-bottom-nav md:pb-10">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7 pb-bottom-nav md:pb-10 space-y-5">
 
-        {/* ── Page header ─────────────────────────────────── */}
-        <div className="page-in mb-10">
-          <PapersHeader />
-        </div>
+        {/* ── Page hero ───────────────────────────────────── */}
+        <PapersHeader />
 
         {list.length === 0 ? (
           <PapersEmpty />
@@ -70,7 +68,7 @@ export default async function PapersPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {list.map((paper, i) => (
               <div key={paper.id}
-                className={`group bg-ink-2/50 border border-line rounded-2xl p-5 flex flex-col gap-4 hover:border-teal/30 hover:bg-ink-2 transition-all card-enter card-enter-${Math.min(i + 1, 5)}`}>
+                className={`group bg-ink-2/50 border border-line rounded-2xl p-5 flex flex-col gap-4 hover:border-coral/30 hover:bg-ink-2 transition-all card-enter card-enter-${Math.min(i + 1, 5)}`}>
 
                 {/* Top: badge + year */}
                 <div className="flex items-center justify-between gap-2">

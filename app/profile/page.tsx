@@ -9,15 +9,6 @@ import { CREDIT_COSTS } from "@/app/lib/usage";
 
 interface Stats { exams: number; markings: number; studies: number }
 
-function StatCard({ value, label, icon }: { value: number; label: string; icon: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-line bg-ink-2/50 p-4 text-center">
-      <div className="text-2xl font-bold text-snow mb-0.5">{value}</div>
-      <div className="text-xs text-dim flex items-center justify-center gap-1">{icon}{label}</div>
-    </div>
-  );
-}
-
 export default function ProfilePage() {
   const { T } = useT();
   const P = T.profile;
@@ -85,11 +76,13 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-ink text-snow page-shell">
       <Header />
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 pb-bottom-nav md:pb-10 space-y-6">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-7 pb-bottom-nav md:pb-10 space-y-5">
 
         {/* ── Identity hero ──────────────────────────────── */}
-        <div className="rounded-2xl border border-line bg-ink-2/50 p-6 sm:p-8 page-in">
-          <div className="flex items-start gap-5">
+        <div className="relative overflow-hidden rounded-2xl border border-line p-6 sm:p-8 page-in"
+          style={{ background: "linear-gradient(135deg, oklch(0.30 0.10 192 / 0.5) 0%, oklch(0.19 0.010 238) 55%, oklch(0.24 0.07 192 / 0.35) 100%)" }}>
+          <div className="absolute -top-10 -right-8 w-44 h-44 rounded-full opacity-[0.12] pointer-events-none" style={{ background: "oklch(0.72 0.20 192)" }} />
+          <div className="relative flex items-start gap-5">
             <div className="w-16 h-16 rounded-2xl bg-teal/15 border border-teal/30 flex items-center justify-center text-2xl font-bold text-teal shrink-0 select-none">
               {initials}
             </div>
@@ -171,13 +164,13 @@ export default function ProfilePage() {
           <p className="text-xs font-bold text-dim uppercase tracking-widest mb-3">{P.allTimeStats}</p>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { value: stats.exams, label: P.predictedExams, d: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" },
-              { value: stats.markings, label: P.aiMarkings, d: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" },
-              { value: stats.studies, label: P.studySessions, d: "M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" },
-            ].map(({ value, label, d }) => (
+              { value: stats.exams, label: P.predictedExams, accent: "text-coral bg-coral/10 border-coral/20", d: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" },
+              { value: stats.markings, label: P.aiMarkings, accent: "text-teal bg-teal/10 border-teal/20", d: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" },
+              { value: stats.studies, label: P.studySessions, accent: "text-gold bg-gold/10 border-gold/20", d: "M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" },
+            ].map(({ value, label, accent, d }) => (
               <div key={label} className="rounded-2xl border border-line bg-ink-2/50 p-4 text-center">
-                <div className="w-8 h-8 rounded-xl bg-ink-3 border border-line flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-4 h-4 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className={`w-8 h-8 rounded-xl border flex items-center justify-center mx-auto mb-3 ${accent}`}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={d} />
                   </svg>
                 </div>

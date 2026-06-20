@@ -16,7 +16,7 @@ const CREDIT_PACKS = [
     key: "starter" as const,
     name: "Starter",
     credits: 20,
-    amount_tzs: 500,
+    amount_tzs: 2_500,
     badge: null,
     description: "Perfect to try Tausi AI",
     color: "border-line",
@@ -26,7 +26,7 @@ const CREDIT_PACKS = [
     key: "scholar" as const,
     name: "Scholar",
     credits: 60,
-    amount_tzs: 500,
+    amount_tzs: 6_000,
     badge: "Best Value",
     description: "Great for regular studying",
     color: "border-gold/70",
@@ -109,9 +109,14 @@ function BuyModal({
   onClose: () => void;
 }) {
   const [phone, setPhone]   = useState("");
+  const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const [state, setState]       = useState<ModalState>({ step: "form" });
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const MAX_QTY = 20;
+  const totalAmount = pack.amount_tzs * quantity;
+  const totalCredits = pack.credits * quantity;
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -146,7 +151,7 @@ function BuyModal({
         const data = await res.json() as { status: string; credits?: number; pack?: string };
         if (data.status === "completed") {
           if (pollRef.current) clearInterval(pollRef.current);
-          setState({ step: "success", credits: data.credits ?? pack.credits, pack: pack.name });
+          setState({ step: "success", credits: data.credits ?? totalCredits, pack: pack.name });
         } else if (data.status === "failed" || data.status === "expired") {
           if (pollRef.current) clearInterval(pollRef.current);
           setState({ step: "error", message: "Payment was not completed. Please try again." });
@@ -164,7 +169,7 @@ function BuyModal({
       const res = await fetch("/api/checkout/snippe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pack: pack.key, phone: phone.trim() }),
+        body: JSON.stringify({ pack: pack.key, phone: phone.trim(), quantity }),
       });
       let data: { reference?: string; purchase_id?: string; error?: string; message?: string } = {};
       try { data = await res.json(); } catch { /* empty / non-JSON response */ }
@@ -192,7 +197,7 @@ function BuyModal({
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="font-display text-base font-bold text-snow">Buy {pack.name} Pack</h2>
-            <p className="text-xs text-dim mt-0.5">{pack.credits} credits · TZS {pack.amount_tzs.toLocaleString()}</p>
+            <p className="text-xs text-dim mt-0.5">{totalCredits} credits · TZS {totalAmount.toLocaleString()}</p>
           </div>
           {state.step !== "waiting" && (
             <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-dim hover:text-snow hover:bg-ink-3 transition-colors">
@@ -206,6 +211,52 @@ function BuyModal({
         {/* Form */}
         {state.step === "form" && (
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Quantity stepper */}
+            <div>
+              <label className="block text-xs font-medium text-body mb-1.5">Quantity</label>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center rounded-xl border border-line bg-ink overflow-hidden">
+                  <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                    aria-label="Decrease quantity"
+                    className="w-10 h-10 flex items-center justify-center text-dim hover:text-snow hover:bg-ink-3 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                    </svg>
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    max={MAX_QTY}
+                    value={quantity}
+                    onChange={(e) => {
+                      const n = Math.floor(Number(e.target.value));
+                      setQuantity(Number.isNaN(n) ? 1 : Math.max(1, Math.min(n, MAX_QTY)));
+                    }}
+                    aria-label="Quantity"
+                    className="w-12 h-10 bg-transparent text-center text-sm font-bold text-snow outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <button type="button" onClick={() => setQuantity((q) => Math.min(MAX_QTY, q + 1))}
+                    disabled={quantity >= MAX_QTY}
+                    aria-label="Increase quantity"
+                    className="w-10 h-10 flex items-center justify-center text-dim hover:text-snow hover:bg-ink-3 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                    </svg>
+                  </button>
+                </div>
+                <p className="text-xs text-dim">
+                  {pack.credits} cr × {quantity} = <span className="text-teal font-semibold">{totalCredits} credits</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Order total */}
+            <div className="flex items-center justify-between rounded-xl border border-teal/20 bg-teal/5 px-4 py-3">
+              <span className="text-xs font-semibold text-dim uppercase tracking-widest">Total</span>
+              <span className="font-display text-lg font-bold text-snow">TZS {totalAmount.toLocaleString()}</span>
+            </div>
+
             <div>
               <label className="block text-xs font-medium text-body mb-1.5">Phone number</label>
               <input
@@ -235,7 +286,7 @@ function BuyModal({
               disabled={loading || !phone.trim()}
               className="w-full rounded-xl bg-teal hover:bg-teal/90 disabled:opacity-50 disabled:cursor-not-allowed text-ink font-semibold py-3 text-sm transition-colors"
             >
-              {loading ? "Initiating..." : `Pay TZS ${pack.amount_tzs.toLocaleString()}`}
+              {loading ? "Initiating..." : `Pay TZS ${totalAmount.toLocaleString()}`}
             </button>
           </form>
         )}
@@ -323,21 +374,26 @@ export function PricingClient() {
   return (
     <div className="min-h-screen bg-ink text-snow page-shell">
       <Header />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-12 pb-bottom-nav md:pb-12 space-y-14">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-7 pb-bottom-nav md:pb-12 space-y-12">
 
         {/* ── Hero ──────────────────────────────────────────── */}
-        <div className="text-center page-in">
-          <div className="inline-flex items-center gap-2 rounded-xl border border-teal/25 bg-teal/8 px-3 py-1.5 text-xs font-semibold text-teal mb-5">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-            </svg>
-            No subscriptions — pay as you go
+        <div className="relative overflow-hidden rounded-2xl border border-line px-6 py-12 text-center page-in"
+          style={{ background: "linear-gradient(135deg, oklch(0.32 0.10 72 / 0.5) 0%, oklch(0.19 0.010 238) 55%, oklch(0.30 0.10 192 / 0.4) 100%)" }}>
+          <div className="absolute -top-12 -right-10 w-52 h-52 rounded-full opacity-[0.12] pointer-events-none" style={{ background: "oklch(0.82 0.17 72)" }} />
+          <div className="absolute -bottom-12 -left-10 w-52 h-52 rounded-full opacity-[0.10] pointer-events-none" style={{ background: "oklch(0.72 0.20 192)" }} />
+          <div className="relative">
+            <div className="inline-flex items-center gap-2 rounded-xl border border-gold/25 bg-gold/8 px-3 py-1.5 text-xs font-semibold text-gold mb-5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+              </svg>
+              No subscriptions — pay as you go
+            </div>
+            <h1 className="font-display text-3xl sm:text-4xl font-bold text-snow mb-3">Buy Credits</h1>
+            <p className="text-body max-w-lg mx-auto text-sm leading-relaxed">
+              Fuel your AI exam prep. Credits work across all features — predictions, marking, tutoring, and writing.
+            </p>
+            <p className="text-xs text-dim mt-2">5 free credits on every new account.</p>
           </div>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-snow mb-3">Buy Credits</h1>
-          <p className="text-body max-w-lg mx-auto text-sm leading-relaxed">
-            Fuel your AI exam prep. Credits work across all features — predictions, marking, tutoring, and writing.
-          </p>
-          <p className="text-xs text-dim mt-2">5 free credits on every new account.</p>
         </div>
 
         {/* ── Credit pack cards ─────────────────────────────── */}

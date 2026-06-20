@@ -17,30 +17,44 @@ function NavIcon({ d, sw = 1.5 }: { d: string; sw?: number }) {
 
 const NAV = [
   {
-    href: "/dashboard", key: "myExams" as const, label: "My Exams",
+    href: "/dashboard", key: "myExams" as const, label: "My Exams", accent: "teal",
     d: "M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25",
   },
   {
-    href: "/mark", key: "aiMarker" as const, label: "AI Marker",
+    href: "/mark", key: "aiMarker" as const, label: "AI Marker", accent: "teal",
     d: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z",
   },
   {
-    href: "/study", key: "studyRoom" as const, label: "Study Room",
+    href: "/study", key: "studyRoom" as const, label: "Study Room", accent: "gold",
     d: "M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337 5.972 5.972 0 01-5.035 2.057 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z",
   },
   {
-    href: "/write", key: "aiWriter" as const, label: "AI Writer",
+    href: "/write", key: "aiWriter" as const, label: "AI Writer", accent: "magenta",
     d: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125",
   },
   {
-    href: "/papers", key: "examLibrary" as const, label: "Papers",
+    href: "/papers", key: "examLibrary" as const, label: "Papers", accent: "coral",
     d: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z",
   },
   {
-    href: "/discover", key: "discover" as const, label: "Discover",
+    href: "/discover", key: "discover" as const, label: "Discover", accent: "coral",
     d: "M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c-.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z",
   },
 ] as const;
+
+// Accent class maps for active nav items (premium gradient pills)
+const ACTIVE_PILL: Record<string, string> = {
+  teal: "bg-gradient-to-r from-teal/20 to-teal/5 text-teal",
+  gold: "bg-gradient-to-r from-gold/20 to-gold/5 text-gold",
+  magenta: "bg-gradient-to-r from-brand-magenta/20 to-brand-magenta/5 text-brand-magenta",
+  coral: "bg-gradient-to-r from-coral/20 to-coral/5 text-coral",
+};
+const ACTIVE_DOT: Record<string, string> = {
+  teal: "bg-teal", gold: "bg-gold", magenta: "bg-brand-magenta", coral: "bg-coral",
+};
+const ACTIVE_BAR: Record<string, string> = {
+  teal: "bg-teal", gold: "bg-gold", magenta: "bg-brand-magenta", coral: "bg-coral",
+};
 
 type NavKey = typeof NAV[number]["key"];
 
@@ -131,15 +145,16 @@ export function Header() {
       {/* ══════════════════════════════════════════════════════
           DESKTOP SIDEBAR
           ══════════════════════════════════════════════════════ */}
-      <aside className={`hidden md:flex fixed inset-y-0 left-0 z-40 flex-col bg-ink border-r border-line transition-[width] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden ${
+      <aside className={`hidden md:flex fixed inset-y-0 left-0 z-40 flex-col border-r border-line transition-[width] duration-200 ease-out-expo overflow-hidden ${
         collapsed ? "w-14" : "w-56"
-      }`}>
+      }`}
+        style={{ background: "linear-gradient(180deg, oklch(0.17 0.012 240) 0%, oklch(0.14 0.008 240) 38%)" }}>
 
         {/* ── Logo ─────────────────────────────────────────── */}
         <div className={`flex items-center border-b border-line shrink-0 h-14 ${collapsed ? "justify-center px-0" : "px-4 gap-3"}`}>
           <Link href="/" className="flex items-center gap-2.5 min-w-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo/android-chrome-192x192.png" alt="Tausi" className="w-8 h-8 rounded-xl shrink-0" />
+            <img src="/logo/android-chrome-192x192.png" alt="Tausi" className="w-8 h-8 rounded-xl shrink-0 ring-1 ring-teal/20" />
             {!collapsed && (
               <span className="font-display text-sm font-bold text-snow tracking-tight truncate">Tausi</span>
             )}
@@ -155,25 +170,29 @@ export function Header() {
         </div>
 
         {/* ── Nav links ─────────────────────────────────────── */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-          {NAV.map(({ href, key, d }) => {
+        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
+          {NAV.map(({ href, key, d, accent }) => {
             const active = isActive(href);
             return (
               <Link key={href} href={href} title={collapsed ? T.nav[key as NavKey] : undefined}
-                className={`group flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer ${
+                className={`group relative flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer ${
                   collapsed ? "justify-center" : ""
                 } ${
                   active
-                    ? "bg-teal/15 text-teal"
+                    ? ACTIVE_PILL[accent]
                     : "text-dim hover:text-snow hover:bg-white/5"
                 }`}
               >
+                {/* Active accent bar */}
+                {active && (
+                  <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full ${ACTIVE_BAR[accent]} ${collapsed ? "" : "-ml-2"}`} />
+                )}
                 <NavIcon d={d} sw={active ? 2 : 1.5} />
                 {!collapsed && (
                   <span className="truncate">{T.nav[key as NavKey]}</span>
                 )}
                 {active && !collapsed && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-teal shrink-0" />
+                  <span className={`ml-auto w-1.5 h-1.5 rounded-full shrink-0 ${ACTIVE_DOT[accent]}`} />
                 )}
               </Link>
             );
@@ -192,7 +211,8 @@ export function Header() {
               </Link>
             ) : (
               <Link href="/pricing"
-                className="flex items-center justify-between w-full rounded-xl border border-teal/25 bg-teal/5 hover:bg-teal/10 px-3 py-2.5 transition-all group">
+                className="flex items-center justify-between w-full rounded-xl border border-teal/25 px-3 py-2.5 transition-all group hover:border-teal/40"
+                style={{ background: "linear-gradient(120deg, oklch(0.25 0.10 192 / 0.35) 0%, oklch(0.19 0.010 238 / 0.4) 100%)" }}>
                 <div className="flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-lg bg-teal/15 border border-teal/20 flex items-center justify-center">
                     <svg className="w-3.5 h-3.5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -323,14 +343,17 @@ export function Header() {
       {user && (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-ink/95 backdrop-blur-md border-t border-line"
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-          <div className="grid grid-cols-5 h-16">
-            {NAV.slice(0, 5).map(({ href, key, d }) => {
+          <div className="grid grid-cols-5 h-16 px-1">
+            {NAV.slice(0, 5).map(({ href, key, d, accent }) => {
               const active = isActive(href);
               return (
                 <Link key={href} href={href}
-                  className={`flex flex-col items-center justify-center gap-1.5 transition-colors ${
-                    active ? "text-teal" : "text-dim"
+                  className={`relative flex flex-col items-center justify-center gap-1.5 transition-colors ${
+                    active ? ACTIVE_DOT[accent].replace("bg-", "text-") : "text-dim"
                   }`}>
+                  {active && (
+                    <span className={`absolute top-1.5 w-9 h-1 rounded-full ${ACTIVE_BAR[accent]}`} />
+                  )}
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 2 : 1.5} d={d} />
                   </svg>

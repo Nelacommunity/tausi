@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/app/components/Header";
+import { PageHero } from "@/app/components/PageHero";
+
+const BOLT_ICON = "M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z";
 
 interface Purchase {
   id: string;
@@ -58,33 +61,31 @@ export default function PurchasesPage() {
   return (
     <div className="min-h-screen bg-ink text-snow page-shell">
       <Header />
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 pb-bottom-nav md:pb-10 space-y-6">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-7 pb-bottom-nav md:pb-10 space-y-5">
 
-        {/* ── Page header ────────────────────────────────── */}
-        <div className="flex items-start justify-between page-in">
-          <div>
-            <h1 className="font-display text-2xl font-bold text-snow">Purchase History</h1>
-            <p className="text-sm text-dim mt-1">All your credit top-ups</p>
-          </div>
-          <Link href="/pricing"
-            className="flex items-center gap-2 rounded-xl border border-teal/40 hover:border-teal bg-teal/10 hover:bg-teal/15 text-teal font-bold px-4 py-2.5 text-sm transition-all shrink-0">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-            </svg>
-            Buy credits
-          </Link>
-        </div>
+        {/* ── Page hero ──────────────────────────────────── */}
+        <PageHero d={BOLT_ICON} accent="gold" title="Purchase History" subtitle="All your credit top-ups"
+          action={
+            <Link href="/pricing"
+              className="flex items-center gap-2 rounded-xl bg-gold hover:opacity-90 text-on-gold font-bold px-4 py-2.5 text-sm transition-opacity shrink-0 cursor-pointer">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d={BOLT_ICON} />
+              </svg>
+              Buy credits
+            </Link>
+          }
+        />
 
         {/* ── Summary ────────────────────────────────────── */}
         {purchases && purchases.filter((p) => p.status === "completed").length > 0 && (
           <div className="grid grid-cols-2 gap-3 card-enter card-enter-1">
-            <div className="rounded-2xl border border-line bg-ink-2/50 p-5">
-              <p className="text-xs font-bold text-dim uppercase tracking-widest mb-2">Total spent</p>
-              <p className="font-display text-2xl font-bold text-snow">TZS {totalPaid.toLocaleString()}</p>
+            <div className="rounded-2xl border border-gold/20 bg-gold/10 text-gold p-5">
+              <p className="text-xs font-bold uppercase tracking-widest mb-2 opacity-70">Total spent</p>
+              <p className="font-display text-2xl font-bold">TZS {totalPaid.toLocaleString()}</p>
             </div>
-            <div className="rounded-2xl border border-teal/30 bg-teal/5 p-5">
-              <p className="text-xs font-bold text-dim uppercase tracking-widest mb-2">Credits purchased</p>
-              <p className="font-display text-2xl font-bold text-teal">{totalCredits}</p>
+            <div className="rounded-2xl border border-teal/20 bg-teal/10 text-teal p-5">
+              <p className="text-xs font-bold uppercase tracking-widest mb-2 opacity-70">Credits purchased</p>
+              <p className="font-display text-2xl font-bold">{totalCredits}</p>
             </div>
           </div>
         )}

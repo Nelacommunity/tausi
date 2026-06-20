@@ -2,7 +2,10 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/app/lib/supabase/server";
 import { Header } from "@/app/components/Header";
+import { PageHero } from "@/app/components/PageHero";
 import type { Exam } from "@/app/lib/types";
+
+const DISCOVER_ICON = "M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z";
 
 const APP_URL = "https://tausi.app";
 
@@ -78,45 +81,41 @@ export default async function DiscoverPage() {
       <JsonLd data={breadcrumbSchema} />
     <div className="min-h-screen bg-ink text-snow page-shell">
       <Header />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-bottom-nav md:pb-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7 pb-bottom-nav md:pb-10 space-y-5">
 
-        {/* Page header */}
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="font-display text-2xl font-bold text-snow mb-1">Discover</h1>
-            <p className="text-sm text-dim">Browse AI-predicted exams shared by the community</p>
-          </div>
-          {!user && (
+        {/* ── Page hero ───────────────────────────────────── */}
+        <PageHero d={DISCOVER_ICON} accent="coral" title="Discover"
+          subtitle="Browse AI-predicted exams shared by the community"
+          action={!user && (
             <Link href="/signup"
-              className="shrink-0 rounded-xl bg-teal hover:opacity-90 text-ink font-bold px-4 py-2 text-sm transition-opacity">
+              className="shrink-0 rounded-xl bg-coral hover:opacity-90 text-white font-bold px-4 py-2.5 text-sm transition-opacity cursor-pointer">
               Join free
             </Link>
           )}
-        </div>
+        />
 
-        {/* Stats bar */}
-        <div className="flex items-center gap-6 mb-8 pb-6 border-b border-line">
-          <div>
-            <p className="text-xl font-bold text-snow">{publicExams.length}</p>
-            <p className="text-xs text-dim">Public Exams</p>
+        {/* ── Stats tiles (bento) ─────────────────────────── */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 card-enter card-enter-1">
+          <div className="rounded-2xl border border-coral/20 bg-coral/10 text-coral p-4 flex flex-col gap-1">
+            <span className="font-display text-2xl font-bold leading-none">{publicExams.length}</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wide opacity-70">Public exams</span>
           </div>
-          <div className="w-px h-6 bg-line" />
-          <div>
-            <p className="text-xl font-bold text-snow">
-              {new Set(publicExams.map((e) => e.user_id)).size}
-            </p>
-            <p className="text-xs text-dim">Contributors</p>
+          <div className="rounded-2xl border border-teal/20 bg-teal/10 text-teal p-4 flex flex-col gap-1">
+            <span className="font-display text-2xl font-bold leading-none">{new Set(publicExams.map((e) => e.user_id)).size}</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wide opacity-70">Contributors</span>
           </div>
-          {!user && (
-            <>
-              <div className="w-px h-6 bg-line" />
-              <p className="text-sm text-dim ml-2">
-                <Link href="/login" className="text-teal hover:text-snow transition-colors">
-                  Sign in
-                </Link>{" "}
-                to create and save your own exams
-              </p>
-            </>
+          {!user ? (
+            <Link href="/login"
+              className="rounded-2xl border border-line bg-ink-2/40 hover:bg-ink-2 hover:border-teal/30 p-4 flex flex-col justify-center gap-1 transition-all col-span-2 sm:col-span-1 cursor-pointer group">
+              <span className="text-sm font-bold text-body group-hover:text-snow transition-colors">Sign in →</span>
+              <span className="text-[11px] text-dim">to create &amp; save your own exams</span>
+            </Link>
+          ) : (
+            <Link href="/dashboard"
+              className="rounded-2xl border border-gold/20 bg-gold/10 hover:bg-gold/15 p-4 flex flex-col justify-center gap-1 transition-all col-span-2 sm:col-span-1 cursor-pointer group text-gold">
+              <span className="text-sm font-bold transition-colors">Create exam →</span>
+              <span className="text-[11px] opacity-70">predict your next paper</span>
+            </Link>
           )}
         </div>
 
@@ -145,7 +144,7 @@ export default async function DiscoverPage() {
 
               return (
                 <Link key={exam.id} href={`/exams/${exam.id}`}
-                  className="block rounded-xl border border-line bg-ink-2/60 hover:bg-ink-2 hover:border-teal/40 p-5 transition-all group cursor-pointer">
+                  className="block rounded-xl border border-line bg-ink-2/60 hover:bg-ink-2 hover:border-coral/40 p-5 transition-all group cursor-pointer">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <h3 className="text-sm font-semibold text-body group-hover:text-snow line-clamp-2 leading-snug flex-1 transition-colors">
                       {exam.title}
