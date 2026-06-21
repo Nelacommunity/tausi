@@ -1,7 +1,14 @@
 import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { createClient } from "@/app/lib/supabase/server";
 import type { WriteDocument } from "@/app/lib/types";
 import { WritePage } from "./WritePage";
+
+export const metadata: Metadata = {
+  title: "Document",
+  description: "Write and edit your document with Tausi's AI writing assistant.",
+  robots: { index: false, follow: false },
+};
 
 export default async function WriteDocPage({
   params,

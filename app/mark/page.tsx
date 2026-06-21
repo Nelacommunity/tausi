@@ -205,7 +205,7 @@ export default function MarkPage() {
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Instant grading
+              {M.instantGrading}
             </span>
           }
         />
@@ -286,7 +286,7 @@ export default function MarkPage() {
           {/* ── Side panel (bento) ─────────────────────────── */}
           <div className="grad-side-teal rounded-2xl border border-line overflow-hidden relative">
             <div className="relative p-5 flex flex-col gap-4 h-full">
-              <p className="text-xs font-bold text-dim uppercase tracking-widest">At a glance</p>
+              <p className="text-xs font-bold text-dim uppercase tracking-widest">{M.atAGlance}</p>
 
               {/* Stat tiles */}
               <div className="grid grid-cols-2 gap-2.5">
@@ -294,23 +294,23 @@ export default function MarkPage() {
                   <span className="font-display text-2xl font-bold leading-none">
                     {loadingSessions ? "—" : sessions.length}
                   </span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">Marked</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">{M.marked}</span>
                 </div>
                 <div className="rounded-xl border border-good/20 bg-good/10 text-good p-3.5 flex flex-col gap-1">
                   <span className="font-display text-2xl font-bold leading-none">
                     {avgPct !== null ? `${avgPct}%` : "—"}
                   </span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">Avg score</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">{M.avgScore}</span>
                 </div>
               </div>
 
               {/* How it works */}
               <div className="rounded-xl border border-white/10 bg-ink/40 p-4 space-y-3 flex-1">
-                <p className="text-xs font-semibold text-snow">How it works</p>
+                <p className="text-xs font-semibold text-snow">{M.howItWorks}</p>
                 {[
-                  { n: "1", t: "Upload the question paper & your answers" },
-                  { n: "2", t: "AI matches answers to each question" },
-                  { n: "3", t: "Get marks, grade & detailed feedback" },
+                  { n: "1", t: M.mStep1 },
+                  { n: "2", t: M.mStep2 },
+                  { n: "3", t: M.mStep3 },
                 ].map(({ n, t }) => (
                   <div key={n} className="flex items-start gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-teal/15 border border-teal/25 text-teal text-[10px] font-bold flex items-center justify-center shrink-0">{n}</span>
@@ -365,7 +365,7 @@ export default function MarkPage() {
                     <p className="text-xs text-dim truncate mb-1">{s.original_filenames[0]}</p>
                   )}
                   {s.total_marks !== null && (
-                    <p className="text-xs text-dim/80">{s.total_marks} / {s.max_marks} marks</p>
+                    <p className="text-xs text-dim/80">{s.total_marks} / {s.max_marks} {M.marksLabel}</p>
                   )}
                   <div className="flex items-center justify-between mt-2">
                     <p className="text-xs text-dim/60">{formatDate(s.created_at)}</p>

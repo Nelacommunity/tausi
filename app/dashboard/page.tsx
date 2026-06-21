@@ -20,6 +20,7 @@ function formatDate(iso: string) {
 
 export default function Dashboard() {
   const { T } = useT();
+  const D = T.dashboard;
   const { user, credits } = useSession();
 
   const [recentExams, setRecentExams] = useState<RecentExam[]>([]);
@@ -58,10 +59,10 @@ export default function Dashboard() {
           {/* ── Stats card ─────────────────────────────────────────── */}
           <div className="rounded-2xl border border-line bg-ink-2 p-6 flex flex-col gap-5">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-bold text-dim uppercase tracking-widest">Overview</p>
+              <p className="text-xs font-bold text-dim uppercase tracking-widest">{D.overview}</p>
               <Link href="/pricing"
                 className="text-[11px] font-semibold text-teal border border-teal/30 bg-teal/5 hover:bg-teal/10 px-2 py-1 rounded-lg transition-colors cursor-pointer">
-                Buy credits
+                {D.buyCredits}
               </Link>
             </div>
 
@@ -81,15 +82,15 @@ export default function Dashboard() {
 
               {credits !== null && (
                 <span className="text-[11px] font-semibold bg-teal/10 text-teal border border-teal/20 rounded-full px-3 py-1">
-                  {credits} credits left
+                  {D.creditsLeftN(credits)}
                 </span>
               )}
 
               <div className="text-center">
                 <p className="font-display text-xl font-bold text-snow leading-snug">
-                  Welcome{displayName ? `, ${displayName}` : " back"}
+                  {displayName ? D.welcomeName(displayName) : D.welcomeBack}
                 </p>
-                <p className="text-xs text-dim mt-0.5">Ready to ace your exams?</p>
+                <p className="text-xs text-dim mt-0.5">{D.readyAce}</p>
               </div>
             </div>
 
@@ -97,7 +98,7 @@ export default function Dashboard() {
             {credits !== null && (
               <div className="space-y-1.5 px-1">
                 <div className="flex justify-between text-[11px]">
-                  <span className="text-dim">Monthly activity</span>
+                  <span className="text-dim">{D.monthlyActivity}</span>
                   <span className="font-semibold text-body">{ringVal}%</span>
                 </div>
                 <div className="h-2 rounded-full bg-ink-3 overflow-hidden">
@@ -112,19 +113,19 @@ export default function Dashboard() {
               {([
                 {
                   value: loadingRecent ? "—" : String(recentExams.length),
-                  label: "Exams",
+                  label: D.statExams,
                   path: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z",
                   accent: "text-coral bg-coral/10 border-coral/20",
                 },
                 {
                   value: papersCount !== null ? String(papersCount) : "—",
-                  label: "Papers",
+                  label: D.statPapers,
                   path: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z",
                   accent: "text-brand-magenta bg-brand-magenta/10 border-brand-magenta/20",
                 },
                 {
                   value: credits !== null ? String(credits) : "—",
-                  label: "Credits",
+                  label: D.statCredits,
                   path: "M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z",
                   accent: "text-gold bg-gold/10 border-gold/20",
                 },
@@ -150,16 +151,16 @@ export default function Dashboard() {
               style={{ background: "oklch(0.90 0.07 35)" }} />
 
             <div className="relative flex items-center justify-between">
-              <h2 className="font-display text-2xl font-bold text-white">Your Exams</h2>
+              <h2 className="font-display text-2xl font-bold text-white">{D.yourExams}</h2>
               <div className="flex items-center gap-2">
                 {recentExams.length > 3 && (
                   <span className="text-xs font-semibold text-white/70">
-                    {recentExams.length} total
+                    {D.totalN(recentExams.length)}
                   </span>
                 )}
                 <Link href="/predict"
                   className="text-xs font-semibold text-white border border-white/25 bg-white/15 hover:bg-white/25 rounded-lg px-3 py-1.5 transition-all cursor-pointer">
-                  + New
+                  {D.newBtn}
                 </Link>
               </div>
             </div>
@@ -177,8 +178,8 @@ export default function Dashboard() {
                     d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                 </svg>
                 <div className="text-center">
-                  <p className="text-sm font-semibold text-white">No exams yet</p>
-                  <p className="text-xs text-white/60 mt-0.5">Tap to predict your first exam</p>
+                  <p className="text-sm font-semibold text-white">{D.noExamsYet}</p>
+                  <p className="text-xs text-white/60 mt-0.5">{D.tapPredict}</p>
                 </div>
               </Link>
             ) : (
@@ -204,16 +205,16 @@ export default function Dashboard() {
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                           exam.is_public ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"
                         }`}>
-                          {exam.is_public ? "Public" : "Private"}
+                          {exam.is_public ? T.common.public : T.common.private}
                         </span>
                         <span className="text-[10px] font-medium bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded-full">
-                          AI
+                          {D.aiBadge}
                         </span>
                       </div>
 
                       <div className="space-y-1">
                         <div className="flex justify-between items-center">
-                          <span className="text-[10px] text-gray-400">Reviewed</span>
+                          <span className="text-[10px] text-gray-400">{D.reviewed}</span>
                           <span className="text-xs font-bold" style={{ color: "oklch(0.56 0.15 32)" }}>
                             {pct}%
                           </span>
@@ -252,19 +253,19 @@ export default function Dashboard() {
               </div>
               <div>
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-teal uppercase tracking-widest mb-1.5">
-                  AI Exam Predictor
+                  {D.ctaEyebrow}
                 </span>
                 <h2 className="font-display text-2xl sm:text-3xl font-bold text-snow leading-tight">
-                  Start predicting your exam
+                  {D.ctaTitle}
                 </h2>
                 <p className="text-sm text-dim mt-1 max-w-md">
-                  Upload past papers and get a full AI-predicted exam with marking scheme in seconds.
+                  {D.ctaSub}
                 </p>
               </div>
             </div>
 
             <span className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-teal text-ink font-bold px-6 py-4 text-base shadow-lg group-hover:opacity-90 transition-opacity w-full sm:w-auto justify-center">
-              Start Predicting
+              {D.startPredicting}
               <svg className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
               </svg>
@@ -279,9 +280,9 @@ export default function Dashboard() {
           <div className="relative p-5 sm:p-6 flex flex-col gap-5">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-bold text-dim uppercase tracking-widest mb-1">AI Tools</p>
+                <p className="text-xs font-bold text-dim uppercase tracking-widest mb-1">{D.aiToolsLabel}</p>
                 <h3 className="font-display text-xl font-bold text-snow leading-snug">
-                  Supercharge your studies
+                  {D.aiToolsTitle}
                 </h3>
               </div>
               {/* Ask-something input → links to Study Room (desktop) */}
@@ -291,7 +292,7 @@ export default function Dashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                     d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337 5.972 5.972 0 01-5.035 2.057 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
                 </svg>
-                <span className="flex-1 text-xs text-dim">Ask something...</span>
+                <span className="flex-1 text-xs text-dim">{D.askSomething}</span>
                 <span className="w-7 h-7 rounded-lg bg-teal flex items-center justify-center shrink-0">
                   <svg className="w-3.5 h-3.5 text-ink" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -304,22 +305,22 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {([
                 {
-                  href: "/mark", label: "AI Marker", desc: "Grade your answers instantly",
+                  href: "/mark", label: T.nav.aiMarker, desc: D.toolMarkerDesc,
                   icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z",
                   accent: "text-teal bg-teal/10 border-teal/20 group-hover:bg-teal/20",
                 },
                 {
-                  href: "/study", label: "Study Room", desc: "Chat with AI about any topic",
+                  href: "/study", label: T.nav.studyRoom, desc: D.toolStudyDesc,
                   icon: "M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337 5.972 5.972 0 01-5.035 2.057 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z",
                   accent: "text-gold bg-gold/10 border-gold/20 group-hover:bg-gold/20",
                 },
                 {
-                  href: "/write", label: "AI Writer", desc: "Generate notes & essays",
+                  href: "/write", label: T.nav.aiWriter, desc: D.toolWriterDesc,
                   icon: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z",
                   accent: "text-brand-magenta bg-brand-magenta/10 border-brand-magenta/20 group-hover:bg-brand-magenta/20",
                 },
                 {
-                  href: "/discover", label: "Discover", desc: "Browse public exam papers",
+                  href: "/discover", label: T.nav.discover, desc: D.toolDiscoverDesc,
                   icon: "M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c-.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z",
                   accent: "text-coral bg-coral/10 border-coral/20 group-hover:bg-coral/20",
                 },
@@ -349,7 +350,7 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337 5.972 5.972 0 01-5.035 2.057 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
               </svg>
-              <span className="flex-1 text-xs text-dim">Ask something...</span>
+              <span className="flex-1 text-xs text-dim">{D.askSomething}</span>
               <span className="w-7 h-7 rounded-lg bg-teal flex items-center justify-center shrink-0">
                 <svg className="w-3.5 h-3.5 text-ink" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

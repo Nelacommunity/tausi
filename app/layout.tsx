@@ -6,6 +6,7 @@ import CustomCursor from "./components/CustomCursor";
 import { LanguageProvider } from "./lib/language-context";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "./lib/theme-context";
 import { SessionProvider } from "./lib/session-context";
+import { TAUSI_KEYWORDS } from "./lib/seo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,15 +29,17 @@ const APP_URL = "https://tausi.app";
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
 
+  applicationName: "Tausi",
+
   title: {
-    default: "Tausi — AI Exam Prediction for NECTA, KCSE & East Africa",
+    default: "Tausi — AI Exam Prediction for NECTA: ACSEE, CSEE, FTNA & PSLE",
     template: "%s | Tausi",
   },
 
   description:
-    "AI-powered exam prediction, marking schemes, and AI tutoring for East African students. Supports NECTA, KCSE, IGCSE, WAEC, ZIMSEC and more. Free to use.",
+    "Tausi is an AI exam app for Tanzanian & East African students. Predict NECTA exams — ACSEE, CSEE, FTNA, PSLE — plus KCSE, IGCSE, WAEC & ZIMSEC, with marking schemes and an AI tutor. Free to use.",
 
-  keywords: [
+  keywords: Array.from(new Set([
     "Tausi", "tausi.app",
     "NECTA exams", "NECTA past papers", "NECTA mock exams",
     "KCSE past papers", "KCSE prediction",
@@ -47,7 +50,8 @@ export const metadata: Metadata = {
     "IGCSE predicted exam", "WAEC mock", "ZIMSEC past papers",
     "UNEB exams", "form four exams Tanzania", "O level exams East Africa",
     "study assistant AI", "AI education",
-  ],
+    ...TAUSI_KEYWORDS,
+  ])),
 
   authors: [{ name: "Tausi", url: APP_URL }],
   creator: "Tausi",
@@ -76,18 +80,10 @@ export const metadata: Metadata = {
     title: "Tausi — AI Exam Prediction for East African Students",
     description:
       "Upload NECTA, KCSE, IGCSE or WAEC past papers. Get AI-predicted exams, marking schemes, and AI tutoring — free for East African students.",
-    images: [
-      {
-        url: `${APP_URL}/og-image.png`,
-        width: 1200,
-        height: 630,
-        alt: "Tausi — AI Exam Prediction for East African Students",
-        type: "image/png",
-      },
-    ],
+    // og:image is supplied by the file-based app/opengraph-image.tsx route.
   },
 
-  // Twitter / X
+  // Twitter / X — image falls back to app/opengraph-image.tsx
   twitter: {
     card: "summary_large_image",
     site: "@tausiapp",
@@ -95,7 +91,6 @@ export const metadata: Metadata = {
     title: "Tausi — AI Exam Prediction for East African Students",
     description:
       "Upload NECTA, KCSE or IGCSE past papers. Get AI-predicted exams, marking schemes, and AI tutoring.",
-    images: [`${APP_URL}/og-image.png`],
   },
 
   // App
@@ -115,10 +110,16 @@ export const metadata: Metadata = {
     ],
   },
 
-  // Verification (add your actual tokens when available)
+  // Verification — only emitted when the real token is set in the environment.
+  // Set GOOGLE_SITE_VERIFICATION (and optionally BING_SITE_VERIFICATION) in your
+  // host's env vars, then redeploy, then verify in Google Search Console.
   verification: {
-    google: "REPLACE_WITH_GOOGLE_SEARCH_CONSOLE_TOKEN",
-    // bing: "REPLACE_WITH_BING_WEBMASTER_TOKEN",
+    ...(process.env.GOOGLE_SITE_VERIFICATION
+      ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+      : {}),
+    ...(process.env.BING_SITE_VERIFICATION
+      ? { other: { "msvalidate.01": process.env.BING_SITE_VERIFICATION } }
+      : {}),
   },
 
   // Category for app stores / directories

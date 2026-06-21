@@ -88,12 +88,14 @@ function LangPill() {
 
 function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const { theme, toggleTheme } = useTheme();
+  const { T } = useT();
   const isDark = theme === "dark";
+  const switchTitle = isDark ? T.nav.switchLight : T.nav.switchDark;
   const sun = "M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z";
   const moon = "M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z";
   if (compact) {
     return (
-      <button onClick={toggleTheme} title={isDark ? "Light mode" : "Dark mode"}
+      <button onClick={toggleTheme} title={switchTitle}
         className="w-9 h-9 rounded-xl bg-ink-3 border border-line flex items-center justify-center text-dim hover:text-snow hover:border-line-2 transition-colors cursor-pointer">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d={isDark ? sun : moon} />
@@ -104,11 +106,11 @@ function ThemeToggle({ compact = false }: { compact?: boolean }) {
   return (
     <button onClick={toggleTheme}
       className="flex items-center gap-1.5 rounded-lg border border-line px-2 py-1 text-dim hover:text-snow hover:border-line-2 transition-colors cursor-pointer shrink-0"
-      title={isDark ? "Switch to light mode" : "Switch to dark mode"}>
+      title={switchTitle}>
       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d={isDark ? sun : moon} />
       </svg>
-      <span className="text-[11px] font-bold uppercase">{isDark ? "Light" : "Dark"}</span>
+      <span className="text-[11px] font-bold uppercase">{isDark ? T.nav.lightMode : T.nav.darkMode}</span>
     </button>
   );
 }
@@ -195,7 +197,7 @@ export function Header() {
         {/* ── Nav links ─────────────────────────────────────── */}
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
           {/* Prominent Predict CTA — the key feature */}
-          <Link href="/predict" title={collapsed ? "Predict Exam" : undefined}
+          <Link href="/predict" title={collapsed ? T.nav.predictExam : undefined}
             className={`group relative flex items-center gap-2.5 rounded-xl bg-teal text-ink font-bold shadow-sm hover:opacity-90 transition-all cursor-pointer mb-2 ${
               collapsed ? "justify-center p-2" : "px-2.5 py-2.5"
             } ${isActive("/predict") ? "ring-2 ring-teal/40 ring-offset-2 ring-offset-ink" : ""}`}>
@@ -204,11 +206,11 @@ export function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
               </svg>
             </span>
-            {!collapsed && <span className="text-sm">Predict Exam</span>}
+            {!collapsed && <span className="text-sm">{T.nav.predictExam}</span>}
           </Link>
 
           {!collapsed && (
-            <p className="px-2.5 pb-1.5 text-[10px] font-bold text-dim/70 uppercase tracking-[0.15em]">Workspace</p>
+            <p className="px-2.5 pb-1.5 text-[10px] font-bold text-dim/70 uppercase tracking-[0.15em]">{T.nav.workspace}</p>
           )}
           {NAV.map(({ href, key, d, accent }) => {
             const active = isActive(href);
@@ -247,7 +249,7 @@ export function Header() {
         {user && (
           <div className={`px-2 py-3 border-t border-line shrink-0 ${collapsed ? "flex justify-center" : ""}`}>
             {collapsed ? (
-              <Link href="/pricing" title="Buy credits"
+              <Link href="/pricing" title={T.nav.buyCredits}
                 className="flex items-center justify-center w-10 h-10 rounded-xl border border-teal/30 bg-teal-deep/20 hover:bg-teal-deep/40 transition-colors">
                 <svg className="w-4 h-4 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
@@ -264,10 +266,10 @@ export function Header() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-snow leading-none">{credits !== null ? credits : "—"}</p>
-                    <p className="text-[10px] text-dim leading-none mt-0.5">credits left</p>
+                    <p className="text-[10px] text-dim leading-none mt-0.5">{T.nav.creditsLeft}</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-teal/70 group-hover:text-teal border border-teal/30 rounded-md px-1.5 py-0.5 transition-colors">+ Buy</span>
+                <span className="text-[10px] font-bold text-teal/70 group-hover:text-teal border border-teal/30 rounded-md px-1.5 py-0.5 transition-colors">+ {T.nav.buy}</span>
               </Link>
             )}
           </div>
@@ -305,13 +307,13 @@ export function Header() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs text-snow font-medium truncate">{user.email}</p>
-                    <p className="text-[10px] text-dim">View profile</p>
+                    <p className="text-[10px] text-dim">{T.nav.viewProfile}</p>
                   </div>
                 </Link>
                 <div className="flex items-center gap-1.5 px-1">
                   <LangPill />
                   <ThemeToggle />
-                  <Link href="/purchases" title="Purchase history"
+                  <Link href="/purchases" title={T.nav.purchaseHistory}
                     className="ml-auto p-1.5 rounded-lg text-dim hover:text-snow hover:bg-white/5 transition-colors cursor-pointer">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
@@ -447,7 +449,7 @@ export function Header() {
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
               </svg>
-              Buy credits
+              {T.nav.buyCredits}
             </Link>
             <Link href="/discover" onClick={() => setMobileSheet(false)}
               className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-dim hover:text-snow hover:bg-white/5 transition-colors text-sm">
@@ -468,7 +470,7 @@ export function Header() {
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
               </svg>
-              Purchase history
+              {T.nav.purchaseHistory}
             </Link>
             <button onClick={signOut}
               className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-bad hover:bg-bad/10 transition-colors text-sm cursor-pointer">

@@ -1,10 +1,17 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/app/lib/supabase/server";
 import { Header } from "@/app/components/Header";
 import type { ExamPaper } from "@/app/lib/types";
 import { PaperActions } from "./PaperActions";
 import { PapersHeader, PapersEmpty } from "./PapersHeader";
+
+export const metadata: Metadata = {
+  title: "Exam Library",
+  description: "Your saved past papers. Reuse them to predict new exams with Tausi AI.",
+  robots: { index: false, follow: false },
+};
 
 const TYPE_LABELS: Record<string, string> = {
   NECTA: "NECTA", KCSE: "KCSE", KCPE: "KCPE",

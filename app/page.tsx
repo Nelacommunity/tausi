@@ -1,24 +1,25 @@
 import type { Metadata } from "next";
 import { LandingClient } from "./LandingClient";
+import { withSharedKeywords } from "./lib/seo";
 
 /* ── Page-level metadata (overrides layout defaults) ─────────────────── */
 export const metadata: Metadata = {
-  title: "Tausi — AI Exam Prediction for NECTA, KCSE & East African Students",
+  title: "Tausi — AI NECTA Exam Prediction: ACSEE, CSEE, FTNA & PSLE",
   description:
-    "Upload past NECTA, KCSE, IGCSE or WAEC exam papers. Tausi AI analyses the structure, predicts new exam questions, generates full marking schemes, and tutors you — free for all East African students.",
-  keywords: [
+    "Tausi AI predicts your NECTA exams — ACSEE, CSEE, FTNA & PSLE — plus KCSE, IGCSE & WAEC. Upload past papers to get a predicted exam, full marking scheme, and an AI tutor. Free for Tanzanian & East African students.",
+  keywords: withSharedKeywords(
     "Tausi", "NECTA exams", "mock exams", "Tanzania education", "East Africa education",
     "exam creator", "exam prediction", "AI exam generator", "NECTA past papers",
     "KCSE past papers", "IGCSE predicted exam", "WAEC mock exam", "marking scheme",
     "AI tutor", "study assistant", "form four exams", "O level Tanzania",
     "predicted exam paper", "AI study tool East Africa", "tausi.app",
-  ],
+  ),
   alternates: { canonical: "https://tausi.app" },
   openGraph: {
     url: "https://tausi.app",
-    title: "Tausi — AI Exam Prediction for East African Students",
+    title: "Tausi — AI NECTA Exam Prediction (ACSEE, CSEE, FTNA, PSLE)",
     description:
-      "Upload NECTA, KCSE or IGCSE past papers. Get AI-predicted exams, full marking schemes, and an AI tutor — free for all East African students.",
+      "Upload past NECTA, KCSE or IGCSE papers. Get AI-predicted exams, full marking schemes, and an AI tutor — free for Tanzanian & East African students.",
   },
 };
 
@@ -29,7 +30,8 @@ const websiteSchema = {
   "@id": "https://tausi.app/#website",
   url: "https://tausi.app",
   name: "Tausi",
-  description: "AI-powered exam prediction and study platform for East African students",
+  alternateName: ["Tausi AI", "Tausi App", "Tausi Tanzania", "tausi.app"],
+  description: "AI-powered NECTA exam prediction (ACSEE, CSEE, FTNA, PSLE) and study platform for Tanzanian and East African students",
   inLanguage: ["en", "sw"],
   potentialAction: {
     "@type": "SearchAction",
@@ -46,6 +48,7 @@ const organizationSchema = {
   "@type": "Organization",
   "@id": "https://tausi.app/#organization",
   name: "Tausi",
+  alternateName: ["Tausi AI", "Tausi App", "Tausi Tanzania"],
   url: "https://tausi.app",
   logo: {
     "@type": "ImageObject",
@@ -54,10 +57,11 @@ const organizationSchema = {
     height: 512,
   },
   description:
-    "Tausi provides AI-powered exam prediction, marking scheme generation, answer-sheet marking, and AI tutoring for students preparing for NECTA, KCSE, IGCSE, WAEC, and other East African examinations.",
+    "Tausi provides AI-powered exam prediction, marking scheme generation, answer-sheet marking, and AI tutoring for students preparing for NECTA (ACSEE, CSEE, FTNA, PSLE), KCSE, IGCSE, WAEC, and other East African examinations.",
   areaServed: ["Tanzania", "Kenya", "Uganda", "East Africa"],
   knowsAbout: [
-    "NECTA examinations", "KCSE", "IGCSE", "WAEC", "exam preparation",
+    "NECTA examinations", "ACSEE", "CSEE", "FTNA", "PSLE",
+    "KCSE", "IGCSE", "WAEC", "exam preparation",
     "AI tutoring", "marking schemes", "past papers",
   ],
   sameAs: [],
@@ -131,7 +135,15 @@ const faqSchema = {
       name: "Which exams does Tausi support?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Tausi supports NECTA (Tanzania), KCSE and KCPE (Kenya), IGCSE, Cambridge A-Level, IEB and NSC (South Africa), WAEC, NECO (Nigeria), ZIMSEC (Zimbabwe), UNEB and UACE (Uganda), and any other past paper in PDF or image format.",
+        text: "Tausi supports all NECTA Tanzania examinations — ACSEE (Form 6), CSEE (Form 4), FTNA (Form 2), and PSLE (Standard 7) — plus KCSE and KCPE (Kenya), IGCSE, Cambridge A-Level, IEB and NSC (South Africa), WAEC, NECO (Nigeria), ZIMSEC (Zimbabwe), UNEB and UACE (Uganda), and any other past paper in PDF or image format.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Does Tausi predict ACSEE, CSEE, FTNA and PSLE exams?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. Tausi predicts every NECTA examination level in Tanzania: ACSEE (Advanced Certificate of Secondary Education, Form 6), CSEE (Certificate of Secondary Education, Form 4), FTNA (Form Two National Assessment), and PSLE (Primary School Leaving Examination, Standard 7). Upload a past paper and Tausi AI generates a predicted exam in the same format with a full marking scheme.",
       },
     },
     {

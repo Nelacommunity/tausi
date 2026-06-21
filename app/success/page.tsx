@@ -1,26 +1,24 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
-import { CREDIT_PACKS } from "@/app/api/checkout/snippe/route";
+import { useSearchParams } from "next/navigation";
+import { useT } from "@/app/lib/language-context";
 
-export const metadata: Metadata = {
-  title: "Credits Added — Tausi",
-  robots: { index: false, follow: false },
-};
+// Local pack credit map (avoids importing the server checkout route into a client component).
+const PACK_CREDITS: Record<string, number> = { starter: 20, scholar: 60, champion: 175 };
+const PACK_LABELS: Record<string, string> = { starter: "Starter", scholar: "Scholar", champion: "Champion" };
 
-export default async function SuccessPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ credits?: string; pack?: string }>;
-}) {
-  const { credits: creditsParam, pack: packParam } = await searchParams;
+export default function SuccessPage() {
+  const { T } = useT();
+  const S = T.success;
+  const params = useSearchParams();
+
+  const creditsParam = params.get("credits");
+  const packParam = params.get("pack");
 
   const credits = creditsParam ? parseInt(creditsParam, 10) : null;
-  const packInfo = packParam && packParam in CREDIT_PACKS
-    ? CREDIT_PACKS[packParam as keyof typeof CREDIT_PACKS]
-    : null;
-
-  const displayCredits = credits ?? packInfo?.credits ?? null;
-  const displayPack    = packInfo?.label ?? packParam ?? null;
+  const displayCredits = credits ?? (packParam ? PACK_CREDITS[packParam] ?? null : null);
+  const displayPack = packParam ? PACK_LABELS[packParam] ?? packParam : null;
 
   return (
     <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-4">
@@ -32,25 +30,15 @@ export default async function SuccessPage({
       <div className="relative z-10 w-full max-w-md text-center">
         {/* Check icon */}
         <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-teal-deep/60 ring-1 ring-teal/40 shadow-xl shadow-teal/10">
-          <svg
-            className="h-10 w-10 text-teal"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2.5}
-          >
+          <svg className="h-10 w-10 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
           </svg>
         </div>
 
         {/* Heading */}
-        <h1 className="font-display text-3xl font-extrabold text-snow mb-2">
-          Credits added!
-        </h1>
+        <h1 className="font-display text-3xl font-extrabold text-snow mb-2">{S.title}</h1>
         <p className="text-dim text-sm mb-8">
-          {displayCredits
-            ? <>Your <span className="text-teal font-semibold">{displayCredits} credits</span> are ready to use.</>
-            : <>Your credits have been added to your account.</>}
+          {displayCredits ? S.creditsReadyN(displayCredits) : S.message}
         </p>
 
         {/* Summary card */}
@@ -63,10 +51,10 @@ export default async function SuccessPage({
             </div>
             <div>
               <p className="text-snow font-semibold text-sm">
-                {displayPack ? `${displayPack} Pack` : "Credit Pack"}
+                {displayPack ? `${displayPack} ${S.pack}` : S.pack}
               </p>
               {displayCredits && (
-                <p className="text-xs text-dim">{displayCredits} credits added to your account</p>
+                <p className="text-xs text-dim">{S.creditsAddedN(displayCredits)}</p>
               )}
             </div>
           </div>
@@ -74,19 +62,9 @@ export default async function SuccessPage({
           <div className="h-px bg-line" />
 
           <div className="space-y-2.5">
-            {[
-              "Credits never expire",
-              "Use for exam predictions, marking, tutoring",
-              "Buy more credits any time",
-            ].map((feature) => (
+            {[S.feat1, S.feat2, S.feat3].map((feature) => (
               <div key={feature} className="flex items-center gap-2.5">
-                <svg
-                  className="h-4 w-4 text-good shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
+                <svg className="h-4 w-4 text-good shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
                 <span className="text-sm text-body">{feature}</span>
@@ -97,23 +75,17 @@ export default async function SuccessPage({
 
         {/* Actions */}
         <div className="space-y-3">
-          <Link
-            href="/dashboard"
-            className="block w-full rounded-xl bg-teal hover:bg-teal/90 text-ink font-semibold py-3 text-sm transition-colors shadow-lg shadow-teal/20 text-center"
-          >
-            Go to Dashboard
+          <Link href="/dashboard"
+            className="block w-full rounded-xl bg-teal hover:opacity-90 text-ink font-semibold py-3 text-sm transition-opacity shadow-lg shadow-teal/20 text-center">
+            {S.goDashboard}
           </Link>
-          <Link
-            href="/pricing"
-            className="block w-full rounded-xl border border-line hover:border-line-2 text-body hover:text-snow font-medium py-3 text-sm transition-colors text-center"
-          >
-            Buy more credits
+          <Link href="/pricing"
+            className="block w-full rounded-xl border border-line hover:border-line-2 text-body hover:text-snow font-medium py-3 text-sm transition-colors text-center">
+            {S.buyMore}
           </Link>
         </div>
 
-        <p className="mt-6 text-xs text-dim">
-          Questions? Contact support via your dashboard.
-        </p>
+        <p className="mt-6 text-xs text-dim">{S.support}</p>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/app/lib/supabase/server";
+import { withSharedKeywords } from "@/app/lib/seo";
 import type { Exam, ChatMessage } from "@/app/lib/types";
 import { ExamViewer } from "./ExamViewer";
 
@@ -37,31 +38,24 @@ export async function generateMetadata({
   return {
     title,
     description,
-    keywords: [
+    keywords: withSharedKeywords(
       exam.title, "predicted exam", "AI exam", "marking scheme",
-      "NECTA", "KCSE", "East Africa", "Tausi", "past paper prediction",
-    ],
+      "KCSE", "East Africa", "past paper prediction",
+    ),
     alternates: { canonical: url },
+    // og:image / twitter:image are supplied by the dynamic
+    // app/exams/[id]/opengraph-image.tsx route (per-exam title card).
     openGraph: {
       type: "article",
       url,
       title,
       description,
       publishedTime: exam.created_at,
-      images: [
-        {
-          url: `${APP_URL}/og-image.png`,
-          width: 1200,
-          height: 630,
-          alt: title,
-        },
-      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [`${APP_URL}/og-image.png`],
     },
   };
 }

@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/app/lib/supabase/client";
+import { useT } from "@/app/lib/language-context";
 
 export default function VerifiedPage() {
+  const { T } = useT();
+  const V = T.verified;
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,23 +36,23 @@ export default function VerifiedPage() {
         <span className="text-lg font-bold text-white">Tausi</span>
       </div>
 
-      <h1 className="text-3xl font-extrabold text-white mb-3">Email verified!</h1>
+      <h1 className="font-display text-3xl font-extrabold text-snow mb-3">{V.title}</h1>
 
       {email && (
-        <p className="text-sm text-gray-400 mb-2">
-          <span className="text-white font-medium">{email}</span> is now confirmed.
+        <p className="text-sm text-dim mb-2">
+          <span className="text-snow font-medium">{email}</span>
         </p>
       )}
 
-      <p className="text-sm text-gray-500 mb-8">
-        Your account is active. Sign in to start using Tausi.
+      <p className="text-sm text-dim mb-8">
+        {V.message}
       </p>
 
       <Link
         href="/login"
-        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors text-sm shadow-lg shadow-indigo-600/30"
+        className="flex items-center gap-2 bg-teal hover:opacity-90 text-ink font-semibold px-8 py-3 rounded-xl transition-opacity text-sm shadow-lg shadow-teal/20"
       >
-        Sign in to your account
+        {V.continueBtn}
       </Link>
     </div>
   );

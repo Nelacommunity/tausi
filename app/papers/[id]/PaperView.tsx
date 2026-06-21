@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { ExamPaper } from "@/app/lib/types";
 import { ExamOutput } from "@/app/components/ExamOutput";
+import { useT } from "@/app/lib/language-context";
 
 interface PaperViewProps {
   paper: ExamPaper;
@@ -65,6 +66,8 @@ const ICONS = {
 };
 
 export function PaperView({ paper, signedUrls }: PaperViewProps) {
+  const { T } = useT();
+  const V = T.paperView;
   const [activeFile, setActiveFile]   = useState(0);
   const [phase, setPhase]             = useState<GenPhase>("idle");
   const [preview, setPreview]         = useState("");
@@ -195,7 +198,7 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
             <span className="font-bold text-indigo-400 hidden sm:block">Tausi</span>
           </Link>
           <span className="text-gray-700 select-none">/</span>
-          <span className="text-gray-500 text-sm hidden sm:block">Papers</span>
+          <span className="text-gray-500 text-sm hidden sm:block">{V.papersCrumb}</span>
           <span className="text-gray-700 select-none hidden sm:block">/</span>
 
           <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -257,7 +260,7 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
               className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors shrink-0"
             >
               <Icon d={ICONS.external} size={3} />
-              <span className="hidden sm:inline">Open full</span>
+              <span className="hidden sm:inline">{V.openFull}</span>
             </a>
           </div>
 
@@ -282,7 +285,7 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
               )
             ) : (
               <div className="flex items-center justify-center h-full">
-                <p className="text-sm text-gray-600">File not available</p>
+                <p className="text-sm text-gray-600">{V.fileNotAvailable}</p>
               </div>
             )}
           </div>
@@ -302,7 +305,7 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
               }`}
             >
               <Icon d={ICONS.sparkle} size={3} />
-              Generate
+
             </button>
             <button
               onClick={() => setActivePanel("chat")}
@@ -334,7 +337,7 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
                         <Icon d={ICONS.chat} size={5} />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-300 mb-1">Chat with this paper</p>
+                        <p className="text-sm font-semibold text-gray-300 mb-1">{V.chatTitle}</p>
                         <p className="text-xs text-gray-500 leading-relaxed">
                           Ask questions about the exam content, get explanations, or discuss topics.
                         </p>
@@ -400,7 +403,7 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
                     onChange={chatAutoResize}
                     onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); } }}
                     disabled={chatStreaming}
-                    placeholder="Ask about this paper…"
+                    placeholder={V.chatPlaceholder}
                     rows={1}
                     className="flex-1 bg-gray-900 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 rounded-xl px-3 py-2 text-xs text-gray-200 placeholder-gray-600 resize-none overflow-hidden outline-none transition-colors disabled:opacity-50"
                     style={{ minHeight: "36px", maxHeight: "120px" }}
@@ -448,12 +451,10 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
 
                 {/* What happens note */}
                 <div className="bg-indigo-950/40 border border-indigo-900/50 rounded-xl p-3.5 space-y-1.5">
-                  <p className="text-xs font-semibold text-indigo-300">What this does</p>
+                  <p className="text-xs font-semibold text-indigo-300">{V.whatThisDoes}</p>
                   <ul className="space-y-1">
                     {[
-                      "Analyses the structure of this past paper",
-                      "Generates a new predicted exam in the same format",
-                      "Saves it to your exam library",
+                      V.does1, V.does2, V.does3,
                     ].map(t => (
                       <li key={t} className="flex items-start gap-1.5 text-xs text-gray-400">
                         <span className="text-indigo-400 mt-0.5 shrink-0">·</span>
@@ -469,7 +470,7 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
                   className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-semibold text-sm transition-colors"
                 >
                   <Icon d={ICONS.sparkle} size={4} />
-                  Generate Predicted Exam
+
                 </button>
               </div>
             )}
@@ -482,8 +483,8 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
                 <div className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-xl p-3.5">
                   <span className="w-5 h-5 border-2 border-indigo-500/40 border-t-indigo-400 rounded-full animate-spin shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-gray-200">Generating exam…</p>
-                    <p className="text-xs text-gray-600">AI is analysing and building your predicted paper</p>
+                    <p className="text-sm font-semibold text-gray-200">{V.generatingTitle}</p>
+                    <p className="text-xs text-gray-600">{V.generatingSub}</p>
                   </div>
                 </div>
 
@@ -492,7 +493,7 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
                   <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
                     <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-800 bg-gray-900/80">
                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-                      <span className="text-xs text-indigo-400 font-medium">Live Preview</span>
+                      <span className="text-xs text-indigo-400 font-medium">{V.livePreview}</span>
                     </div>
                     <div className="p-4 max-h-[400px] overflow-y-auto">
                       <ExamOutput content={preview} isStreaming />
@@ -510,8 +511,8 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
                 <div className="flex items-start gap-3 bg-emerald-950/50 border border-emerald-800/60 rounded-xl p-4">
                   <Icon d={ICONS.check} size={5} />
                   <div>
-                    <p className="text-sm font-semibold text-emerald-300">Exam generated!</p>
-                    <p className="text-xs text-emerald-600 mt-0.5">Saved to your exam library</p>
+                    <p className="text-sm font-semibold text-emerald-300">{V.examGenerated}</p>
+                    <p className="text-xs text-emerald-600 mt-0.5">{V.savedToLibrary}</p>
                   </div>
                 </div>
 
@@ -521,7 +522,7 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
                     href={`/exams/${examId}`}
                     className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-colors"
                   >
-                    View Generated Exam
+
                     <Icon d={ICONS.arrow} size={4} />
                   </Link>
                 )}
@@ -538,7 +539,7 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
                 {preview && (
                   <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
                     <div className="flex items-center justify-between px-3 py-2 border-b border-gray-800">
-                      <span className="text-xs text-gray-500 font-medium">Preview</span>
+                      <span className="text-xs text-gray-500 font-medium">{V.preview}</span>
                     </div>
                     <div className="p-4 max-h-[400px] overflow-y-auto">
                       <ExamOutput content={preview} />
@@ -554,7 +555,7 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
                 <div className="bg-red-950/40 border border-red-800/60 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Icon d={ICONS.warn} size={4} />
-                    <p className="text-sm font-semibold text-red-300">Generation failed</p>
+                    <p className="text-sm font-semibold text-red-300">{V.generationFailed}</p>
                   </div>
                   <p className="text-xs text-red-400">{genError}</p>
                 </div>
@@ -562,7 +563,7 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
                   onClick={() => { setPhase("idle"); setGenError(""); }}
                   className="w-full py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium transition-colors"
                 >
-                  Try Again
+
                 </button>
               </div>
             )}

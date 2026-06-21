@@ -1,9 +1,16 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/app/lib/supabase/server";
 import { Header } from "@/app/components/Header";
 import { ExamOutput } from "@/app/components/ExamOutput";
 import type { MarkingSession } from "@/app/lib/types";
+
+export const metadata: Metadata = {
+  title: "Marking Result",
+  description: "Your AI-graded marking result — score, grade and per-question feedback from Tausi.",
+  robots: { index: false, follow: false },
+};
 
 function GradeDisplay({ pct, total, max }: { pct: number; total: number; max: number }) {
   const grade = pct >= 75 ? "A" : pct >= 65 ? "B" : pct >= 50 ? "C" : pct >= 40 ? "D" : "F";

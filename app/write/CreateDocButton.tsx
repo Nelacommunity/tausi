@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/app/lib/language-context";
 
 function PenIcon() {
   return (
@@ -12,8 +13,10 @@ function PenIcon() {
   );
 }
 
-export function CreateDocButton({ label = "New Document" }: { label?: string }) {
+export function CreateDocButton({ firstDoc = false }: { firstDoc?: boolean }) {
   const router = useRouter();
+  const { T } = useT();
+  const W = T.writer;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -24,17 +27,17 @@ export function CreateDocButton({ label = "New Document" }: { label?: string }) 
       const res = await fetch("/api/write", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: "Untitled Document", content: "" }),
+        body: JSON.stringify({ title: W.untitled, content: "" }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Failed to create document");
+        setError(data.error ?? W.createFailed);
         setLoading(false);
         return;
       }
       router.push(`/write/${data.id}`);
     } catch {
-      setError("Network error — please try again");
+      setError(W.networkError);
       setLoading(false);
     }
   };
@@ -44,16 +47,16 @@ export function CreateDocButton({ label = "New Document" }: { label?: string }) 
       <button
         onClick={create}
         disabled={loading}
-        className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 bg-brand-magenta hover:opacity-90 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-opacity cursor-pointer"
       >
         {loading ? (
           <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
         ) : (
           <PenIcon />
         )}
-        {loading ? "Creating…" : label}
+        {loading ? W.creating : firstDoc ? W.createFirst : W.newDocument}
       </button>
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-bad">{error}</p>}
     </div>
   );
 }

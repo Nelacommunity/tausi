@@ -71,7 +71,7 @@ export default function StudyPage() {
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
               </svg>
-              AI tutor
+              {S.aiTutor}
             </span>
           }
         />
@@ -174,21 +174,21 @@ export default function StudyPage() {
           {/* ── Side panel (bento) ─────────────────────────── */}
           <div className="grad-side-gold rounded-2xl border border-line overflow-hidden relative">
             <div className="relative p-5 flex flex-col gap-4 h-full">
-              <p className="text-xs font-bold text-dim uppercase tracking-widest">Study smarter</p>
+              <p className="text-xs font-bold text-dim uppercase tracking-widest">{S.studySmarter}</p>
 
               <div className="rounded-xl border border-gold/20 bg-gold/10 text-gold p-4 flex items-center gap-3">
                 <span className="font-display text-3xl font-bold leading-none">
                   {loadingSessions ? "—" : sessions.length}
                 </span>
-                <span className="text-xs font-semibold leading-tight">study<br />sessions</span>
+                <span className="text-xs font-semibold leading-tight">{S.studySessions}</span>
               </div>
 
               <div className="rounded-xl border border-white/10 bg-ink/40 p-4 space-y-3 flex-1">
-                <p className="text-xs font-semibold text-snow">What you can do</p>
+                <p className="text-xs font-semibold text-snow">{S.whatYouCanDo}</p>
                 {[
-                  { d: "M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z", t: "Ask questions about your notes" },
-                  { d: "M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25", t: "Get topics explained simply" },
-                  { d: "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z", t: "Test yourself with practice Q&A" },
+                  { d: "M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z", t: S.sTip1 },
+                  { d: "M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25", t: S.sTip2 },
+                  { d: "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z", t: S.sTip3 },
                 ].map(({ d, t }) => (
                   <div key={t} className="flex items-start gap-2.5">
                     <svg className="w-4 h-4 text-gold shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

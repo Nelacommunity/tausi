@@ -1425,19 +1425,28 @@ export function LandingClient() {
 
         {/* ── Footer ───────────────────────────────────────────── */}
         <footer className="border-t border-line/40 py-10 px-4">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo/android-chrome-192x192.png" alt="Tausi" className="w-6 h-6 rounded-md" />
-              <span className="font-display text-sm font-semibold text-body">Tausi</span>
+          <div className="max-w-6xl mx-auto flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo/android-chrome-192x192.png" alt="Tausi" className="w-6 h-6 rounded-md" />
+                <span className="font-display text-sm font-semibold text-body">Tausi</span>
+              </div>
+              <div className="flex items-center gap-6 text-xs text-dim">
+                <Link href="/discover" className="hover:text-snow transition-colors">{T.nav.discover}</Link>
+                <Link href="/pricing" className="hover:text-snow transition-colors">{L.pricingTitle}</Link>
+                <Link href="/login" className="hover:text-snow transition-colors">{T.nav.signIn}</Link>
+                <Link href="/signup" className="hover:text-snow transition-colors">{T.nav.signUp}</Link>
+              </div>
+              <p className="text-xs text-dim">{L.poweredBy}</p>
             </div>
-            <div className="flex items-center gap-6 text-xs text-dim">
-              <Link href="/discover" className="hover:text-snow transition-colors">{T.nav.discover}</Link>
-              <Link href="/pricing" className="hover:text-snow transition-colors">{L.pricingTitle}</Link>
-              <Link href="/login" className="hover:text-snow transition-colors">{T.nav.signIn}</Link>
-              <Link href="/signup" className="hover:text-snow transition-colors">{T.nav.signUp}</Link>
+            {/* Legal links */}
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-dim/70 border-t border-line/30 pt-5">
+              <Link href="/privacy" className="hover:text-snow transition-colors">{T.legal.footerPrivacy}</Link>
+              <Link href="/service" className="hover:text-snow transition-colors">{T.legal.footerTerms}</Link>
+              <Link href="/cookies" className="hover:text-snow transition-colors">{T.legal.footerCookies}</Link>
+              <span className="text-dim/40">© {new Date().getFullYear()} Tausi</span>
             </div>
-            <p className="text-xs text-dim">{L.poweredBy}</p>
           </div>
         </footer>
       </div>

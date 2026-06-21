@@ -1,7 +1,14 @@
 import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { createClient } from "@/app/lib/supabase/server";
 import type { ExamPaper } from "@/app/lib/types";
 import { PaperView } from "./PaperView";
+
+export const metadata: Metadata = {
+  title: "Exam Paper",
+  description: "View an uploaded past paper and its AI-analysed structure on Tausi.",
+  robots: { index: false, follow: false },
+};
 
 export default async function PaperViewPage({
   params,

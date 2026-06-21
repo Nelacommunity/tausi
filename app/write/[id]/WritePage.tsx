@@ -17,6 +17,7 @@ import TableHeader from "@tiptap/extension-table-header";
 import TableCell from "@tiptap/extension-table-cell";
 import type { WriteDocument } from "@/app/lib/types";
 import { downloadPDF } from "@/app/lib/download-pdf";
+import { useT } from "@/app/lib/language-context";
 
 interface WritePageProps {
   document: WriteDocument;
@@ -27,21 +28,7 @@ type SaveStatus = "saved" | "saving" | "unsaved";
 type AIMode = "write" | "continue" | "improve" | "summarize" | "ask";
 type ChatMsg = { id: string; role: "user" | "assistant"; content: string };
 
-const AI_MODES: { id: AIMode; label: string }[] = [
-  { id: "write",     label: "Write"     },
-  { id: "continue",  label: "Continue"  },
-  { id: "improve",   label: "Improve"   },
-  { id: "summarize", label: "Summarize" },
-  { id: "ask",       label: "Ask"       },
-];
-
-const MODE_HINTS: Record<AIMode, string> = {
-  write:     "Write new content for me…",
-  continue:  "Continue writing from where I left off…",
-  improve:   "Improve my selected text…",
-  summarize: "Summarize my document or selection…",
-  ask:       "Ask anything about the document…",
-};
+const AI_MODES: AIMode[] = ["write", "continue", "improve", "summarize", "ask"];
 
 function Icon({ d, size = 4 }: { d: string; size?: number }) {
   return (
@@ -109,6 +96,16 @@ function TDivider() {
 
 export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
   const router = useRouter();
+  const { T } = useT();
+  const W = T.writer;
+  const MODE_LABEL: Record<AIMode, string> = {
+    write: W.modeWrite, continue: W.modeContinue, improve: W.modeImprove,
+    summarize: W.modeSummarize, ask: W.modeAsk,
+  };
+  const MODE_HINT: Record<AIMode, string> = {
+    write: W.hintWrite, continue: W.hintContinue, improve: W.hintImprove,
+    summarize: W.hintSummarize, ask: W.hintAsk,
+  };
 
   const [title, setTitle]                         = useState(initialDoc.title);
   const [editingTitle, setEditingTitle]           = useState(false);
@@ -382,10 +379,10 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
                 <span className="w-2.5 h-2.5 border-2 border-amber-400/40 border-t-amber-400 rounded-full animate-spin" />
               )}
               {saveStatus === "saved" && <Icon d={ICONS.check} size={3} />}
-              {saveStatus === "saved" ? "Saved" : saveStatus === "saving" ? "Saving…" : "Unsaved"}
+              {saveStatus === "saved" ? W.saved : saveStatus === "saving" ? W.savingDoc : W.unsaved}
             </span>
 
-            <span className="hidden lg:block text-xs text-gray-600">{words} words</span>
+            <span className="hidden lg:block text-xs text-gray-600">{W.wordsN(words)}</span>
 
             {/* AI toggle */}
             <button
@@ -406,7 +403,7 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
               className="flex items-center gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg px-3 py-1.5 transition-colors font-medium shrink-0"
             >
               <Icon d={ICONS.pdf} size={3} />
-              <span>Export PDF</span>
+              <span>{W.exportPdf}</span>
             </button>
 
             {/* Delete */}
@@ -419,19 +416,19 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
               </button>
             ) : (
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-red-400">Delete?</span>
+                <span className="text-xs text-red-400">{W.deleteQ}</span>
                 <button
                   onClick={deleteDocument}
                   disabled={isDeleting}
                   className="text-xs text-white bg-red-600 hover:bg-red-500 disabled:opacity-50 rounded-lg px-2.5 py-1 transition-colors"
                 >
-                  {isDeleting ? "…" : "Yes"}
+                  {isDeleting ? "…" : W.yes}
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
                   className="text-xs text-gray-400 border border-gray-700 rounded-lg px-2.5 py-1 transition-colors"
                 >
-                  No
+                  {W.no}
                 </button>
               </div>
             )}
@@ -444,10 +441,10 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
         <div className="flex items-center gap-0.5 px-3 py-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
 
           {/* History */}
-          <TBtn onClick={() => editor?.chain().focus().undo().run()} title="Undo (Ctrl+Z)" disabled={!editor?.can().undo()}>
+          <TBtn onClick={() => editor?.chain().focus().undo().run()} title={W.undo} disabled={!editor?.can().undo()}>
             <Icon d={ICONS.undo} size={3} />
           </TBtn>
-          <TBtn onClick={() => editor?.chain().focus().redo().run()} title="Redo (Ctrl+Y)" disabled={!editor?.can().redo()}>
+          <TBtn onClick={() => editor?.chain().focus().redo().run()} title={W.redo} disabled={!editor?.can().redo()}>
             <Icon d={ICONS.redo} size={3} />
           </TBtn>
 
@@ -458,9 +455,9 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
             wide
             active={!editor?.isActive("heading")}
             onClick={() => editor?.chain().focus().setParagraph().run()}
-            title="Normal paragraph"
+            title={W.normalParagraph}
           >
-            <span className="text-xs">Normal</span>
+            <span className="text-xs">{W.normal}</span>
           </TBtn>
           {([1, 2, 3] as const).map((level) => (
             <TBtn
@@ -468,7 +465,7 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
               wide
               active={editor?.isActive("heading", { level }) ?? false}
               onClick={() => editor?.chain().focus().toggleHeading({ level }).run()}
-              title={`Heading ${level}`}
+              title={W.headingN(level)}
             >
               <span className={`font-bold ${level === 1 ? "text-sm" : level === 2 ? "text-xs" : "text-[11px]"}`}>
                 H{level}
@@ -480,23 +477,23 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
 
           {/* Character formatting */}
           <TBtn active={editor?.isActive("bold") ?? false}
-            onClick={() => editor?.chain().focus().toggleBold().run()} title="Bold (Ctrl+B)">
+            onClick={() => editor?.chain().focus().toggleBold().run()} title={W.bold}>
             <span className="text-sm font-bold leading-none">B</span>
           </TBtn>
           <TBtn active={editor?.isActive("italic") ?? false}
-            onClick={() => editor?.chain().focus().toggleItalic().run()} title="Italic (Ctrl+I)">
+            onClick={() => editor?.chain().focus().toggleItalic().run()} title={W.italic}>
             <span className="text-sm italic font-serif leading-none">I</span>
           </TBtn>
           <TBtn active={editor?.isActive("underline") ?? false}
-            onClick={() => editor?.chain().focus().toggleUnderline().run()} title="Underline (Ctrl+U)">
+            onClick={() => editor?.chain().focus().toggleUnderline().run()} title={W.underline}>
             <span className="text-sm underline leading-none">U</span>
           </TBtn>
           <TBtn active={editor?.isActive("strike") ?? false}
-            onClick={() => editor?.chain().focus().toggleStrike().run()} title="Strikethrough">
+            onClick={() => editor?.chain().focus().toggleStrike().run()} title={W.strikethrough}>
             <span className="text-sm line-through leading-none">S</span>
           </TBtn>
           <TBtn active={editor?.isActive("highlight") ?? false}
-            onClick={() => editor?.chain().focus().toggleHighlight().run()} title="Highlight">
+            onClick={() => editor?.chain().focus().toggleHighlight().run()} title={W.highlight}>
             <span
               className="text-xs font-semibold leading-none px-0.5 rounded"
               style={{ background: "#fef08a", color: "#111" }}
@@ -509,19 +506,19 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
 
           {/* Lists & blocks */}
           <TBtn active={editor?.isActive("bulletList") ?? false}
-            onClick={() => editor?.chain().focus().toggleBulletList().run()} title="Bullet list">
+            onClick={() => editor?.chain().focus().toggleBulletList().run()} title={W.bulletList}>
             <Icon d={ICONS.list} size={3} />
           </TBtn>
           <TBtn active={editor?.isActive("orderedList") ?? false}
-            onClick={() => editor?.chain().focus().toggleOrderedList().run()} title="Numbered list">
+            onClick={() => editor?.chain().focus().toggleOrderedList().run()} title={W.numberedList}>
             <Icon d={ICONS.listOl} size={3} />
           </TBtn>
           <TBtn active={editor?.isActive("blockquote") ?? false}
-            onClick={() => editor?.chain().focus().toggleBlockquote().run()} title="Blockquote">
+            onClick={() => editor?.chain().focus().toggleBlockquote().run()} title={W.blockquote}>
             <Icon d={ICONS.quote} size={3} />
           </TBtn>
           <TBtn active={editor?.isActive("code") ?? false}
-            onClick={() => editor?.chain().focus().toggleCode().run()} title="Inline code">
+            onClick={() => editor?.chain().focus().toggleCode().run()} title={W.inlineCode}>
             <Icon d={ICONS.code} size={3} />
           </TBtn>
 
@@ -529,15 +526,15 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
 
           {/* Text alignment */}
           <TBtn active={editor?.isActive({ textAlign: "left" }) ?? false}
-            onClick={() => editor?.chain().focus().setTextAlign("left").run()} title="Align left">
+            onClick={() => editor?.chain().focus().setTextAlign("left").run()} title={W.alignLeft}>
             <Icon d={ICONS.alignL} size={3} />
           </TBtn>
           <TBtn active={editor?.isActive({ textAlign: "center" }) ?? false}
-            onClick={() => editor?.chain().focus().setTextAlign("center").run()} title="Align center">
+            onClick={() => editor?.chain().focus().setTextAlign("center").run()} title={W.alignCenter}>
             <Icon d={ICONS.alignC} size={3} />
           </TBtn>
           <TBtn active={editor?.isActive({ textAlign: "right" }) ?? false}
-            onClick={() => editor?.chain().focus().setTextAlign("right").run()} title="Align right">
+            onClick={() => editor?.chain().focus().setTextAlign("right").run()} title={W.alignRight}>
             <Icon d={ICONS.alignR} size={3} />
           </TBtn>
 
@@ -546,13 +543,13 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
           {/* Insert */}
           <TBtn
             onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-            title="Insert table"
+            title={W.insertTable}
           >
             <Icon d={ICONS.table} size={3} />
           </TBtn>
           <TBtn
             onClick={() => editor?.chain().focus().setHorizontalRule().run()}
-            title="Insert divider"
+            title={W.insertDivider}
           >
             <Icon d={ICONS.hr} size={3} />
           </TBtn>
@@ -560,7 +557,7 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
           {/* Page / char count pushed to the right */}
           <div className="ml-auto flex items-center gap-3 pl-3 border-l border-gray-200 shrink-0">
             <span className="text-[11px] text-gray-400 whitespace-nowrap">
-              {pageCount} {pageCount === 1 ? "page" : "pages"}
+              {W.pageN(pageCount)}
             </span>
             <span className="hidden md:block text-[11px] text-gray-400 whitespace-nowrap">
               {chars} chars
@@ -599,9 +596,9 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
 
               {/* Below-sheet status bar */}
               <div className="flex items-center justify-between py-3 px-1">
-                <span className="text-xs text-gray-500">{words} words · {chars} characters</span>
+                <span className="text-xs text-gray-500">{W.statusN(words, chars)}</span>
                 <span className="text-xs text-gray-500">
-                  {pageCount} {pageCount === 1 ? "page" : "pages"}
+                  {W.pageN(pageCount)}
                 </span>
               </div>
 
@@ -621,20 +618,20 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
                   className="md:hidden flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm"
                 >
                   <Icon d={ICONS.back} size={4} />
-                  <span>Editor</span>
+                  <span>{W.editorTab}</span>
                 </button>
                 <div className="hidden md:flex items-center gap-2">
                   <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                     <Icon d={ICONS.sparkle} size={3} />
                   </div>
-                  <span className="text-sm font-semibold text-gray-200">AI Assistant</span>
+                  <span className="text-sm font-semibold text-gray-200">{W.aiAssistant}</span>
                 </div>
               </div>
               <div className="flex items-center gap-1">
                 {chatHistory.length > 0 && (
                   <button
                     onClick={() => setChatHistory([])}
-                    title="Clear chat"
+                    title={W.clearChat}
                     className="text-gray-600 hover:text-gray-400 transition-colors p-1"
                   >
                     <Icon d={ICONS.clear} size={3} />
@@ -653,15 +650,15 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
             <div className="flex gap-1 px-3 pt-2.5 pb-2 border-b border-gray-800/60 shrink-0 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
               {AI_MODES.map((m) => (
                 <button
-                  key={m.id}
-                  onClick={() => setAIMode(m.id)}
+                  key={m}
+                  onClick={() => setAIMode(m)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
-                    aiMode === m.id
+                    aiMode === m
                       ? "bg-indigo-600 text-white"
                       : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700"
                   }`}
                 >
-                  {m.label}
+                  {MODE_LABEL[m]}
                 </button>
               ))}
             </div>
@@ -673,15 +670,13 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
                   <div className="w-10 h-10 rounded-2xl bg-gray-900 border border-gray-800 flex items-center justify-center">
                     <Icon d={ICONS.sparkle} size={4} />
                   </div>
-                  <p className="text-sm text-gray-400 font-medium">AI Writing Assistant</p>
+                  <p className="text-sm text-gray-400 font-medium">{W.aiWritingAssistant}</p>
                   <p className="text-xs text-gray-600 max-w-[200px]">
-                    Select a mode above, then type your request below.
+                    {W.selectModeHint}
                   </p>
                   <div className="w-full space-y-1.5 mt-1">
                     {[
-                      "Write an introduction about climate change",
-                      "Improve my selected paragraph",
-                      "Continue writing from here",
+                      W.sugg1, W.sugg2, W.sugg3,
                     ].map((s) => (
                       <button
                         key={s}
@@ -744,13 +739,13 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
                   onClick={insertLastResponse}
                   className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold bg-indigo-700 hover:bg-indigo-600 text-white rounded-lg transition-colors"
                 >
-                  <Icon d={ICONS.insert} size={3} /> Insert
+                  <Icon d={ICONS.insert} size={3} /> {W.insert}
                 </button>
                 <button
                   onClick={replaceSelectionWithLastResponse}
                   className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
                 >
-                  <Icon d={ICONS.replace} size={3} /> Replace
+                  <Icon d={ICONS.replace} size={3} /> {W.replace}
                 </button>
               </div>
             )}
@@ -766,7 +761,7 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
                     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
                   }}
                   disabled={isStreaming}
-                  placeholder={MODE_HINTS[aiMode]}
+                  placeholder={MODE_HINT[aiMode]}
                   rows={1}
                   className="flex-1 bg-gray-900 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 rounded-xl px-3 py-2 text-xs text-gray-200 placeholder-gray-600 resize-none overflow-hidden outline-none transition-colors disabled:opacity-50"
                   style={{ minHeight: "36px", maxHeight: "120px" }}
@@ -775,7 +770,7 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
                   onClick={sendMessage}
                   disabled={!chatInput.trim() || isStreaming}
                   className="flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-800 disabled:text-gray-600 text-white transition-colors shrink-0"
-                  aria-label="Send"
+                  aria-label={W.send}
                 >
                   {isStreaming
                     ? <span className="w-3.5 h-3.5 border-2 border-gray-500 border-t-indigo-400 rounded-full animate-spin" />
@@ -783,7 +778,7 @@ export function WritePage({ document: initialDoc, userTier }: WritePageProps) {
                   }
                 </button>
               </div>
-              <p className="text-xs text-gray-700 mt-1.5 text-center">Enter to send · Shift+Enter for new line</p>
+              <p className="text-xs text-gray-700 mt-1.5 text-center">{W.sendHint}</p>
             </div>
           </div>
         )}

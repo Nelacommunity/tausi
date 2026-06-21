@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/app/lib/supabase/server";
 import { Header } from "@/app/components/Header";
 import { PageHero } from "@/app/components/PageHero";
+import { withSharedKeywords } from "@/app/lib/seo";
 import type { Exam } from "@/app/lib/types";
 
 const DISCOVER_ICON = "M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z";
@@ -10,9 +11,14 @@ const DISCOVER_ICON = "M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.
 const APP_URL = "https://tausi.app";
 
 export const metadata: Metadata = {
-  title: "Discover — Public AI-Predicted Exam Papers",
+  title: "Discover — Public AI-Predicted NECTA, ACSEE & CSEE Papers",
   description:
-    "Browse community-shared AI-predicted exam papers for NECTA, KCSE, IGCSE, WAEC and more. Study from public exams created by East African students on Tausi.",
+    "Browse community-shared AI-predicted exam papers for NECTA — ACSEE, CSEE, FTNA, PSLE — plus KCSE, IGCSE & WAEC. Study from public exams created by students on Tausi.",
+  keywords: withSharedKeywords(
+    "discover exam papers", "public predicted exams", "browse NECTA papers",
+    "ACSEE past papers", "CSEE past papers", "shared exam papers Tanzania",
+    "free past papers", "predicted exam papers East Africa",
+  ),
   alternates: { canonical: `${APP_URL}/discover` },
   openGraph: {
     url: `${APP_URL}/discover`,
