@@ -866,6 +866,7 @@ function FaqAccordion() {
   const items = [
     [L.faqQ1, L.faqA1], [L.faqQ2, L.faqA2], [L.faqQ3, L.faqA3],
     [L.faqQ4, L.faqA4], [L.faqQ5, L.faqA5], [L.faqQ6, L.faqA6],
+    [L.faqQ7, L.faqA7],
   ] as [string, string][];
 
   return (
@@ -1442,10 +1443,11 @@ export function LandingClient() {
             </div>
             {/* Legal links */}
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-dim/70 border-t border-line/30 pt-5">
+              <Link href="/about" className="hover:text-snow transition-colors">{T.legal.footerAbout}</Link>
               <Link href="/privacy" className="hover:text-snow transition-colors">{T.legal.footerPrivacy}</Link>
               <Link href="/service" className="hover:text-snow transition-colors">{T.legal.footerTerms}</Link>
               <Link href="/cookies" className="hover:text-snow transition-colors">{T.legal.footerCookies}</Link>
-              <span className="text-dim/40">© {new Date().getFullYear()} Tausi</span>
+              <span className="text-dim/40">© {new Date().getFullYear()} Tausi · A Vylos.co product</span>
             </div>
           </div>
         </footer>

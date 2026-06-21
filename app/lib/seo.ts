@@ -8,6 +8,7 @@ export const BRAND_KEYWORDS = [
   "Tausi", "Tausi AI", "Tausi app", "tausi.app", "Tausi exam",
   "Tausi Tanzania", "Tausi web", "Tausi exam prediction", "Tausi study app",
   "Tausi NECTA", "Tausi mitihani",
+  "Vylos", "Vylos.co", "Vylos Tausi", "Tausi parent company",
 ];
 
 /** Tanzanian NECTA examinations — the core local search intent. */

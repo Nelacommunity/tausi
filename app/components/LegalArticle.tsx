@@ -45,6 +45,7 @@ export function LegalArticle({ doc }: { doc: Doc }) {
         </div>
 
         <div className="mt-12 pt-8 border-t border-line flex flex-wrap gap-4 text-xs text-dim">
+          <Link href="/about" className="hover:text-snow transition-colors">{L.footerAbout}</Link>
           <Link href="/privacy" className="hover:text-snow transition-colors">{L.footerPrivacy}</Link>
           <Link href="/service" className="hover:text-snow transition-colors">{L.footerTerms}</Link>
           <Link href="/cookies" className="hover:text-snow transition-colors">{L.footerCookies}</Link>

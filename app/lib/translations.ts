@@ -101,6 +101,8 @@ const t = {
       faqA5: "The AI analyses topic frequency, mark distribution, and question patterns across the last five years. Accuracy improves as more past papers are added to the library.",
       faqQ6: "Can teachers use Tausi for classes?",
       faqA6: "Yes. Teachers use Tausi to generate practice papers, mark student submissions, and identify weak topics across a whole cohort.",
+      faqQ7: "Who made Tausi?",
+      faqA7: "Tausi is built by Vylos.co, its parent company. Tausi was founded by Aaron Rweyongeza and Brown Mafuru.",
     },
 
     // ── Auth pages ────────────────────────────────────────────────────────
@@ -539,10 +541,11 @@ const t = {
       footerPrivacy: "Privacy Policy",
       footerTerms: "Terms of Service",
       footerCookies: "Cookie Policy",
+      footerAbout: "About",
       privacy: {
         title: "Privacy Policy",
         sections: [
-          { h: "1. Who we are", p: ["Tausi (“we”, “our”, “us”) is an AI-powered exam preparation platform for Tanzanian and East African students. We operate the website tausi.app and any associated services. For privacy questions, contact us at privacy@tausi.app."], list: [], note: "" },
+          { h: "1. Who we are", p: ["Tausi (“we”, “our”, “us”) is an AI-powered exam preparation platform for Tanzanian and East African students, built and operated by Vylos.co, its parent company. We operate the website tausi.app and any associated services. For privacy questions, contact us at privacy@tausi.app."], list: [], note: "" },
           { h: "2. Information we collect", p: [], list: ["Account data — email address and password (hashed) when you create an account.", "Uploaded files — exam papers you upload for analysis, stored securely and linked to your account.", "Generated content — predicted exams, marking schemes, and chat messages produced during your sessions.", "Usage data — pages visited and features used, collected in aggregate without personal identifiers.", "Device & technical data — browser type, operating system, and IP address for security and debugging."], note: "We do not collect payment card details directly; payments are handled by third-party mobile-money processors." },
           { h: "3. How we use your information", p: [], list: ["To provide, operate, and improve the Tausi service.", "To process your uploaded papers through Google’s Gemini AI to generate predicted exams and marking schemes.", "To store your exams and chat history so you can access them across sessions.", "To send transactional emails such as account confirmation and password reset.", "To detect and prevent abuse, fraud, and security incidents."], note: "We do not sell your personal data to third parties." },
           { h: "4. Third-party services", p: [], list: ["Supabase — our database and authentication provider; your credentials and stored data reside on Supabase infrastructure.", "Google Gemini AI — uploaded papers and chat messages are sent to Google’s Gemini API for processing.", "Google OAuth — if you sign in with Google, your name and email are shared with us under Google’s OAuth flow.", "Snippe — our mobile-money payment processor for credit purchases."], note: "" },
@@ -581,6 +584,33 @@ const t = {
           { h: "6. Changes & contact", p: ["We may update this Cookie Policy occasionally. Material changes will be posted on this page. Questions? Email privacy@tausi.app."], list: [], note: "" },
         ],
       },
+    },
+
+    about: {
+      title: "About Tausi",
+      backToTausi: "Back to Tausi",
+      intro: "Tausi is an AI-powered exam prediction and study platform built for Tanzanian and East African students.",
+      sections: [
+        {
+          h: "A product of Vylos.co",
+          p: [
+            "Tausi is built and operated by Vylos.co, its parent company. Vylos.co is responsible for Tausi's product, engineering, and operations.",
+          ],
+          list: [],
+        },
+        {
+          h: "Founders",
+          p: ["Tausi was founded by:"],
+          list: ["Aaron Rweyongeza — Co-founder", "Brown Mafuru — Co-founder"],
+        },
+        {
+          h: "Our mission",
+          p: [
+            "We believe every student in Tanzania and East Africa deserves access to high-quality exam preparation — regardless of where they live or what school they attend. Tausi turns past papers into AI-predicted exams, marking schemes, and an AI tutor, free for every student.",
+          ],
+          list: [],
+        },
+      ],
     },
   },
 
@@ -684,6 +714,8 @@ const t = {
       faqA5: "AI inachambua mzunguko wa mada, usambazaji wa alama, na mifumo ya maswali kwa miaka mitano iliyopita. Usahihi unaboresha kadri karatasi zaidi za zamani zinapoongezwa.",
       faqQ6: "Je, walimu wanaweza kutumia Tausi kwa madarasa?",
       faqA6: "Ndiyo. Walimu wanatumia Tausi kutengeneza karatasi za mazoezi, kukagua mawasilisho ya wanafunzi, na kutambua mada dhaifu katika kikundi kizima.",
+      faqQ7: "Nani aliyetengeneza Tausi?",
+      faqA7: "Tausi imejengwa na Vylos.co, kampuni mama yake. Tausi ilianzishwa na Aaron Rweyongeza na Brown Mafuru.",
     },
 
     auth: {
@@ -1106,10 +1138,11 @@ const t = {
       footerPrivacy: "Sera ya Faragha",
       footerTerms: "Masharti ya Huduma",
       footerCookies: "Sera ya Vidakuzi",
+      footerAbout: "Kuhusu",
       privacy: {
         title: "Sera ya Faragha",
         sections: [
-          { h: "1. Sisi ni nani", p: ["Tausi (“sisi”, “yetu”) ni jukwaa la kujiandaa kwa mitihani linalotumia AI kwa wanafunzi wa Tanzania na Afrika Mashariki. Tunaendesha tovuti ya tausi.app na huduma zote zinazohusiana. Kwa maswali ya faragha, wasiliana nasi kupitia privacy@tausi.app."], list: [], note: "" },
+          { h: "1. Sisi ni nani", p: ["Tausi (“sisi”, “yetu”) ni jukwaa la kujiandaa kwa mitihani linalotumia AI kwa wanafunzi wa Tanzania na Afrika Mashariki, lililojengwa na linaloendeshwa na Vylos.co, kampuni mama yake. Tunaendesha tovuti ya tausi.app na huduma zote zinazohusiana. Kwa maswali ya faragha, wasiliana nasi kupitia privacy@tausi.app."], list: [], note: "" },
           { h: "2. Taarifa tunazokusanya", p: [], list: ["Taarifa za akaunti — anwani ya barua pepe na nywila (iliyofichwa) unapofungua akaunti.", "Faili ulizopakia — karatasi za mitihani unazopakia kwa uchambuzi, zinazohifadhiwa kwa usalama na kuunganishwa na akaunti yako.", "Maudhui yaliyozalishwa — mitihani iliyotabiriwa, miongozo ya kusahihisha, na ujumbe wa mazungumzo wakati wa vipindi vyako.", "Taarifa za matumizi — kurasa zilizotembelewa na vipengele vilivyotumika, zinazokusanywa kwa ujumla bila vitambulisho binafsi.", "Taarifa za kifaa na kiufundi — aina ya kivinjari, mfumo wa uendeshaji, na anwani ya IP kwa ajili ya usalama na utatuzi."], note: "Hatukusanyi taarifa za kadi za malipo moja kwa moja; malipo yanashughulikiwa na watoa huduma wa pesa za simu." },
           { h: "3. Jinsi tunavyotumia taarifa zako", p: [], list: ["Kutoa, kuendesha, na kuboresha huduma ya Tausi.", "Kuchakata karatasi ulizopakia kupitia AI ya Gemini ya Google ili kuzalisha mitihani iliyotabiriwa na miongozo ya kusahihisha.", "Kuhifadhi mitihani na historia ya mazungumzo yako ili uweze kuifikia katika vipindi mbalimbali.", "Kutuma barua pepe za kiutendaji kama uthibitisho wa akaunti na kuweka upya nywila.", "Kugundua na kuzuia matumizi mabaya, udanganyifu, na matukio ya usalama."], note: "Hatuuzi taarifa zako binafsi kwa watu wa tatu." },
           { h: "4. Huduma za watu wa tatu", p: [], list: ["Supabase — mtoa huduma wetu wa hifadhidata na uthibitishaji; vitambulisho vyako na taarifa zilizohifadhiwa zipo kwenye miundombinu ya Supabase.", "AI ya Gemini ya Google — karatasi ulizopakia na ujumbe wa mazungumzo hutumwa kwa API ya Gemini kwa uchakataji.", "Google OAuth — ukiingia kwa Google, jina na barua pepe yako hushirikiwa nasi kupitia mfumo wa OAuth wa Google.", "Snippe — mtoa huduma wetu wa malipo ya pesa za simu kwa ununuzi wa krediti."], note: "" },
@@ -1148,6 +1181,33 @@ const t = {
           { h: "6. Mabadiliko na mawasiliano", p: ["Tunaweza kusasisha Sera hii ya Vidakuzi mara kwa mara. Mabadiliko muhimu yatachapishwa kwenye ukurasa huu. Maswali? Tuma barua pepe privacy@tausi.app."], list: [], note: "" },
         ],
       },
+    },
+
+    about: {
+      title: "Kuhusu Tausi",
+      backToTausi: "Rudi Tausi",
+      intro: "Tausi ni jukwaa la utabiri wa mitihani na masomo linalotumia AI, lililojengwa kwa wanafunzi wa Tanzania na Afrika Mashariki.",
+      sections: [
+        {
+          h: "Bidhaa ya Vylos.co",
+          p: [
+            "Tausi imejengwa na inaendeshwa na Vylos.co, kampuni mama yake. Vylos.co inawajibika kwa bidhaa, uhandisi, na uendeshaji wa Tausi.",
+          ],
+          list: [],
+        },
+        {
+          h: "Waanzilishi",
+          p: ["Tausi ilianzishwa na:"],
+          list: ["Aaron Rweyongeza — Mwanzilishi mwenza", "Brown Mafuru — Mwanzilishi mwenza"],
+        },
+        {
+          h: "Dhamira yetu",
+          p: [
+            "Tunaamini kila mwanafunzi Tanzania na Afrika Mashariki anastahili kupata maandalizi bora ya mtihani — bila kujali anaishi wapi au anasoma shule gani. Tausi inabadilisha karatasi za zamani kuwa mitihani ya utabiri inayotumia AI, mfumo wa ukaguzi, na mwalimu wa AI, bure kwa kila mwanafunzi.",
+          ],
+          list: [],
+        },
+      ],
     },
   },
 } as const;

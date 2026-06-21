@@ -64,6 +64,15 @@ const organizationSchema = {
     "KCSE", "IGCSE", "WAEC", "exam preparation",
     "AI tutoring", "marking schemes", "past papers",
   ],
+  parentOrganization: {
+    "@type": "Organization",
+    name: "Vylos.co",
+    url: "https://vylos.co",
+  },
+  founder: [
+    { "@type": "Person", name: "Aaron Rweyongeza" },
+    { "@type": "Person", name: "Brown Mafuru" },
+  ],
   sameAs: [],
 };
 
@@ -160,6 +169,14 @@ const faqSchema = {
       acceptedAnswer: {
         "@type": "Answer",
         text: "Yes. Tausi's interface is fully available in both English and Kiswahili (Swahili). You can switch between languages at any time using the EN/SW toggle in the navigation bar.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Who made Tausi?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Tausi is built by Vylos.co, its parent company. Tausi was founded by Aaron Rweyongeza and Brown Mafuru.",
       },
     },
   ],
