@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { LOGO_DATA_URI } from "@/app/lib/og-logo";
 
 /**
  * Shared Open Graph image template for Tausi.
@@ -49,22 +50,24 @@ export function ogImage(opts: {
         <div style={{ position: "absolute", bottom: -200, left: -160, width: 520, height: 520, borderRadius: "50%", background: "rgba(40,185,165,0.10)", filter: "blur(80px)", display: "flex" }} />
 
         {/* Top row — logo + wordmark */}
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div
             style={{
-              width: 60,
-              height: 60,
-              borderRadius: 16,
-              background: "linear-gradient(135deg, #28b9a5 0%, #1a7f8e 100%)",
+              width: 88,
+              height: 88,
+              borderRadius: 22,
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.10)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 32,
-              fontWeight: 900,
-              color: "#06110f",
+              overflow: "hidden",
             }}
           >
-            T
+            {/* The logo PNG has transparent padding baked in; scale up so the
+                peacock fills the frame (overflow:hidden crops the margins). */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={LOGO_DATA_URI} width={128} height={128} alt="Tausi" style={{ objectFit: "contain" }} />
           </div>
           <span style={{ fontSize: 40, fontWeight: 800, color: "white", letterSpacing: "-1px" }}>Tausi</span>
         </div>

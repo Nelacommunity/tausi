@@ -14,81 +14,81 @@ interface ExamOutputProps {
 
 export function ExamOutput({ content, isStreaming }: ExamOutputProps) {
   return (
-    <div className="exam-output text-gray-100 leading-relaxed">
+    <div className="exam-output text-body leading-relaxed">
       <ReactMarkdown
         remarkPlugins={[remarkMath, remarkGfm]}
         rehypePlugins={[rehypeKatex]}
         components={{
           h1: ({ children }) => (
-            <h1 className="text-2xl font-bold text-white mb-4 mt-2 pb-2 border-b border-gray-600">
+            <h1 className="text-2xl font-bold text-snow mb-4 mt-2 pb-2 border-b border-line-2">
               {children}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-xl font-semibold text-indigo-300 mb-3 mt-6 pb-1 border-b border-indigo-900/50">
+            <h2 className="text-xl font-semibold text-teal mb-3 mt-6 pb-1 border-b border-teal/30">
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-lg font-semibold text-indigo-200 mb-2 mt-4">
+            <h3 className="text-lg font-semibold text-teal mb-2 mt-4">
               {children}
             </h3>
           ),
           h4: ({ children }) => (
-            <h4 className="text-base font-semibold text-gray-200 mb-1 mt-3">
+            <h4 className="text-base font-semibold text-snow mb-1 mt-3">
               {children}
             </h4>
           ),
           p: ({ children }) => (
-            <div className="text-gray-200 mb-3 leading-relaxed">{children}</div>
+            <div className="text-snow mb-3 leading-relaxed">{children}</div>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal text-gray-200 mb-3 space-y-1.5 pl-6">
+            <ol className="list-decimal text-snow mb-3 space-y-1.5 pl-6">
               {children}
             </ol>
           ),
           ul: ({ children }) => (
-            <ul className="list-disc text-gray-200 mb-3 space-y-1.5 pl-6">
+            <ul className="list-disc text-snow mb-3 space-y-1.5 pl-6">
               {children}
             </ul>
           ),
           li: ({ children }) => (
-            <li className="text-gray-200 leading-relaxed">{children}</li>
+            <li className="text-snow leading-relaxed">{children}</li>
           ),
           strong: ({ children }) => (
-            <strong className="font-bold text-amber-300">{children}</strong>
+            <strong className="font-bold text-gold">{children}</strong>
           ),
           em: ({ children }) => (
-            <em className="italic text-gray-300">{children}</em>
+            <em className="italic text-body">{children}</em>
           ),
-          hr: () => <hr className="border-gray-600 my-6" />,
+          hr: () => <hr className="border-line-2 my-6" />,
 
           // ── Tables — scroll horizontally on small screens ────────────
           table: ({ children }) => (
-            <div className="overflow-x-auto mb-5 rounded-lg border border-gray-700 w-full">
-              <table className="border-collapse text-sm text-gray-200 w-full min-w-max">
+            <div className="overflow-x-auto mb-5 rounded-lg border border-line w-full">
+              <table className="border-collapse text-sm text-snow w-full min-w-max">
                 {children}
               </table>
             </div>
           ),
           thead: ({ children }) => (
-            <thead className="bg-gray-800/90">{children}</thead>
+            <thead className="bg-ink-3/90">{children}</thead>
           ),
           tbody: ({ children }) => (
-            <tbody className="divide-y divide-gray-800">{children}</tbody>
+            <tbody className="divide-y divide-line">{children}</tbody>
           ),
           tr: ({ children }) => (
-            <tr className="hover:bg-gray-800/40 transition-colors even:bg-gray-900/30">
+            <tr className="hover:bg-ink-3/40 transition-colors even:bg-ink-2/30">
               {children}
             </tr>
           ),
           th: ({ children }) => (
-            <th className="border border-gray-600 px-4 py-2.5 text-left font-semibold text-indigo-300 align-middle bg-gray-800 whitespace-nowrap">
+            <th className="border border-line-2 px-4 py-2.5 text-left font-semibold text-teal align-middle bg-ink-3 whitespace-nowrap">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="border border-gray-700/60 px-4 py-2 text-left text-gray-200 align-middle">
+            <td className="border border-line/60 px-4 py-2 text-left text-snow align-middle">
               {children}
             </td>
           ),
@@ -101,14 +101,14 @@ export function ExamOutput({ content, isStreaming }: ExamOutputProps) {
             const isBlock = Boolean(className?.includes("language-"));
             return isBlock ? (
               <code
-                className="block bg-gray-900 rounded-lg p-4 text-green-300 text-sm font-mono my-3 overflow-x-auto"
+                className="block bg-ink-2 rounded-lg p-4 text-good text-sm font-mono my-3 overflow-x-auto"
                 {...props}
               >
                 {children}
               </code>
             ) : (
               <code
-                className="bg-gray-800 rounded px-1.5 py-0.5 text-amber-300 text-sm font-mono"
+                className="bg-ink-3 rounded px-1.5 py-0.5 text-gold text-sm font-mono"
                 {...props}
               >
                 {children}
@@ -116,12 +116,12 @@ export function ExamOutput({ content, isStreaming }: ExamOutputProps) {
             );
           },
           pre: ({ children }) => (
-            <pre className="bg-gray-900 rounded-lg overflow-x-auto my-3">
+            <pre className="bg-ink-2 rounded-lg overflow-x-auto my-3">
               {children}
             </pre>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-indigo-500 pl-4 italic text-gray-400 my-3 bg-gray-800/30 py-2 rounded-r-lg">
+            <blockquote className="border-l-4 border-teal pl-4 italic text-body my-3 bg-ink-3/30 py-2 rounded-r-lg">
               {children}
             </blockquote>
           ),
@@ -130,7 +130,7 @@ export function ExamOutput({ content, isStreaming }: ExamOutputProps) {
         {content}
       </ReactMarkdown>
       {isStreaming && (
-        <span className="inline-block w-2 h-4 bg-indigo-400 animate-pulse ml-0.5 rounded-sm" />
+        <span className="inline-block w-2 h-4 bg-teal animate-pulse ml-0.5 rounded-sm" />
       )}
     </div>
   );

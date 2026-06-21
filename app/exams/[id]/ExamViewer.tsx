@@ -253,19 +253,19 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
   const SUGGESTIONS = V.suggestions;
 
   return (
-    <div className="h-screen bg-gray-950 flex flex-col overflow-hidden">
+    <div className="h-screen bg-ink flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-gray-800 bg-gray-950/90 backdrop-blur-sm">
+      <header className="sticky top-0 z-20 border-b border-line bg-ink/90 backdrop-blur-sm">
         <div className="flex items-center gap-3 px-4 sm:px-6 py-3 min-w-0">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors shrink-0"
+            className="flex items-center gap-1.5 text-body hover:text-snow transition-colors shrink-0"
             aria-label="Go back"
           >
             <Icon d={ICONS.back} />
-            <span className="font-bold text-indigo-400 hidden sm:block">Tausi</span>
+            <span className="font-bold text-teal hidden sm:block">Tausi</span>
           </button>
-          <span className="text-gray-700 select-none">/</span>
+          <span className="text-dim select-none">/</span>
 
           {/* Editable title */}
           <div className="flex-1 min-w-0 flex items-center gap-2">
@@ -275,15 +275,15 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
                   onChange={(e) => setTitleDraft(e.target.value)}
                   onBlur={saveTitle}
                   onKeyDown={(e) => { if (e.key === "Escape") { setEditingTitle(false); setTitleDraft(exam.title); } }}
-                  className="flex-1 min-w-0 bg-gray-800 border border-indigo-600 rounded-lg px-3 py-1 text-sm text-white outline-none"
+                  className="flex-1 min-w-0 bg-ink-3 border border-teal rounded-lg px-3 py-1 text-sm text-snow outline-none"
                   disabled={savingTitle} />
               </form>
             ) : (
               <div className="flex items-center gap-2 min-w-0">
-                <h1 className="text-sm font-semibold text-gray-200 truncate">{exam.title}</h1>
+                <h1 className="text-sm font-semibold text-snow truncate">{exam.title}</h1>
                 {isOwner && (
                   <button onClick={() => setEditingTitle(true)}
-                    className="text-gray-600 hover:text-gray-400 transition-colors shrink-0 p-0.5">
+                    className="text-dim hover:text-body transition-colors shrink-0 p-0.5">
                     <Icon d={ICONS.pencil} size={3} />
                   </button>
                 )}
@@ -293,15 +293,15 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
 
           {/* Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-gray-600 hidden md:block" suppressHydrationWarning>
+            <span className="text-xs text-dim hidden md:block" suppressHydrationWarning>
               {formatDate(exam.created_at)}
             </span>
 
             {/* Public/Private badge */}
             <span className={`hidden sm:flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${
               exam.is_public
-                ? "text-emerald-400 border-emerald-800 bg-emerald-950/40"
-                : "text-gray-500 border-gray-700 bg-gray-900"
+                ? "text-good border-good/40 bg-good/15"
+                : "text-dim border-line bg-ink-2"
             }`}>
               <Icon d={exam.is_public ? ICONS.globe : ICONS.lock} size={3} />
               {exam.is_public ? V.public : V.private}
@@ -309,7 +309,7 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
 
             {activeTab !== "chat" && (
               <button onClick={copyExam}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 border border-gray-700 hover:border-gray-500 rounded-lg px-2.5 py-1.5 transition-colors">
+                className="flex items-center gap-1 text-xs text-dim hover:text-body border border-line hover:border-line-2 rounded-lg px-2.5 py-1.5 transition-colors">
                 <Icon d={copyState === "copied" ? ICONS.check : ICONS.copy} size={3} />
                 <span className="hidden sm:block">{copyState === "copied" ? V.copied : V.copy}</span>
               </button>
@@ -317,7 +317,7 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
 
             {activeTab !== "chat" && (
               <button onClick={handleDownloadPDF} disabled={isDownloading}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 border border-gray-700 hover:border-gray-500 rounded-lg px-2.5 py-1.5 transition-colors disabled:opacity-50">
+                className="flex items-center gap-1 text-xs text-dim hover:text-body border border-line hover:border-line-2 rounded-lg px-2.5 py-1.5 transition-colors disabled:opacity-50">
                 <Icon d={ICONS.pdf} size={3} />
                 <span className="hidden sm:block">{isDownloading ? "…" : V.pdf}</span>
               </button>
@@ -328,8 +328,8 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
                 <button onClick={toggleVisibility} disabled={isTogglingVisibility}
                   className={`flex items-center gap-1 text-xs border rounded-lg px-2.5 py-1.5 transition-colors disabled:opacity-50 ${
                     exam.is_public
-                      ? "text-emerald-400 border-emerald-800 hover:bg-emerald-950/40"
-                      : "text-gray-400 border-gray-700 hover:text-white hover:border-gray-500"
+                      ? "text-good border-good/40 hover:bg-good/15"
+                      : "text-body border-line hover:text-snow hover:border-line-2"
                   }`}>
                   <Icon d={exam.is_public ? ICONS.lock : ICONS.globe} size={3} />
                   <span className="hidden md:block">{exam.is_public ? V.makePrivate : V.makePublic}</span>
@@ -337,19 +337,19 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
 
                 {!showDeleteConfirm ? (
                   <button onClick={() => setShowDeleteConfirm(true)}
-                    className="flex items-center gap-1 text-xs text-red-500 hover:text-red-400 border border-red-900 hover:border-red-700 rounded-lg px-2.5 py-1.5 transition-colors">
+                    className="flex items-center gap-1 text-xs text-bad hover:opacity-80 border border-bad/40 hover:border-bad/70 rounded-lg px-2.5 py-1.5 transition-colors">
                     <Icon d={ICONS.trash} size={3} />
                     <span className="hidden sm:block">{V.delete}</span>
                   </button>
                 ) : (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-red-400">{V.deleteConfirm}</span>
+                    <span className="text-xs text-bad">{V.deleteConfirm}</span>
                     <button onClick={deleteExam} disabled={isDeleting}
-                      className="text-xs text-white bg-red-600 hover:bg-red-500 disabled:opacity-50 rounded-lg px-2.5 py-1 transition-colors">
+                      className="text-xs text-white bg-bad hover:opacity-90 disabled:opacity-50 rounded-lg px-2.5 py-1 transition-colors">
                       {isDeleting ? "…" : V.yes}
                     </button>
                     <button onClick={() => setShowDeleteConfirm(false)}
-                      className="text-xs text-gray-400 hover:text-white border border-gray-700 rounded-lg px-2.5 py-1 transition-colors">
+                      className="text-xs text-body hover:text-snow border border-line rounded-lg px-2.5 py-1 transition-colors">
                       {V.no}
                     </button>
                   </div>
@@ -363,20 +363,20 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
       {/* Body — flex-1 min-h-0 lets this shrink to fit the remaining viewport */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* LEFT — exam content (hidden on mobile when chat tab is active) */}
-        <div className={`flex-col flex-1 min-w-0 overflow-hidden border-r border-gray-800 ${
+        <div className={`flex-col flex-1 min-w-0 overflow-hidden border-r border-line ${
           activeTab === "chat" ? "hidden md:flex" : "flex"
         }`}>
-          <div className="border-b border-gray-800 bg-gray-950 shrink-0">
+          <div className="border-b border-line bg-ink shrink-0">
             {/* ── Primary picker: Source Paper vs Predicted Exam ── */}
             <div className="flex items-center gap-2 px-3 pt-2 pb-2">
               {sourceSignedUrls.length > 0 ? (
-                <div className="flex rounded-lg bg-gray-900 border border-gray-800 p-0.5 gap-px">
+                <div className="flex rounded-lg bg-ink-2 border border-line p-0.5 gap-px">
                   <button
                     onClick={() => setActiveTab("source")}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
                       activeTab === "source"
-                        ? "bg-amber-500/20 text-amber-300 shadow-sm"
-                        : "text-gray-500 hover:text-gray-300"
+                        ? "bg-gold/15 text-gold shadow-sm"
+                        : "text-dim hover:text-body"
                     }`}
                   >
                     <Icon d={ICONS.file} size={3} />
@@ -386,8 +386,8 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
                     onClick={() => setActiveTab(activeTab === "marking" ? "marking" : "exam")}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
                       activeTab === "exam" || activeTab === "marking"
-                        ? "bg-indigo-500/20 text-indigo-300 shadow-sm"
-                        : "text-gray-500 hover:text-gray-300"
+                        ? "bg-teal/15 text-teal shadow-sm"
+                        : "text-dim hover:text-body"
                     }`}
                   >
                     <Icon d={ICONS.sparkle} size={3} />
@@ -398,12 +398,12 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
                 /* No source paper — flat tabs only */
                 <div className="flex items-center gap-1">
                   {([
-                    { key: "exam" as Tab, label: V.predictedExam, iconD: ICONS.sparkle, active: "text-indigo-300 border-indigo-500" },
-                    { key: "marking" as Tab, label: V.markingScheme, iconD: ICONS.book, active: "text-emerald-300 border-emerald-500" },
+                    { key: "exam" as Tab, label: V.predictedExam, iconD: ICONS.sparkle, active: "text-teal border-teal" },
+                    { key: "marking" as Tab, label: V.markingScheme, iconD: ICONS.book, active: "text-good border-good" },
                   ] as const).map(({ key, label, iconD, active }) => (
                     <button key={key} onClick={() => setActiveTab(key)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
-                        activeTab === key ? active : "text-gray-500 border-transparent hover:text-gray-300"
+                        activeTab === key ? active : "text-dim border-transparent hover:text-body"
                       }`}>
                       <Icon d={iconD} size={3} />
                       {label}
@@ -418,8 +418,8 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
                 onClick={() => setActiveTab("chat")}
                 className={`md:hidden ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   activeTab === "chat"
-                    ? "bg-purple-500/20 text-purple-300"
-                    : "text-gray-500 hover:text-gray-300"
+                    ? "bg-brand-magenta/15 text-brand-magenta"
+                    : "text-dim hover:text-body"
                 }`}
               >
                 <Icon d={ICONS.chat} size={3} />
@@ -429,14 +429,14 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
 
             {/* ── Sub-tabs: Exam / Marking Scheme (only when Predicted is active) ── */}
             {sourceSignedUrls.length > 0 && (activeTab === "exam" || activeTab === "marking") && (
-              <div className="flex items-center gap-1 px-3 border-t border-gray-800/60">
+              <div className="flex items-center gap-1 px-3 border-t border-line/60">
                 {([
-                  { key: "exam" as Tab, label: V.predictedExam, iconD: ICONS.sparkle, cls: "text-indigo-300 border-indigo-500" },
-                  { key: "marking" as Tab, label: V.markingScheme, iconD: ICONS.book, cls: "text-emerald-300 border-emerald-500" },
+                  { key: "exam" as Tab, label: V.predictedExam, iconD: ICONS.sparkle, cls: "text-teal border-teal" },
+                  { key: "marking" as Tab, label: V.markingScheme, iconD: ICONS.book, cls: "text-good border-good" },
                 ] as const).map(({ key, label, iconD, cls }) => (
                   <button key={key} onClick={() => setActiveTab(key)}
                     className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
-                      activeTab === key ? cls : "text-gray-500 border-transparent hover:text-gray-300"
+                      activeTab === key ? cls : "text-dim border-transparent hover:text-body"
                     }`}>
                     <Icon d={iconD} size={3} />
                     {label}
@@ -460,13 +460,13 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
                 <>
                   {/* File tabs */}
                   {exam.original_filenames.length > 1 && (
-                    <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-800 bg-gray-950 shrink-0 overflow-x-auto">
+                    <div className="flex items-center gap-1 px-3 py-2 border-b border-line bg-ink shrink-0 overflow-x-auto">
                       {exam.original_filenames.map((name, i) => (
                         <button key={i} onClick={() => setActiveSourceFile(i)}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
                             activeSourceFile === i
-                              ? "bg-gray-800 text-white"
-                              : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
+                              ? "bg-ink-3 text-snow"
+                              : "text-dim hover:text-body hover:bg-ink-3/50"
                           }`}>
                           <Icon d={ICONS.file} size={3} />
                           {name}
@@ -475,21 +475,21 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
                     </div>
                   )}
                   {/* File bar */}
-                  <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800 bg-gray-900/60 shrink-0">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-line bg-ink-2/60 shrink-0">
                     <div className="flex items-center gap-2 min-w-0">
                       <Icon d={ICONS.file} size={3} />
-                      <span className="text-xs text-gray-400 truncate">
+                      <span className="text-xs text-body truncate">
                         {exam.original_filenames[activeSourceFile] ?? "Source Paper"}
                       </span>
                     </div>
                     <a href={currentUrl} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 transition-colors shrink-0">
+                      className="flex items-center gap-1 text-xs text-gold hover:text-gold transition-colors shrink-0">
                       <Icon d={ICONS.external} size={3} />
                       <span className="hidden sm:inline">Open full</span>
                     </a>
                   </div>
                   {/* Viewer */}
-                  <div className="flex-1 overflow-hidden bg-gray-900">
+                  <div className="flex-1 overflow-hidden bg-ink-2">
                     {isImage(currentPath) ? (
                       <div className="h-full overflow-y-auto flex items-start justify-center p-4">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -511,21 +511,21 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
                 </div>
               ) : isOwner ? (
                 <div className="flex flex-col items-center justify-center h-full gap-4 text-center py-20">
-                  <div className="w-14 h-14 rounded-2xl bg-gray-900 border border-gray-800 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-2xl bg-ink-2 border border-line flex items-center justify-center">
                     <Icon d={ICONS.book} size={6} />
                   </div>
                   <div>
-                    <p className="text-gray-300 font-medium mb-1">{V.noMarkingYet}</p>
-                    <p className="text-sm text-gray-600 mb-4">{V.noMarkingSub}</p>
+                    <p className="text-body font-medium mb-1">{V.noMarkingYet}</p>
+                    <p className="text-sm text-dim mb-4">{V.noMarkingSub}</p>
                     <button onClick={generateMarking}
-                      className="flex items-center gap-2 mx-auto px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-semibold text-sm transition-colors">
+                      className="flex items-center gap-2 mx-auto px-5 py-2.5 rounded-xl bg-good hover:opacity-90 text-ink font-semibold text-sm transition-colors">
                       <Icon d={ICONS.book} />{V.generateMarking}
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full">
-                  <p className="text-sm text-gray-600">{V.notAvailable}</p>
+                  <p className="text-sm text-dim">{V.notAvailable}</p>
                 </div>
               )
             )}
@@ -536,28 +536,28 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
         <div className={`flex-col min-h-0 overflow-hidden md:w-full md:max-w-md lg:max-w-lg md:shrink-0 ${
           activeTab === "chat" ? "flex w-full" : "hidden md:flex"
         }`}>
-          <div className="border-b border-gray-800 shrink-0">
+          <div className="border-b border-line shrink-0">
             <div className="px-4 py-3 flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal to-brand-magenta flex items-center justify-center shrink-0">
                 <Icon d={ICONS.sparkle} size={3} />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-200">{V.chatTitle}</p>
-                <p className="text-xs text-gray-600 truncate">
+                <p className="text-sm font-semibold text-snow">{V.chatTitle}</p>
+                <p className="text-xs text-dim truncate">
                   {isOwner ? V.chatPrivate : V.chatPublic}
                 </p>
               </div>
             </div>
             {sourceSignedUrls.length > 0 && (
               <div className="px-4 pb-3 flex items-center gap-2">
-                <span className="text-xs text-gray-600 shrink-0">Ask about:</span>
-                <div className="flex rounded-lg bg-gray-900 border border-gray-800 p-0.5 gap-px">
+                <span className="text-xs text-dim shrink-0">Ask about:</span>
+                <div className="flex rounded-lg bg-ink-2 border border-line p-0.5 gap-px">
                   <button
                     onClick={() => setChatContext("predicted")}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
                       chatContext === "predicted"
-                        ? "bg-indigo-500/20 text-indigo-300"
-                        : "text-gray-500 hover:text-gray-300"
+                        ? "bg-teal/15 text-teal"
+                        : "text-dim hover:text-body"
                     }`}
                   >
                     <Icon d={ICONS.sparkle} size={3} />
@@ -567,8 +567,8 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
                     onClick={() => setChatContext("source")}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
                       chatContext === "source"
-                        ? "bg-amber-500/20 text-amber-300"
-                        : "text-gray-500 hover:text-gray-300"
+                        ? "bg-gold/15 text-gold"
+                        : "text-dim hover:text-body"
                     }`}
                   >
                     <Icon d={ICONS.file} size={3} />
@@ -582,17 +582,17 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full gap-3 py-8 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-gray-900 border border-gray-800 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-ink-2 border border-line flex items-center justify-center">
                   <Icon d={ICONS.sparkle} size={5} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-400 mb-1">{V.readyToHelp}</p>
-                  <p className="text-xs text-gray-600 mb-4">{V.chatPrivateSub}</p>
+                  <p className="text-sm font-medium text-body mb-1">{V.readyToHelp}</p>
+                  <p className="text-xs text-dim mb-4">{V.chatPrivateSub}</p>
                 </div>
                 <div className="grid grid-cols-1 gap-2 w-full max-w-xs">
                   {SUGGESTIONS.map((s) => (
                     <button key={s} onClick={() => { setChatInput(s); textareaRef.current?.focus(); }}
-                      className="text-left text-xs text-gray-500 hover:text-gray-300 border border-gray-800 hover:border-gray-600 rounded-lg px-3 py-2 transition-colors">
+                      className="text-left text-xs text-dim hover:text-body border border-line hover:border-line-2 rounded-lg px-3 py-2 transition-colors">
                       {s}
                     </button>
                   ))}
@@ -606,12 +606,12 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
               return (
                 <div key={msg.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
                   {!isUser && (
-                    <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 mt-1 mr-2">
+                    <div className="w-6 h-6 rounded-md bg-gradient-to-br from-teal to-brand-magenta flex items-center justify-center shrink-0 mt-1 mr-2">
                       <Icon d={ICONS.sparkle} size={3} />
                     </div>
                   )}
                   <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-                    isUser ? "bg-indigo-600 text-white text-sm" : "bg-gray-800/80 text-gray-100 text-sm"
+                    isUser ? "bg-teal text-ink text-sm" : "bg-ink-3/80 text-body text-sm"
                   }`}>
                     {isUser ? (
                       <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
@@ -627,24 +627,24 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
             <div ref={bottomRef} />
           </div>
 
-          <div className="border-t border-gray-800 p-3 shrink-0">
+          <div className="border-t border-line p-3 shrink-0">
             <div className="flex items-end gap-2">
               <textarea ref={textareaRef} value={chatInput} onChange={autoResize}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                 disabled={isChatStreaming}
                 placeholder={V.chatPlaceholder}
                 rows={1}
-                className="flex-1 bg-gray-900 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 rounded-xl px-4 py-2.5 text-sm text-gray-200 placeholder-gray-600 resize-none overflow-hidden outline-none transition-colors disabled:opacity-50"
+                className="flex-1 bg-ink-2 border border-line focus:border-teal focus:ring-1 focus:ring-teal/40 rounded-xl px-4 py-2.5 text-sm text-snow placeholder-dim resize-none overflow-hidden outline-none transition-colors disabled:opacity-50"
                 style={{ minHeight: "42px", maxHeight: "160px" }} />
               <button onClick={sendMessage} disabled={!chatInput.trim() || isChatStreaming}
-                className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-800 disabled:text-gray-600 text-white transition-colors shrink-0"
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-teal hover:opacity-90 disabled:bg-ink-3 disabled:text-dim text-ink transition-colors shrink-0"
                 aria-label="Send">
                 {isChatStreaming
-                  ? <span className="w-4 h-4 border-2 border-gray-500 border-t-indigo-400 rounded-full animate-spin" />
+                  ? <span className="w-4 h-4 border-2 border-line-2 border-t-teal rounded-full animate-spin" />
                   : <Icon d={ICONS.send} />}
               </button>
             </div>
-            <p className="text-xs text-gray-700 mt-1.5 text-center">
+            <p className="text-xs text-dim mt-1.5 text-center">
               {V.aiDisclaimer}
             </p>
           </div>
