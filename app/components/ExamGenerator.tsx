@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ExamOutput } from "@/app/components/ExamOutput";
@@ -31,6 +31,21 @@ function LoadingDots() {
           style={{ animationDelay: `${i * 0.25}s` }} />
       ))}
     </span>
+  );
+}
+function PhaseCycler({ phrases }: { phrases: readonly string[] }) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setI((p) => (p + 1) % phrases.length), 1800);
+    return () => clearInterval(id);
+  }, [phrases.length]);
+  return <p key={i} className="text-sm phase-fade motion-reduce:animate-none">{phrases[i]}</p>;
+}
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    </svg>
   );
 }
 function formatFileSize(b: number) {
@@ -74,7 +89,9 @@ export function ExamGenerator() {
   const [activeTab, setActiveTab] = useState<Tab>("exam");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+  const [justRevealed, setJustRevealed] = useState(false);
 
   const loadLibrary = useCallback(() => {
     if (libraryLoaded) return;
@@ -205,7 +222,9 @@ export function ExamGenerator() {
       const res = await fetch("/api/exams", { method: "POST", body: fd });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Save failed");
       const { id } = await res.json();
-      router.push(`/exams/${id}`);
+      setIsSaving(false);
+      setSavedFlash(true);
+      setTimeout(() => router.push(`/exams/${id}`), 550);
     } catch (err) { setError(err instanceof Error ? err.message : "Save failed"); setIsSaving(false); }
   };
 
@@ -224,6 +243,14 @@ export function ExamGenerator() {
 
   const cleanExamContent = examContent.replace(/<!--FROM_STRUCTURE-->\n?/, "");
   const fromStructure = examContent.startsWith("<!--FROM_STRUCTURE-->");
+
+  // Brief celebratory "Ready" pill the moment a prediction finishes streaming.
+  useEffect(() => {
+    if (status !== "done-exam") return;
+    setJustRevealed(true);
+    const t = setTimeout(() => setJustRevealed(false), 1700);
+    return () => clearTimeout(t);
+  }, [status]);
 
   return (
     <div className="space-y-5">
@@ -532,13 +559,26 @@ export function ExamGenerator() {
               )}
 
               {hasExam && !isGenerating && (
-                <button onClick={saveExam} disabled={isSaving}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl border border-teal/30 hover:border-teal hover:bg-teal/5 disabled:opacity-50 text-teal font-semibold py-2.5 text-sm transition-all cursor-pointer">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                      d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                  </svg>
-                  {isSaving ? D.savingBtn : D.saveBtn}
+                <button onClick={saveExam} disabled={isSaving || savedFlash}
+                  className={`flex items-center justify-center gap-2 w-full rounded-xl border font-semibold py-2.5 text-sm transition-all cursor-pointer ${
+                    savedFlash
+                      ? "border-good/40 bg-good/10 text-good"
+                      : "border-teal/30 hover:border-teal hover:bg-teal/5 disabled:opacity-50 text-teal"
+                  }`}>
+                  {savedFlash ? (
+                    <span className="tab-pop flex items-center gap-2">
+                      <CheckIcon className="w-4 h-4" />
+                      {D.savedBtn}
+                    </span>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                          d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                      </svg>
+                      {isSaving ? D.savingBtn : D.saveBtn}
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -567,22 +607,30 @@ export function ExamGenerator() {
                 </button>
               );
             })}
-            {fromStructure && activeTab === "exam" && status !== "generating-exam" && (
-              <span className="ml-auto text-xs font-semibold text-good flex items-center gap-1 pr-3">
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {D.fromStructureBadge}
-              </span>
-            )}
+            <div className="ml-auto flex items-center gap-2 pr-3">
+              {justRevealed && (
+                <span className="tab-pop flex items-center gap-1 text-xs font-semibold text-good bg-good/10 border border-good/30 px-2.5 py-1 rounded-full">
+                  <CheckIcon className="w-3 h-3" />
+                  Ready
+                </span>
+              )}
+              {fromStructure && activeTab === "exam" && status !== "generating-exam" && (
+                <span className="text-xs font-semibold text-good flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {D.fromStructureBadge}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="p-6 min-h-75">
+          <div className={`p-6 min-h-75 ${justRevealed ? "reveal-pop" : ""}`}>
             {activeTab === "exam" && (
               cleanExamContent
                 ? <ExamOutput content={cleanExamContent} isStreaming={status === "generating-exam"} />
                 : <div className="flex flex-col items-center justify-center h-48 gap-3 text-dim">
-                    <div className="w-8 h-8 border-2 border-teal border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm">{D.analysing2}</p>
+                    <div className="gen-pulse w-8 h-8 border-2 border-teal border-t-transparent rounded-full animate-spin" />
+                    <PhaseCycler phrases={D.analysingPhases ?? [D.analysing2]} />
                   </div>
             )}
             {activeTab === "marking" && (

@@ -450,6 +450,22 @@ html.tausi-js .reveal.is-in .pricing-lissajous {
 }
 .tab-pop { animation: tab-pop 0.22s var(--ease-out-expo) both; }
 
+/* ── Phase-cycling caption (anticipation while waiting on AI output) ── */
+@keyframes phase-fade {
+  0%   { opacity: 0; transform: translateY(3px); }
+  12%  { opacity: 1; transform: none; }
+  88%  { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-3px); }
+}
+.phase-fade { animation: phase-fade 1.8s ease-in-out both; }
+
+/* ── Reveal pop: result just landed ── */
+@keyframes reveal-pop {
+  0%   { opacity: 0; transform: scale(0.97); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.reveal-pop { animation: reveal-pop 0.4s var(--ease-out-expo) both; }
+
 /* Override default focus ring with teal */
 input:focus,
 textarea:focus,
