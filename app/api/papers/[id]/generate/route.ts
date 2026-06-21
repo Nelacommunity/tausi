@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GEMINI_MODEL } from "@/app/lib/ai";
 import { createClient } from "@/app/lib/supabase/server";
 import { EXAM_SYSTEM_PROMPT } from "@/app/lib/prompts";
 import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
@@ -43,7 +44,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   parts.push({ text: `Analyse ${count === 1 ? "this" : `these ${count}`} past exam paper${count === 1 ? "" : "s"} for ${paper.subject} (${paper.exam_type} ${paper.year}) and generate a new predicted exam paper that follows the exact same format and structure.` });
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: EXAM_SYSTEM_PROMPT });
+  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL, systemInstruction: EXAM_SYSTEM_PROMPT });
 
   let fullContent = "";
   const stream = new ReadableStream({

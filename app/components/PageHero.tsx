@@ -2,11 +2,11 @@ import type { ReactNode } from "react";
 
 type Accent = "teal" | "gold" | "magenta" | "coral";
 
-const HERO_BG: Record<Accent, string> = {
-  teal: "linear-gradient(135deg, oklch(0.30 0.10 192 / 0.55) 0%, oklch(0.19 0.010 238) 55%, oklch(0.22 0.06 192 / 0.4) 100%)",
-  gold: "linear-gradient(135deg, oklch(0.32 0.10 72 / 0.5) 0%, oklch(0.19 0.010 238) 55%, oklch(0.24 0.07 72 / 0.35) 100%)",
-  magenta: "linear-gradient(135deg, oklch(0.28 0.12 340 / 0.55) 0%, oklch(0.19 0.010 238) 55%, oklch(0.24 0.08 340 / 0.4) 100%)",
-  coral: "linear-gradient(135deg, oklch(0.34 0.12 30 / 0.55) 0%, oklch(0.19 0.010 238) 55%, oklch(0.26 0.08 30 / 0.4) 100%)",
+const HERO_CLASS: Record<Accent, string> = {
+  teal: "grad-hero-teal",
+  gold: "grad-hero-gold",
+  magenta: "grad-hero-magenta",
+  coral: "grad-hero-coral",
 };
 
 const ICON_BOX: Record<Accent, string> = {
@@ -38,8 +38,7 @@ export function PageHero({
   action?: ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-line p-6 page-in"
-      style={{ background: HERO_BG[accent] }}>
+    <div className={`relative overflow-hidden rounded-2xl border border-line p-6 page-in ${HERO_CLASS[accent]}`}>
       {/* Decorative blobs */}
       <div className="absolute -top-10 -right-8 w-44 h-44 rounded-full opacity-[0.12] pointer-events-none"
         style={{ background: BLOB[accent] }} />

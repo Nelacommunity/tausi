@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GEMINI_MODEL } from "@/app/lib/ai";
 import { EXAM_SYSTEM_PROMPT } from "@/app/lib/prompts";
 import { createClient } from "@/app/lib/supabase/server";
 import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
   if (!papers?.length) return jsonErr("Papers not found — make sure the selected papers belong to your account.", 404);
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: EXAM_SYSTEM_PROMPT });
+  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL, systemInstruction: EXAM_SYSTEM_PROMPT });
 
   type Part = { text: string } | { inlineData: { mimeType: string; data: string } };
   let parts: Part[];

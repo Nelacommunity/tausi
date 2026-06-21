@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GEMINI_MODEL } from "@/app/lib/ai";
 import { createClient } from "@/app/lib/supabase/server";
 import { STUDY_SYSTEM_PROMPT } from "@/app/lib/prompts";
 import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
@@ -57,7 +58,7 @@ export async function POST(request: Request, ctx: Ctx) {
   await supabase.from("study_messages").insert({ session_id: id, user_id: user.id, role: "user", content: message });
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: STUDY_SYSTEM_PROMPT });
+  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL, systemInstruction: STUDY_SYSTEM_PROMPT });
 
   const isFirst = history.length === 0;
   const pdfParts: GeminiPart[] = [];

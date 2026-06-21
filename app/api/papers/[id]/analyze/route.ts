@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GEMINI_MODEL } from "@/app/lib/ai";
 import { createClient } from "@/app/lib/supabase/server";
 import { EXAM_STRUCTURE_PROMPT } from "@/app/lib/prompts";
 
@@ -56,7 +57,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   parts.push({ text: EXAM_STRUCTURE_PROMPT });
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
 
   const result = await model.generateContent({
     contents: [{ role: "user", parts }],

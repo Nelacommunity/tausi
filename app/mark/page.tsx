@@ -284,9 +284,7 @@ export default function MarkPage() {
         </div>
 
           {/* ── Side panel (bento) ─────────────────────────── */}
-          <div className="rounded-2xl border border-line overflow-hidden relative">
-            <div className="absolute inset-0"
-              style={{ background: "linear-gradient(160deg, oklch(0.30 0.10 192 / 0.45) 0%, oklch(0.19 0.010 238) 50%, oklch(0.24 0.08 158 / 0.35) 100%)" }} />
+          <div className="grad-side-teal rounded-2xl border border-line overflow-hidden relative">
             <div className="relative p-5 flex flex-col gap-4 h-full">
               <p className="text-xs font-bold text-dim uppercase tracking-widest">At a glance</p>
 

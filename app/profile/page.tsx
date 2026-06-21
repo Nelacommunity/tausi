@@ -79,8 +79,7 @@ export default function ProfilePage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-7 pb-bottom-nav md:pb-10 space-y-5">
 
         {/* ── Identity hero ──────────────────────────────── */}
-        <div className="relative overflow-hidden rounded-2xl border border-line p-6 sm:p-8 page-in"
-          style={{ background: "linear-gradient(135deg, oklch(0.30 0.10 192 / 0.5) 0%, oklch(0.19 0.010 238) 55%, oklch(0.24 0.07 192 / 0.35) 100%)" }}>
+        <div className="grad-hero-teal relative overflow-hidden rounded-2xl border border-line p-6 sm:p-8 page-in">
           <div className="absolute -top-10 -right-8 w-44 h-44 rounded-full opacity-[0.12] pointer-events-none" style={{ background: "oklch(0.72 0.20 192)" }} />
           <div className="relative flex items-start gap-5">
             <div className="w-16 h-16 rounded-2xl bg-teal/15 border border-teal/30 flex items-center justify-center text-2xl font-bold text-teal shrink-0 select-none">

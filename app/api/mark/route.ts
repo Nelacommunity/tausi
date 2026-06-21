@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GEMINI_MODEL } from "@/app/lib/ai";
 import { createClient } from "@/app/lib/supabase/server";
 import { AI_MARKER_SYSTEM_PROMPT } from "@/app/lib/prompts";
 import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
   parts.push({ text: "\n\nUsing the question paper above, derive the marking criteria and maximum marks for each question. Then mark the student's answer sheet thoroughly." });
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: AI_MARKER_SYSTEM_PROMPT });
+  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL, systemInstruction: AI_MARKER_SYSTEM_PROMPT });
 
   let fullFeedback = "";
   const stream = new ReadableStream({

@@ -377,8 +377,7 @@ export function PricingClient() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-7 pb-bottom-nav md:pb-12 space-y-12">
 
         {/* ── Hero ──────────────────────────────────────────── */}
-        <div className="relative overflow-hidden rounded-2xl border border-line px-6 py-12 text-center page-in"
-          style={{ background: "linear-gradient(135deg, oklch(0.32 0.10 72 / 0.5) 0%, oklch(0.19 0.010 238) 55%, oklch(0.30 0.10 192 / 0.4) 100%)" }}>
+        <div className="grad-pricing-hero relative overflow-hidden rounded-2xl border border-line px-6 py-12 text-center page-in">
           <div className="absolute -top-12 -right-10 w-52 h-52 rounded-full opacity-[0.12] pointer-events-none" style={{ background: "oklch(0.82 0.17 72)" }} />
           <div className="absolute -bottom-12 -left-10 w-52 h-52 rounded-full opacity-[0.10] pointer-events-none" style={{ background: "oklch(0.72 0.20 192)" }} />
           <div className="relative">

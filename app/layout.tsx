@@ -4,6 +4,7 @@ import "./globals.css";
 import ServiceWorkerRegistration from "./components/ServiceWorkerRegistration";
 import CustomCursor from "./components/CustomCursor";
 import { LanguageProvider } from "./lib/language-context";
+import { ThemeProvider, THEME_INIT_SCRIPT } from "./lib/theme-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -140,6 +141,8 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full antialiased`}
     >
       <head>
+        {/* Set theme class before paint to avoid a flash of the wrong theme */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         {/* Preconnect to external domains for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://generativelanguage.googleapis.com" />
@@ -147,9 +150,11 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegistration />
         <CustomCursor />
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

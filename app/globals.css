@@ -27,6 +27,36 @@
   --tausi-red: oklch(0.70 0.16 25);           /* destructive */
 }
 
+/* ── Light theme token overrides ─────────────────────────────
+   Dark is the default (:root). Adding `.light` on <html> flips the
+   underlying --tausi-* vars; because @theme maps colour utilities to
+   these vars, every bg-ink / text-snow / border-line flips with it.
+   Accents are deepened so light text on accent buttons stays legible. */
+html.light {
+  --background: oklch(0.975 0.004 240);
+  --foreground: oklch(0.24 0.012 255);
+
+  --tausi-ink:    oklch(0.975 0.004 240);   /* page bg — light */
+  --tausi-ink-2:  oklch(1 0 0);             /* surface — white */
+  --tausi-ink-3:  oklch(0.945 0.005 240);   /* raised surface */
+  --tausi-line:   oklch(0.90 0.006 240);    /* borders */
+  --tausi-line-2: oklch(0.82 0.010 240);    /* active borders */
+  --tausi-white:  oklch(0.24 0.012 255);    /* headings (now dark) */
+  --tausi-body:   oklch(0.36 0.012 250);    /* body text */
+  --tausi-dim:    oklch(0.52 0.014 250);    /* secondary text */
+  --tausi-teal:      oklch(0.56 0.12 192);  /* accent — deepened */
+  --tausi-teal-deep: oklch(0.92 0.05 192);  /* light teal tint */
+  --tausi-gold:       oklch(0.66 0.13 72);
+  --tausi-gold-hover: oklch(0.60 0.13 72);
+  --tausi-on-gold:    oklch(0.99 0.01 72);  /* light text on gold */
+  --tausi-coral:   oklch(0.56 0.14 33);
+  --tausi-magenta: oklch(0.55 0.18 340);
+  --tausi-green:   oklch(0.52 0.13 158);
+  --tausi-red:     oklch(0.58 0.16 25);
+
+  color-scheme: light;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -380,8 +410,9 @@ html.tausi-js .reveal.is-in .pricing-lissajous {
   transition: padding-left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @media (min-width: 768px) {
-  .page-shell { padding-left: 224px; }
-  html.sidebar-collapsed .page-shell { padding-left: 56px; }
+  /* Floating sidebar sits at left:12px with a 12px gap → 12 + width + 12 */
+  .page-shell { padding-left: 248px; }
+  html.sidebar-collapsed .page-shell { padding-left: 80px; }
 }
 
 /* ── Card entrance stagger animations ────────────────────────── */
@@ -591,3 +622,42 @@ select:focus {
 .exam-output table .katex {
   font-size: 0.85em;
 }
+
+/* ── Theme-aware gradient panels ─────────────────────────────
+   Centralised so light/dark both look intentional. Dark values
+   match the original premium look; light variants are soft tints. */
+
+/* Page heroes (PageHero component + bespoke page heroes) */
+.grad-hero-teal    { background: linear-gradient(135deg, oklch(0.30 0.10 192 / 0.55) 0%, var(--tausi-ink-2) 56%, oklch(0.22 0.06 192 / 0.40) 100%); }
+.grad-hero-gold    { background: linear-gradient(135deg, oklch(0.32 0.10 72  / 0.50) 0%, var(--tausi-ink-2) 56%, oklch(0.24 0.07 72  / 0.35) 100%); }
+.grad-hero-magenta { background: linear-gradient(135deg, oklch(0.28 0.12 340 / 0.55) 0%, var(--tausi-ink-2) 56%, oklch(0.24 0.08 340 / 0.40) 100%); }
+.grad-hero-coral   { background: linear-gradient(135deg, oklch(0.34 0.12 30  / 0.55) 0%, var(--tausi-ink-2) 56%, oklch(0.26 0.08 30  / 0.40) 100%); }
+
+html.light .grad-hero-teal    { background: linear-gradient(135deg, oklch(0.93 0.06 192) 0%, oklch(1 0 0) 62%, oklch(0.95 0.04 192) 100%); }
+html.light .grad-hero-gold    { background: linear-gradient(135deg, oklch(0.95 0.06 80)  0%, oklch(1 0 0) 62%, oklch(0.96 0.04 80)  100%); }
+html.light .grad-hero-magenta { background: linear-gradient(135deg, oklch(0.94 0.06 340) 0%, oklch(1 0 0) 62%, oklch(0.96 0.04 340) 100%); }
+html.light .grad-hero-coral   { background: linear-gradient(135deg, oklch(0.94 0.06 30)  0%, oklch(1 0 0) 62%, oklch(0.96 0.04 30)  100%); }
+
+/* Dashboard "Your Exams" feature panel — muted coral, balanced in both modes */
+.grad-coral-panel { background: linear-gradient(135deg, oklch(0.58 0.145 32) 0%, oklch(0.52 0.125 26) 100%); }
+html.light .grad-coral-panel { background: linear-gradient(135deg, oklch(0.64 0.15 33) 0%, oklch(0.58 0.135 27) 100%); }
+
+/* Dashboard AI-tools panel */
+.grad-ai-panel { background: linear-gradient(145deg, oklch(0.24 0.09 340 / 0.65) 0%, var(--tausi-ink-2) 46%, oklch(0.22 0.07 192 / 0.45) 100%); }
+html.light .grad-ai-panel { background: linear-gradient(145deg, oklch(0.94 0.05 340) 0%, oklch(1 0 0) 48%, oklch(0.94 0.04 192) 100%); }
+
+/* Page side panels (mark = teal/green, study = gold) */
+.grad-side-teal { background: linear-gradient(160deg, oklch(0.30 0.10 192 / 0.45) 0%, var(--tausi-ink-2) 50%, oklch(0.24 0.08 158 / 0.35) 100%); }
+.grad-side-gold { background: linear-gradient(160deg, oklch(0.32 0.10 72 / 0.45) 0%, var(--tausi-ink-2) 50%, oklch(0.24 0.07 72 / 0.30) 100%); }
+html.light .grad-side-teal { background: linear-gradient(160deg, oklch(0.93 0.06 192) 0%, oklch(1 0 0) 52%, oklch(0.94 0.05 158) 100%); }
+html.light .grad-side-gold { background: linear-gradient(160deg, oklch(0.95 0.06 80) 0%, oklch(1 0 0) 52%, oklch(0.95 0.04 72) 100%); }
+
+/* Pricing hero (gold → teal) */
+.grad-pricing-hero { background: linear-gradient(135deg, oklch(0.32 0.10 72 / 0.5) 0%, var(--tausi-ink-2) 56%, oklch(0.30 0.10 192 / 0.4) 100%); }
+html.light .grad-pricing-hero { background: linear-gradient(135deg, oklch(0.95 0.06 80) 0%, oklch(1 0 0) 60%, oklch(0.93 0.05 192) 100%); }
+
+/* Sidebar surface + credits chip */
+.grad-sidebar { background: linear-gradient(180deg, oklch(0.17 0.012 240) 0%, oklch(0.14 0.008 240) 38%); }
+html.light .grad-sidebar { background: linear-gradient(180deg, oklch(0.995 0.002 240) 0%, oklch(0.965 0.004 240) 40%); }
+.grad-credit { background: linear-gradient(120deg, oklch(0.25 0.10 192 / 0.35) 0%, oklch(0.19 0.010 238 / 0.40) 100%); }
+html.light .grad-credit { background: linear-gradient(120deg, oklch(0.90 0.06 192) 0%, oklch(1 0 0) 100%); }

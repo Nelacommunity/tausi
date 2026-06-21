@@ -172,9 +172,7 @@ export default function StudyPage() {
         </div>
 
           {/* ── Side panel (bento) ─────────────────────────── */}
-          <div className="rounded-2xl border border-line overflow-hidden relative">
-            <div className="absolute inset-0"
-              style={{ background: "linear-gradient(160deg, oklch(0.32 0.10 72 / 0.45) 0%, oklch(0.19 0.010 238) 50%, oklch(0.24 0.07 72 / 0.3) 100%)" }} />
+          <div className="grad-side-gold rounded-2xl border border-line overflow-hidden relative">
             <div className="relative p-5 flex flex-col gap-4 h-full">
               <p className="text-xs font-bold text-dim uppercase tracking-widest">Study smarter</p>
 

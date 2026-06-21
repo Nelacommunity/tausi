@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GEMINI_MODEL } from "@/app/lib/ai";
 import { MARKING_SYSTEM_PROMPT } from "@/app/lib/prompts";
 import { createClient } from "@/app/lib/supabase/server";
 import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
   if (examContent.length > 200_000) return jsonErr("Exam content too large", 400);
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: MARKING_SYSTEM_PROMPT });
+  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL, systemInstruction: MARKING_SYSTEM_PROMPT });
 
   const INITIAL_PROMPT = `Generate a complete and detailed marking scheme/memo for the following exam paper. Include ALL answers for ALL questions, then conclude with the Weak Points Analysis section.\n\n${examContent}`;
 
