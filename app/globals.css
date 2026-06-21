@@ -369,40 +369,6 @@ html.tausi-js .reveal.is-in .pricing-lissajous {
   to { stroke-dashoffset: 0; }
 }
 
-/* ── Custom cursor (fine pointer devices only) ────────────────────────── */
-@media (pointer: fine) {
-  *, *::before, *::after {
-    cursor: none !important;
-  }
-
-  #tausi-cursor-ring {
-    position: fixed;
-    top: 0; left: 0;
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    border: 1.5px solid oklch(0.72 0.20 192 / 0.70);
-    pointer-events: none;
-    z-index: 9999;
-    will-change: transform;
-    mix-blend-mode: normal;
-    transition: width 0.2s, height 0.2s, border-color 0.2s, background 0.15s;
-  }
-  #tausi-cursor-ring.is-hovering {
-    width: 36px; height: 36px;
-    border-color: oklch(0.72 0.20 192 / 0.90);
-    background: oklch(0.72 0.20 192 / 0.10);
-  }
-  .tausi-dot {
-    position: fixed;
-    top: 0; left: 0;
-    border-radius: 50%;
-    background: oklch(0.72 0.20 192);
-    pointer-events: none;
-    z-index: 9998;
-    will-change: transform;
-  }
-}
-
 /* ── Collapsible sidebar layout shell ───────────────────────── */
 
 /* Pages use .page-shell instead of md:pl-56 */

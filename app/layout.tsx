@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import ServiceWorkerRegistration from "./components/ServiceWorkerRegistration";
-import CustomCursor from "./components/CustomCursor";
 import { LanguageProvider } from "./lib/language-context";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "./lib/theme-context";
 import { SessionProvider } from "./lib/session-context";
@@ -151,7 +150,6 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegistration />
-        <CustomCursor />
         <ThemeProvider>
           <SessionProvider>
             <LanguageProvider>
