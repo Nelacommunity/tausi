@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Header } from "@/app/components/Header";
 import { useT } from "@/app/lib/language-context";
-import { createClient } from "@/app/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import { useSession } from "@/app/lib/session-context";
 
 interface RecentExam {
   id: string;
@@ -21,25 +20,11 @@ function formatDate(iso: string) {
 
 export default function Dashboard() {
   const { T } = useT();
-  const supabase = createClient();
+  const { user, credits } = useSession();
 
-  const [user, setUser] = useState<User | null>(null);
-  const [credits, setCredits] = useState<number | null>(null);
   const [recentExams, setRecentExams] = useState<RecentExam[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(true);
   const [papersCount, setPapersCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!user) return;
-    fetch("/api/credits").then(r => r.ok ? r.json() : null)
-      .then(d => { if (d && typeof d.credits === "number") setCredits(d.credits); })
-      .catch(() => {});
-  }, [user]);
 
   useEffect(() => {
     fetch("/api/exams")

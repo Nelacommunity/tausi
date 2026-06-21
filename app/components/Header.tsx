@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/app/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
 import { useT } from "@/app/lib/language-context";
 import { useTheme } from "@/app/lib/theme-context";
+import { useSession } from "@/app/lib/session-context";
 
 function NavIcon({ d, sw = 1.5 }: { d: string; sw?: number }) {
   return (
@@ -114,13 +114,11 @@ function ThemeToggle({ compact = false }: { compact?: boolean }) {
 }
 
 export function Header() {
-  const [user, setUser] = useState<User | null>(null);
-  const [credits, setCredits] = useState<number | null>(null);
+  const { user, credits } = useSession();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileSheet, setMobileSheet] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = createClient();
   const { T } = useT();
 
   // Load sidebar state from localStorage
@@ -131,19 +129,6 @@ export function Header() {
       document.documentElement.classList.add("sidebar-collapsed");
     }
   }, []);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => setUser(s?.user ?? null));
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!user) { setCredits(null); return; }
-    fetch("/api/credits").then(r => r.ok ? r.json() : null)
-      .then(d => { if (d && typeof d.credits === "number") setCredits(d.credits); })
-      .catch(() => {});
-  }, [user]);
 
   useEffect(() => { setMobileSheet(false); }, [pathname]);
 
@@ -171,7 +156,7 @@ export function Header() {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await createClient().auth.signOut();
     router.push("/");
   };
 

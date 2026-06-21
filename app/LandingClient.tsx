@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "./lib/language-context";
+import { useTheme } from "./lib/theme-context";
 import { CREDIT_COSTS } from "./lib/usage";
 
 /* ── Scroll reveal + progress bar ──────────────────────────────────────────
@@ -191,12 +192,19 @@ const STEP_DETAILS = [UploadDetail, AnalysisDetail, ExamDetail, TutorDetail];
    All at very low opacity — atmospheric depth, not distraction.          */
 function BackgroundCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    // Theme-aware palette: light page paints a light bg with dark dust;
+    // dark keeps the original near-black bg with white stars.
+    const isLight = theme === "light";
+    const bgFill = isLight ? "oklch(0.975 0.004 240)" : "oklch(0.14 0.008 240)";
+    const dust = isLight ? "90,110,140" : "255,255,255";
 
     const dpr = window.devicePixelRatio || 1;
     let w = 0, h = 0;
@@ -249,7 +257,7 @@ function BackgroundCanvas() {
       c.clearRect(0, 0, w, h);
 
       // Background
-      c.fillStyle = "oklch(0.14 0.008 240)";
+      c.fillStyle = bgFill;
       c.fillRect(0, 0, w, h);
 
       // Stars — cursor vortex + twinkling
@@ -274,7 +282,7 @@ function BackgroundCanvas() {
         const pulse = reduced ? 1    : 0.55 + 0.45 * cycle;
         c.beginPath();
         c.arc(s.x * w, s.y * h, s.r * pulse, 0, Math.PI * 2);
-        c.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
+        c.fillStyle = `rgba(${dust},${a.toFixed(3)})`;
         c.fill();
       }
 
@@ -363,8 +371,8 @@ function BackgroundCanvas() {
           const tx = ss.x - nx * tail;
           const ty = ss.y - ny * tail;
           const g = c.createLinearGradient(tx, ty, ss.x, ss.y);
-          g.addColorStop(0, "rgba(255,255,255,0)");
-          g.addColorStop(1, `rgba(255,255,255,${alpha.toFixed(3)})`);
+          g.addColorStop(0, `rgba(${dust},0)`);
+          g.addColorStop(1, `rgba(${dust},${alpha.toFixed(3)})`);
           c.beginPath();
           c.moveTo(tx, ty);
           c.lineTo(ss.x, ss.y);
@@ -390,7 +398,7 @@ function BackgroundCanvas() {
       window.removeEventListener("resize", setSize);
       window.removeEventListener("mousemove", onMouseMove);
     };
-  }, []);
+  }, [theme]);
 
   return (
     <canvas
@@ -1010,6 +1018,7 @@ function CreditCard({
 /* ── Main landing page ────────────────────────────────────────────────────── */
 export function LandingClient() {
   const { T, lang, setLang } = useT();
+  const { theme, toggleTheme } = useTheme();
   const L = T.landing;
   useReveal();
   const [howStep, setHowStep] = useState(0);
@@ -1049,6 +1058,15 @@ export function LandingClient() {
             <Link href="#pricing" className="hover:text-snow px-3 py-2 rounded-full hover:bg-snow/10 transition-colors whitespace-nowrap">{L.pricingTitle}</Link>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
+            <button onClick={toggleTheme} aria-label="Toggle theme"
+              title={theme === "dark" ? "Light mode" : "Dark mode"}
+              className="flex items-center justify-center w-8 h-8 rounded-full border border-line text-dim hover:text-snow hover:border-line-2 transition-colors cursor-pointer">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d={theme === "dark"
+                  ? "M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
+                  : "M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"} />
+              </svg>
+            </button>
             <div className="flex items-center rounded-full border border-line overflow-hidden">
               {(["en", "sw"] as const).map((l) => (
                 <button key={l} onClick={() => setLang(l)}

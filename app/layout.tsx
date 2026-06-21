@@ -5,6 +5,7 @@ import ServiceWorkerRegistration from "./components/ServiceWorkerRegistration";
 import CustomCursor from "./components/CustomCursor";
 import { LanguageProvider } from "./lib/language-context";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "./lib/theme-context";
+import { SessionProvider } from "./lib/session-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -151,9 +152,11 @@ export default function RootLayout({
         <ServiceWorkerRegistration />
         <CustomCursor />
         <ThemeProvider>
-          <LanguageProvider>
-            {children}
-          </LanguageProvider>
+          <SessionProvider>
+            <LanguageProvider>
+              {children}
+            </LanguageProvider>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>
