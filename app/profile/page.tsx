@@ -104,9 +104,9 @@ export default function ProfilePage() {
                   </button>
                 </div>
               )}
-              <p className="text-sm text-white/80">{profile?.email}</p>
+              <p className="text-sm text-body">{profile?.email}</p>
               {profile?.created_at && (
-                <p className="text-xs text-white/60 mt-2">
+                <p className="text-xs text-dim mt-2">
                   {P.joined} {new Date(profile.created_at).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
                 </p>
               )}
