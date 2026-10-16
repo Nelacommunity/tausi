@@ -124,11 +124,17 @@ export async function middleware(request: NextRequest) {
     pathname === "/papers" ||
     pathname.startsWith("/papers/") ||
     pathname === "/write" ||
-    pathname.startsWith("/write/");
+    pathname.startsWith("/write/") ||
+    pathname === "/teach" ||
+    pathname.startsWith("/teach/") ||
+    pathname === "/learn" ||
+    pathname.startsWith("/learn/");
 
   // Logged-in users skip auth pages and the marketing home — send them to the app
   if (user && (pathname === "/" || pathname === "/login" || pathname === "/signup")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    const next = searchParams.get("next");
+    const safe = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+    return NextResponse.redirect(new URL(safe, request.url));
   }
 
   // Unauthenticated users get redirected to login for protected pages

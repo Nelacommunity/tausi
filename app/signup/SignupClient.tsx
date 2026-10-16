@@ -6,6 +6,12 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/app/lib/supabase/client";
 import { useT } from "@/app/lib/language-context";
 
+/** Where to go after signing in: the ?next= path if it's a safe local path. */
+function nextPath(): string {
+  const next = new URLSearchParams(window.location.search).get("next");
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+}
+
 export default function SignupClient() {
   const router = useRouter();
   const { T } = useT();
@@ -16,6 +22,7 @@ export default function SignupClient() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
+  const [role, setRole] = useState<"student" | "teacher">("student");
 
   const handleGoogle = async () => {
     const supabase = createClient();
@@ -32,12 +39,12 @@ export default function SignupClient() {
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     setLoading(true);
     const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { role } } });
     if (error) {
       setError(error.message);
       setLoading(false);
     } else if (data.session) {
-      router.push("/dashboard");
+      router.push(nextPath());
       router.refresh();
     } else {
       setCheckEmail(true);
@@ -141,6 +148,17 @@ export default function SignupClient() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <fieldset>
+              <legend className="text-xs font-medium text-dim mb-1.5">{T.learn.roleLabel}</legend>
+              <div className="grid grid-cols-2 gap-2" role="radiogroup">
+                {(["student", "teacher"] as const).map((r) => (
+                  <button key={r} type="button" role="radio" aria-checked={role === r} onClick={() => setRole(r)}
+                    className={`rounded-xl border-2 px-3 py-2.5 text-sm font-semibold transition-colors cursor-pointer ${role === r ? "border-teal bg-teal/10 text-snow" : "border-line text-dim hover:text-snow"}`}>
+                    {r === "student" ? T.learn.roleStudent : T.learn.roleTeacher}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-dim block" htmlFor="email">{A.emailLabel}</label>
               <input

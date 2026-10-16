@@ -22,6 +22,14 @@ const NAV = [
     d: "M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25",
   },
   {
+    href: "/learn", key: "learn" as const, label: "My learning", accent: "gold",
+    d: "M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6",
+  },
+  {
+    href: "/teach", key: "teach" as const, label: "Teach", accent: "teal", teacherOnly: true,
+    d: "M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342",
+  },
+  {
     href: "/mark", key: "aiMarker" as const, label: "AI Marker", accent: "teal",
     d: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z",
   },
@@ -74,12 +82,12 @@ function LangPill() {
   const { lang, setLang } = useT();
   return (
     <div className="flex items-center rounded-lg border border-line overflow-hidden shrink-0">
-      {(["en", "sw"] as const).map((l) => (
-        <button key={l} onClick={() => setLang(l)}
-          className={`px-2 py-1 text-[11px] font-bold uppercase transition-colors cursor-pointer ${
+      {([["en", "EN"], ["sw", "SW"], ["zh", "中"]] as const).map(([l, label]) => (
+        <button key={l} onClick={() => setLang(l)} lang={l}
+          className={`px-2 py-1 text-[11px] font-bold transition-colors cursor-pointer ${
             lang === l ? "bg-teal text-ink" : "text-dim hover:text-snow"
           }`}>
-          {l}
+          {label}
         </button>
       ))}
     </div>
@@ -116,7 +124,8 @@ function ThemeToggle({ compact = false }: { compact?: boolean }) {
 }
 
 export function Header() {
-  const { user } = useSession();
+  const { user, role } = useSession();
+  const navItems = NAV.filter((i) => !("teacherOnly" in i) || role === "teacher");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileSheet, setMobileSheet] = useState(false);
   const pathname = usePathname();
@@ -212,7 +221,7 @@ export function Header() {
           {!collapsed && (
             <p className="px-2.5 pb-1.5 text-[10px] font-bold text-dim/70 uppercase tracking-[0.15em]">{T.nav.workspace}</p>
           )}
-          {NAV.map(({ href, key, d, accent }) => {
+          {navItems.map(({ href, key, d, accent }) => {
             const active = isActive(href);
             return (
               <Link key={href} href={href} title={collapsed ? T.nav[key as NavKey] : undefined}
@@ -352,7 +361,7 @@ export function Header() {
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-ink/95 backdrop-blur-md border-t border-line"
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           <div className="grid grid-cols-5 h-16 px-1">
-            {NAV.slice(0, 5).map(({ href, key, d, accent }) => {
+            {navItems.slice(0, 5).map(({ href, key, d, accent }) => {
               const active = isActive(href);
               return (
                 <Link key={href} href={href}
@@ -365,8 +374,8 @@ export function Header() {
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 2 : 1.5} d={d} />
                   </svg>
-                  <span className="text-[9px] font-semibold leading-none uppercase tracking-wider">
-                    {T.nav[key as NavKey]?.split(" ")[0]}
+                  <span className="text-[9px] font-semibold leading-none uppercase tracking-wide truncate max-w-full px-0.5">
+                    {T.nav[key as NavKey]}
                   </span>
                 </Link>
               );

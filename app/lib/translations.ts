@@ -1,10 +1,15 @@
-export type Lang = "en" | "sw";
+import { learnEn, learnSw, learnZh } from "./i18n/learn";
+import { zhOverrides } from "./i18n/zh";
 
-const t = {
+export type Lang = "en" | "sw" | "zh";
+
+const base = {
   en: {
     // ── Navigation ────────────────────────────────────────────────────────
     nav: {
       myExams:          "My Exams",
+      learn:            "My learning",
+      teach:            "Teach",
       aiMarker:         "AI Marker",
       studyRoom:        "Study Room",
       aiWriter:         "AI Writer",
@@ -541,6 +546,8 @@ const t = {
   // ────────────────────────────────────────────────────────────────────────
   sw: {
     nav: {
+      learn:            "Masomo yangu",
+      teach:            "Fundisha",
       myExams:          "Mitihani Yangu",
       aiMarker:         "Mkaguzi wa AI",
       studyRoom:        "Chumba cha Kusoma",
@@ -1059,6 +1066,27 @@ const t = {
     },
   },
 } as const;
+
+type Plain = Record<string, unknown>;
+
+/** Override leaves of `base` with `over`; anything missing in `over` falls back to `base`. */
+function deepMerge<T>(baseObj: T, over: Plain): T {
+  const out: Plain = { ...(baseObj as Plain) };
+  for (const [k, v] of Object.entries(over)) {
+    const b = out[k];
+    out[k] = v && typeof v === "object" && !Array.isArray(v) && b && typeof b === "object" && !Array.isArray(b)
+      ? deepMerge(b, v as Plain)
+      : v;
+  }
+  return out as T;
+}
+
+const t = {
+  en: { ...base.en, learn: learnEn },
+  sw: { ...base.sw, learn: learnSw },
+  // Chinese: translated sections from zhOverrides, English for the rest.
+  zh: { ...deepMerge(base.en, zhOverrides), learn: learnZh },
+};
 
 export type Translations = typeof t.en;
 export default t;

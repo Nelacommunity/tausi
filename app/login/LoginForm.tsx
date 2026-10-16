@@ -6,6 +6,12 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/app/lib/supabase/client";
 import { useT } from "@/app/lib/language-context";
 
+/** Where to go after signing in: the ?next= path if it's a safe local path. */
+function nextPath(): string {
+  const next = new URLSearchParams(window.location.search).get("next");
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+}
+
 export function LoginForm() {
   const router = useRouter();
   const { T } = useT();
@@ -33,7 +39,7 @@ export function LoginForm() {
       setError(error.message);
       setLoading(false);
     } else {
-      router.push("/dashboard");
+      router.push(nextPath());
       router.refresh();
     }
   };

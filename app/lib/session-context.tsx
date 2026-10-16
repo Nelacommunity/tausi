@@ -4,18 +4,24 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/app/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
+export type Role = "student" | "teacher";
+
 interface SessionCtx {
   user: User | null;
   loadingUser: boolean;
+  role: Role | null;
+  setRole: (r: Role) => void;
 }
 
 const SessionContext = createContext<SessionCtx>({
   user: null,
   loadingUser: true,
+  role: null,
+  setRole: () => {},
 });
 
 /**
- * App-wide auth, fetched once per session.
+ * App-wide auth and role, fetched once per session.
  *
  * Mounted in the root layout, which never remounts across client-side
  * navigations — so `getUser()` and the auth subscription are set up a
@@ -25,6 +31,7 @@ const SessionContext = createContext<SessionCtx>({
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
+  const [role, setRole] = useState<Role | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -40,8 +47,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return () => { mounted = false; subscription.unsubscribe(); };
   }, []);
 
+  // Role (student/teacher) only changes when the user identity does.
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    if (!userId) return;
+    let live = true;
+    createClient().from("profiles").select("role").eq("id", userId).maybeSingle()
+      .then(({ data }) => { if (live) setRole((data?.role as Role) ?? "student"); });
+    return () => { live = false; };
+  }, [userId]);
+
   return (
-    <SessionContext.Provider value={{ user, loadingUser }}>
+    <SessionContext.Provider value={{ user, loadingUser, role: userId ? role : null, setRole }}>
       {children}
     </SessionContext.Provider>
   );

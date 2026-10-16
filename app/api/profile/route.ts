@@ -40,7 +40,7 @@ export async function PATCH(request: Request) {
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
   const body = await request.json().catch(() => ({}));
-  const allowed = ["full_name"] as const;
+  const allowed = ["full_name", "display_name", "role"] as const;
   const updates: Record<string, unknown> = {};
   for (const key of allowed) {
     if (key in body) updates[key] = body[key];
@@ -49,6 +49,12 @@ export async function PATCH(request: Request) {
   if (!Object.keys(updates).length) return Response.json({ error: "Nothing to update" }, { status: 400 });
   if (typeof updates.full_name === "string" && updates.full_name.length > 200) {
     return Response.json({ error: "Name too long (max 200 characters)" }, { status: 400 });
+  }
+  if (typeof updates.display_name === "string" && updates.display_name.length > 40) {
+    return Response.json({ error: "Display name too long (max 40 characters)" }, { status: 400 });
+  }
+  if ("role" in updates && updates.role !== "student" && updates.role !== "teacher") {
+    return Response.json({ error: "Invalid role" }, { status: 400 });
   }
 
   const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);

@@ -960,10 +960,10 @@ export function LandingClient() {
               </svg>
             </button>
             <div className="flex items-center rounded-full border border-line overflow-hidden">
-              {(["en", "sw"] as const).map((l) => (
-                <button key={l} onClick={() => setLang(l)}
-                  className={`px-2 sm:px-2.5 py-1 text-xs font-bold uppercase transition-colors cursor-pointer ${lang === l ? "bg-teal text-ink" : "text-dim hover:text-snow"}`}>
-                  {l === "en" ? "EN" : "SW"}
+              {([["en", "EN"], ["sw", "SW"], ["zh", "中"]] as const).map(([l, label]) => (
+                <button key={l} onClick={() => setLang(l)} lang={l}
+                  className={`px-2 sm:px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer ${lang === l ? "bg-teal text-ink" : "text-dim hover:text-snow"}`}>
+                  {label}
                 </button>
               ))}
             </div>

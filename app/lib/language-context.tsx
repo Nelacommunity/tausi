@@ -20,7 +20,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const stored = localStorage.getItem("tausi_lang") as Lang | null;
-    if (stored === "en" || stored === "sw") setLangState(stored);
+    if (stored === "en" || stored === "sw" || stored === "zh") setLangState(stored);
   }, []);
 
   const setLang = (l: Lang) => {
