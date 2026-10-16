@@ -29,8 +29,18 @@ function check<T>(res: { data: T; error: { message: string } | null }, what: str
   return res.data as NonNullable<T>;
 }
 
+/** Run fn, retrying transient network failures ("fetch failed") with backoff. */
+async function withRetry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
+  for (let i = 1; ; i++) {
+    try { return await fn(); } catch (err) {
+      if (i >= attempts || !String(err).includes("fetch failed")) throw err;
+      await new Promise((r) => setTimeout(r, 1000 * i));
+    }
+  }
+}
+
 async function chunked<T>(rows: T[], size: number, fn: (chunk: T[]) => Promise<void>) {
-  for (let i = 0; i < rows.length; i += size) await fn(rows.slice(i, i + size));
+  for (let i = 0; i < rows.length; i += size) await withRetry(() => fn(rows.slice(i, i + size)));
 }
 
 // ── Curricula ────────────────────────────────────────────────────────────
@@ -70,8 +80,8 @@ async function seedCurricula() {
         provenance: "seed", status: "approved",
       }));
       const links = level.questions.flatMap((q, i) => q.kps.map((code) => ({ question_id: qRows[i].id, kp_id: kpId.get(code)! })));
-      await chunked(qRows, 200, async (c) => { check(await db.from("questions").insert(c), "questions"); });
-      await chunked(links, 500, async (c) => { check(await db.from("question_kps").insert(c), "question_kps"); });
+      await chunked(qRows, 100, async (c) => { check(await db.from("questions").insert(c), "questions"); });
+      await chunked(links, 250, async (c) => { check(await db.from("question_kps").insert(c), "question_kps"); });
       console.log(`  ${level.code}: ${qRows.length} questions, ${level.knowledgePoints.length} KPs`);
     }
     console.log(`✓ ${c.name}`);
