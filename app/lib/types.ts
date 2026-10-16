@@ -2,15 +2,10 @@ export interface Profile {
   id: string;
   email: string | null;
   full_name: string | null;
-  // Legacy subscription fields — kept for backward compat, not used for access control
+  display_name?: string | null;
+  role: "student" | "teacher";
+  /** Only drives the PDF watermark. */
   tier?: "free" | "premium";
-  subscription_status?: string;
-  subscription_end?: string | null;
-  usage_month?: string | null;
-  predictions_used?: number;
-  marking_schemes_used?: number;
-  ai_markings_used?: number;
-  study_sessions_used?: number;
   created_at: string;
 }
 

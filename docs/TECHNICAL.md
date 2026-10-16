@@ -27,7 +27,7 @@ API routes do their own authorisation and then use a service-role client; Row Le
 Key folders:
 
 - `curricula/` — curricula as data (HSK 1–2, NECTA Form Two maths sample) and the seed question builders
-- `supabase/migrations/001_learning_platform.sql` — schema for the learning platform
+- `supabase/schema.sql` — the complete database schema (one file, safe to re-run)
 - `app/lib/mastery.ts` — the mastery and readiness model (below)
 - `app/lib/learning/` — server logic: grading, live sessions, AI pipeline, reports
 - `app/components/learn/` — shared UI: question input, review list, realtime hook, QR code
