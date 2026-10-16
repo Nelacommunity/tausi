@@ -131,7 +131,6 @@ UI strings live in `app/lib/translations.ts` (English, Kiswahili), `app/lib/i18n
 | tailwindcss, @tailwindcss/typography | 4, 0.5.19 | MIT | Styling |
 | react-markdown, remark-gfm, remark-math, rehype-katex | 10.1.0, 4.0.1, 6.0.0, 7.0.1 | MIT | Rendering practice papers |
 | katex | 0.17.0 | MIT | Maths rendering |
-| @tiptap/* | 3.23.6 | MIT | AI Writer editor |
 | @vercel/analytics | 2.0.1 | MIT | Page analytics |
 | Geist, Geist Mono, Bricolage Grotesque (via next/font) | — | SIL OFL 1.1 | Fonts |
 

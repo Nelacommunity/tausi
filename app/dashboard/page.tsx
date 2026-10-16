@@ -277,7 +277,7 @@ export default function Dashboard() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {([
                 {
                   href: "/mark", label: T.nav.aiMarker, desc: D.toolMarkerDesc,
@@ -288,11 +288,6 @@ export default function Dashboard() {
                   href: "/study", label: T.nav.studyRoom, desc: D.toolStudyDesc,
                   icon: "M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337 5.972 5.972 0 01-5.035 2.057 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z",
                   accent: "text-gold bg-gold/10 border-gold/20 group-hover:bg-gold/20",
-                },
-                {
-                  href: "/write", label: T.nav.aiWriter, desc: D.toolWriterDesc,
-                  icon: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z",
-                  accent: "text-brand-magenta bg-brand-magenta/10 border-brand-magenta/20 group-hover:bg-brand-magenta/20",
                 },
                 {
                   href: "/discover", label: T.nav.discover, desc: D.toolDiscoverDesc,

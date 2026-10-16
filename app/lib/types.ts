@@ -75,12 +75,3 @@ export interface ExamPaper {
   exam_structure: string | null;  // extracted at upload time, enables fast library generation
   created_at: string;
 }
-
-export interface WriteDocument {
-  id: string;
-  user_id: string;
-  title: string;
-  content: string; // Tiptap HTML
-  created_at: string;
-  updated_at: string;
-}

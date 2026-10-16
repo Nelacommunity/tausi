@@ -9,7 +9,6 @@ export const zhOverrides = {
     teach: "教学",
     aiMarker: "AI 批改",
     studyRoom: "学习室",
-    aiWriter: "AI 写作",
     examLibrary: "试卷库",
     discover: "发现",
     signIn: "登录",

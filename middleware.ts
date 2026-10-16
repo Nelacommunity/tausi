@@ -123,8 +123,6 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/study/") ||
     pathname === "/papers" ||
     pathname.startsWith("/papers/") ||
-    pathname === "/write" ||
-    pathname.startsWith("/write/") ||
     pathname === "/teach" ||
     pathname.startsWith("/teach/") ||
     pathname === "/learn" ||

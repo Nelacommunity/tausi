@@ -83,10 +83,12 @@ alter table profiles add column if not exists tier text not null default 'free'
   check (tier in ('free', 'premium'));
 alter table marking_sessions add column if not exists question_paper_paths text[] not null default '{}';
 
--- ── Remove retired features (credits/payments, token metering) ──
+-- ── Remove retired features (credits/payments, token metering, AI Writer) ──
 
 drop table if exists credit_purchases;
 drop table if exists token_usage_monthly;
+drop table if exists write_documents;
+drop function if exists update_updated_at_column();
 drop function if exists deduct_credits(uuid, integer);
 drop function if exists add_credits(uuid, integer);
 drop function if exists increment_token_usage(uuid, text, text, bigint);
@@ -206,38 +208,6 @@ create index if not exists paper_chat_messages_paper_idx
 alter table paper_chat_messages enable row level security;
 drop policy if exists "users manage own paper chat" on paper_chat_messages;
 create policy "users manage own paper chat" on paper_chat_messages for all using (auth.uid() = user_id);
-
--- ── Write documents ─────────────────────────────────────────
-
-create table if not exists write_documents (
-  id         uuid primary key default gen_random_uuid(),
-  user_id    uuid not null references auth.users(id) on delete cascade,
-  title      text not null default 'Untitled Document',
-  content    text not null default '',
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create index if not exists write_documents_user_idx
-  on write_documents(user_id, updated_at desc);
-
-alter table write_documents enable row level security;
-drop policy if exists "users manage own documents" on write_documents;
-create policy "users manage own documents" on write_documents for all using (auth.uid() = user_id);
-
--- Auto-update updated_at on write_documents
-create or replace function update_updated_at_column()
-returns trigger as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$ language plpgsql;
-
-drop trigger if exists write_documents_updated_at on write_documents;
-create trigger write_documents_updated_at
-  before update on write_documents
-  for each row execute function update_updated_at_column();
 
 -- ── Storage ─────────────────────────────────────────────────
 

@@ -21,8 +21,6 @@ export default function robots(): MetadataRoute.Robots {
           "/mark/",
           "/study",
           "/study/",
-          "/write",
-          "/write/",
           "/papers/upload",
           "/offline",
         ],
@@ -32,7 +30,7 @@ export default function robots(): MetadataRoute.Robots {
         // AI crawlers — same rules but explicitly stated so they follow them
         userAgent: ["GPTBot", "ChatGPT-User", "CCBot", "anthropic-ai", "Claude-Web", "Bytespider"],
         allow: ["/", "/discover", "/exams/"],
-        disallow: ["/api/", "/dashboard", "/profile", "/mark", "/study", "/write"],
+        disallow: ["/api/", "/dashboard", "/profile", "/mark", "/study"],
       },
     ],
     sitemap: "https://tausi.app/sitemap.xml",
