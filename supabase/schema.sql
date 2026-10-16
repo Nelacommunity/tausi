@@ -516,5 +516,37 @@ values (
 )
 on conflict (id) do nothing;
 
+-- ── Class access & notifications ────────────────────────────
+-- Private classes (default): only members may join the class's live exams.
+-- Public classes: anyone with the code/link/QR may join their exams.
+alter table classes add column if not exists is_public boolean not null default false;
+
+create table if not exists notifications (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  kind       text not null default 'session' check (kind in ('session', 'class', 'resource')),
+  title      text not null,
+  body       text not null default '',
+  link       text,
+  session_id uuid references live_sessions(id) on delete cascade,
+  class_id   uuid references classes(id) on delete cascade,
+  read_at    timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists notifications_user_idx on notifications(user_id, created_at desc);
+alter table notifications enable row level security;
+
+-- Realtime: a user receives their own notifications live.
+drop policy if exists "users read own notifications" on notifications;
+create policy "users read own notifications" on notifications
+  for select to authenticated using (auth.uid() = user_id);
+
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    begin alter publication supabase_realtime add table notifications; exception when duplicate_object then null; end;
+  end if;
+end $$;
+
 -- Make the API pick up new tables immediately.
 notify pgrst, 'reload schema';

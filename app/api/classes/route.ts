@@ -10,14 +10,14 @@ export async function GET() {
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
   const [{ data: teaching }, { data: member }] = await Promise.all([
-    db.from("classes").select("id, name, join_code, created_at, curricula(name), class_members(count)").eq("teacher_id", user.id).order("created_at", { ascending: false }),
+    db.from("classes").select("id, name, join_code, is_public, created_at, curricula(name), class_members(count)").eq("teacher_id", user.id).order("created_at", { ascending: false }),
     db.from("class_members").select("classes(id, name, curricula(name))").eq("student_id", user.id),
   ]);
-  type T = { id: string; name: string; join_code: string; curricula: { name: string } | null; class_members: { count: number }[] };
+  type T = { id: string; name: string; join_code: string; is_public: boolean; curricula: { name: string } | null; class_members: { count: number }[] };
   type M = { classes: { id: string; name: string; curricula: { name: string } | null } };
   return Response.json({
     teaching: ((teaching ?? []) as unknown as T[]).map((c) => ({
-      id: c.id, name: c.name, code: c.join_code, curriculumName: c.curricula?.name ?? null, memberCount: c.class_members?.[0]?.count ?? 0,
+      id: c.id, name: c.name, code: c.join_code, isPublic: c.is_public, curriculumName: c.curricula?.name ?? null, memberCount: c.class_members?.[0]?.count ?? 0,
     })),
     member: ((member ?? []) as unknown as M[]).map((m) => ({ id: m.classes.id, name: m.classes.name, curriculumName: m.classes.curricula?.name ?? null })),
   });

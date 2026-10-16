@@ -435,11 +435,12 @@ function HostSetup({ assessmentId }: { assessmentId: string }) {
   const [classId, setClassId] = useState("");
   const [questionSeconds, setQuestionSeconds] = useState(20);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(15);
-  const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
+  const [classes, setClasses] = useState<{ id: string; name: string; isPublic: boolean }[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { api<{ teaching: { id: string; name: string }[] }>("/api/classes").then((d) => setClasses(d.teaching)).catch(() => {}); }, []);
+  useEffect(() => { api<{ teaching: { id: string; name: string; isPublic: boolean }[] }>("/api/classes").then((d) => setClasses(d.teaching)).catch(() => {}); }, []);
+  const privateClass = classes.find((c) => c.id === classId && !c.isPublic);
 
   const open = async () => {
     setBusy(true); setError(null);
@@ -478,6 +479,7 @@ function HostSetup({ assessmentId }: { assessmentId: string }) {
             <option value="">{L.noClass}</option>
             {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
+          {privateClass && <span className="block text-[11px] text-gold mt-1">{L.privateClassHost}</span>}
         </Field>
         {mode === "game" ? (
           <Field label={L.perQuestion}>

@@ -108,6 +108,15 @@ At-risk KPs are practised KPs below 50 %, weakest first.
 - Sync: each screen refetches its state on any of (1) Supabase Realtime `postgres_changes` on the session row (plus participants/answers for the host), (2) a Supabase Realtime Broadcast ping on `live:<CODE>` sent after every action, (3) a poll every 3 s while Realtime is disconnected, 20 s otherwise. The server is always the source of truth.
 - Answers are graded on the server; question payloads sent to students never include the answer.
 
+### Classes, access and notifications
+
+- Every class has a join code and a **class QR code** (`/classes/join/<CODE>`, shown on the class page). Scanning it signs the student in if needed and adds them to the class.
+- A class is **private** (default) or **public**. Every way into a live exam (QR code, link, typed code or notification) goes through the same check (`sessionAccess` in `app/lib/learning/live.ts`):
+  - the host is always allowed;
+  - a **private** class's exam admits signed-in members of that class only — anyone else sees "Members only" and cannot join;
+  - a **public** class's exam (or one with no class) admits anyone, signed in if the teacher required it.
+- When a teacher opens a live exam for a class, every member gets a **notification** (in-app bell, delivered live through Supabase Realtime). Open class exams are also listed on the student's learning page. Tapping either opens the exam, and signed-in members join in one tap with their profile name.
+
 ## AI pipeline
 
 All AI calls run on the server (`app/lib/learning/ai.ts`) with a JSON response schema, and every result is validated with zod before it is stored.

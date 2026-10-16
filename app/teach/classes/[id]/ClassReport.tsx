@@ -5,15 +5,21 @@ import Link from "next/link";
 import { Header } from "@/app/components/Header";
 import { useT } from "@/app/lib/language-context";
 import { api } from "@/app/components/learn/api";
+import { QrCode } from "@/app/components/learn/QrCode";
 import { Badge, Card, DistributionBars, ErrorNote, formatDate, pct, SectionTitle, Spinner } from "@/app/components/learn/ui";
 
 interface ClassData {
-  id: string; name: string; code: string;
+  id: string; name: string; code: string; isPublic: boolean;
   sessions: { id: string; code: string; mode: string; status: string; date: string; title: string; accuracy: number | null; players: number }[];
   distribution: number[];
   hardestQuestions: { questionId: string; prompt: string; answer: string; attempts: number; accuracy: number; commonWrong: string | null }[];
   weakestKps: { kpId: string; name: string; level: string; mastery: number; students: number; weakStudents: number }[];
   students: { id: string; name: string; mastery: number | null; accuracy: number | null; answers: number; weakest: string[] }[];
+}
+
+/** Join link for a class QR code. Only called once data has loaded, i.e. on the client. */
+function classJoinUrl(code: string) {
+  return `${window.location.origin}/classes/join/${code}`;
 }
 
 export function ClassReport({ id }: { id: string }) {
@@ -22,6 +28,14 @@ export function ClassReport({ id }: { id: string }) {
   const [c, setC] = useState<ClassData | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => { api<ClassData>(`/api/classes/${id}`).then(setC).catch((e: Error) => setError(e.message)); }, [id]);
+  const [copied, setCopied] = useState(false);
+
+  const setVisibility = async (isPublic: boolean) => {
+    if (!c) return;
+    const before = c;
+    setC({ ...c, isPublic });
+    await api(`/api/classes/${id}`, { method: "PATCH", json: { isPublic } }).catch((e: Error) => { setError(e.message); setC(before); });
+  };
 
   return (
     <div className="min-h-screen bg-ink text-snow page-shell">
@@ -42,6 +56,31 @@ export function ClassReport({ id }: { id: string }) {
                 <p className="font-mono text-3xl font-bold tracking-[0.2em] text-teal">{c.code}</p>
               </div>
             </Card>
+
+            {/* Class QR + who may join its exams */}
+            <div className="grid md:grid-cols-2 gap-5">
+              <Card className="flex flex-col sm:flex-row items-center gap-5">
+                <QrCode value={classJoinUrl(c.code)} size={168} label={`${L.classQr}: ${classJoinUrl(c.code)}`} />
+                <div className="space-y-2 text-center sm:text-left min-w-0">
+                  <p className="font-display font-bold">{L.classQr}</p>
+                  <p className="text-xs text-dim">{L.classQrSub}</p>
+                  <p className="text-xs text-body break-all">{classJoinUrl(c.code)}</p>
+                  <button type="button" className="text-xs text-teal cursor-pointer"
+                    onClick={() => navigator.clipboard?.writeText(classJoinUrl(c.code)).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); })}>
+                    {copied ? L.copied : L.copyLink}
+                  </button>
+                </div>
+              </Card>
+              <Card className="space-y-2.5" >
+                {([[false, L.privateClass, L.privateClassDesc], [true, L.publicClass, L.publicClassDesc]] as const).map(([pub, name, desc]) => (
+                  <button key={String(pub)} type="button" role="radio" aria-checked={c.isPublic === pub} onClick={() => setVisibility(pub)}
+                    className={`w-full text-left rounded-xl border-2 p-3 cursor-pointer transition-colors ${c.isPublic === pub ? "border-teal bg-teal/10" : "border-line hover:border-line-2"}`}>
+                    <span className="block text-sm font-semibold text-snow">{name}</span>
+                    <span className="block text-xs text-dim mt-0.5">{desc}</span>
+                  </button>
+                ))}
+              </Card>
+            </div>
 
             <div className="grid md:grid-cols-2 gap-5">
               <Card>

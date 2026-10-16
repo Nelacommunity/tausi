@@ -36,6 +36,7 @@ export interface SessionRow {
   ended_at: string | null;
   created_at: string;
   assessments: { title: string; level_id: string };
+  classes: { name: string; is_public: boolean; teacher_id: string } | null;
 }
 
 export interface ParticipantRow {
@@ -64,7 +65,7 @@ export function normaliseCode(code: string): string {
 export async function loadSession(db: SupabaseClient, code: string): Promise<SessionRow | null> {
   const { data } = await db
     .from("live_sessions")
-    .select("*, assessments(title, level_id)")
+    .select("*, assessments(title, level_id), classes(name, is_public, teacher_id)")
     .eq("join_code", normaliseCode(code))
     .maybeSingle();
   return (data as SessionRow | null) ?? null;
@@ -117,6 +118,10 @@ export interface SessionInfo {
   startedAt: string | null;
   endedAt: string | null;
   serverNow: string;
+  /** The class this session belongs to, if any. */
+  className: string | null;
+  /** Private-class sessions admit only class members. */
+  classOnly: boolean;
 }
 
 export function sessionInfo(s: SessionRow, questionCount: number): SessionInfo {
@@ -126,6 +131,8 @@ export function sessionInfo(s: SessionRow, questionCount: number): SessionInfo {
     questionStartedAt: s.question_started_at, questionSeconds: s.question_seconds,
     timeLimitSeconds: s.time_limit_seconds, startedAt: s.started_at, endedAt: s.ended_at,
     serverNow: new Date().toISOString(),
+    className: s.classes?.name ?? null,
+    classOnly: !!s.classes && !s.classes.is_public,
   };
 }
 
@@ -133,6 +140,8 @@ export interface PlayerState {
   session: SessionInfo;
   me: { participantId: string; displayName: string; score: number; streak: number; submitted: boolean; rank: number | null } | null;
   signedIn: boolean;
+  /** Whether this viewer may join; when not, why. */
+  access: SessionAccess;
   /** Game: the current question. */
   question?: StudentQuestion;
   /** Game: what I answered for the current question. Correctness only once revealed. */
@@ -150,7 +159,10 @@ export async function playerState(
 ): Promise<PlayerState> {
   const questions = await sessionQuestions(db, s);
   const me = await findParticipant(db, s.id, user, token);
-  const state: PlayerState = { session: sessionInfo(s, questions.length), me: null, signedIn: !!user };
+  const state: PlayerState = {
+    session: sessionInfo(s, questions.length), me: null, signedIn: !!user,
+    access: await sessionAccess(db, s, user),
+  };
   if (!me) return state;
 
   const showBoard = s.mode === "game" && (s.status === "reveal" || s.status === "finished");
@@ -185,4 +197,30 @@ export async function playerState(
 
 export function participantToken(request: Request): string | null {
   return request.headers.get(PARTICIPANT_HEADER) || new URL(request.url).searchParams.get("token");
+}
+
+// ── Access ───────────────────────────────────────────────────────────────
+
+export type SessionAccess =
+  | { allowed: true }
+  | { allowed: false; reason: "LOGIN_REQUIRED" | "CLASS_ONLY" };
+
+/**
+ * Who may join a live session — enforced the same way whether the student
+ * arrives by QR code, link, typed code or notification:
+ *  - the host, always;
+ *  - a private class's session: signed-in members of that class only;
+ *  - a public class's session, or one with no class: anyone, signed in if
+ *    the teacher required sign-in.
+ */
+export async function sessionAccess(db: SupabaseClient, s: SessionRow, user: User | null): Promise<SessionAccess> {
+  if (user && user.id === s.host_id) return { allowed: true };
+  if (s.class_id && s.classes && !s.classes.is_public) {
+    if (!user) return { allowed: false, reason: "LOGIN_REQUIRED" };
+    if (user.id === s.classes.teacher_id) return { allowed: true };
+    const { data } = await db.from("class_members").select("student_id").eq("class_id", s.class_id).eq("student_id", user.id).maybeSingle();
+    return data ? { allowed: true } : { allowed: false, reason: "CLASS_ONLY" };
+  }
+  if (s.require_login && !user) return { allowed: false, reason: "LOGIN_REQUIRED" };
+  return { allowed: true };
 }

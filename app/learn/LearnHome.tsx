@@ -62,6 +62,7 @@ export function LearnHome() {
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const [curricula, setCurricula] = useState<CurriculumNode[]>([]);
   const [resources, setResources] = useState<ResourceSummary[]>([]);
+  const [openExams, setOpenExams] = useState<{ id: string; code: string; mode: string; title: string; className: string; joined: boolean; submitted: boolean }[]>([]);
   const [code, setCode] = useState("");
   const [joinMsg, setJoinMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +73,10 @@ export function LearnHome() {
     api<{ member: { id: string; name: string }[] }>("/api/classes").then((d) => setClasses(d.member)).catch(() => {});
     api<CurriculumNode[]>("/api/curricula").then(setCurricula).catch(() => {});
     api<ResourceSummary[]>("/api/resources").then((r) => setResources(r.filter((x) => !x.isOwner))).catch(() => {});
+    const loadExams = () => api<typeof openExams>("/api/learn/sessions").then(setOpenExams).catch(() => {});
+    loadExams();
+    const poll = setInterval(loadExams, 30_000);
+    return () => clearInterval(poll);
   }, []);
 
   const joinClass = async (e: React.FormEvent) => {
@@ -120,6 +125,26 @@ export function LearnHome() {
           </section>
 
           <aside className="space-y-4">
+            {openExams.length > 0 && (
+              <Card className="border-teal/40">
+                <SectionTitle>{L.classExams}</SectionTitle>
+                <ul className="space-y-2">
+                  {openExams.map((x) => (
+                    <li key={x.id} className="flex items-center justify-between gap-3">
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold truncate">{x.title}</span>
+                        <span className="block text-[11px] text-dim truncate">{x.className} · {x.mode === "exam" ? L.modeExam : L.modeGame}</span>
+                      </span>
+                      {x.submitted ? <Badge tone="good">{L.submitted}</Badge> : (
+                        <Link href={`/play/${x.code}`} className="shrink-0 rounded-lg bg-teal text-ink font-semibold px-3 py-1.5 text-xs">
+                          {x.joined ? L.joined : L.joinNow} →
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
             <Link href="/join" className="sm:hidden flex justify-center rounded-xl bg-teal text-ink font-semibold px-4 py-3 text-sm">{L.joinLive}</Link>
             <Card>
               <SectionTitle>{L.joinClass}</SectionTitle>

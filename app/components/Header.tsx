@@ -7,6 +7,7 @@ import { createClient } from "@/app/lib/supabase/client";
 import { useT } from "@/app/lib/language-context";
 import { useTheme } from "@/app/lib/theme-context";
 import { useSession } from "@/app/lib/session-context";
+import { NotificationBell } from "@/app/components/learn/NotificationBell";
 
 function NavIcon({ d, sw = 1.5 }: { d: string; sw?: number }) {
   return (
@@ -265,6 +266,7 @@ export function Header() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 5l7 7-7 7M3 5l7 7-7 7" />
                   </svg>
                 </button>
+                <NotificationBell side />
                 <ThemeToggle compact />
                 <button onClick={signOut} title={T.nav.signOut}
                   className="w-9 h-9 rounded-xl flex items-center justify-center text-dim hover:text-bad hover:bg-bad/10 transition-colors cursor-pointer">
@@ -288,6 +290,7 @@ export function Header() {
                 <div className="flex items-center gap-1.5 px-1">
                   <LangPill />
                   <ThemeToggle />
+                  <NotificationBell side />
                   <button onClick={signOut} title={T.nav.signOut}
                     className="ml-auto p-1.5 rounded-lg text-dim hover:text-bad hover:bg-bad/10 transition-colors cursor-pointer">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -332,6 +335,7 @@ export function Header() {
           <span className="font-display text-sm font-bold text-snow">Tausi</span>
         </Link>
         <div className="flex items-center gap-2">
+          {user && <NotificationBell />}
           <ThemeToggle compact />
           <LangPill />
           {user ? (

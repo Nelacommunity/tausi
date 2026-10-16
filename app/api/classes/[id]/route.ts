@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { getViewer, jsonError } from "@/app/lib/learning/server";
 import { answerFacts, displayNameOf, distribution, questionStats } from "@/app/lib/learning/reports";
 import { WEAK_BELOW } from "@/app/lib/mastery";
@@ -11,7 +12,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/classes/[id
   const rl = checkRateLimit(`${user.id}:class-report`, LIMITS.standard);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
-  const { data: cls } = await db.from("classes").select("id, name, join_code, teacher_id").eq("id", id).maybeSingle();
+  const { data: cls } = await db.from("classes").select("id, name, join_code, teacher_id, is_public").eq("id", id).maybeSingle();
   if (!cls || cls.teacher_id !== user.id) return jsonError("Not found", 404);
 
   const { data: members } = await db.from("class_members").select("student_id").eq("class_id", id);
@@ -58,7 +59,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/classes/[id
   }
 
   return Response.json({
-    id: cls.id, name: cls.name, code: cls.join_code,
+    id: cls.id, name: cls.name, code: cls.join_code, isPublic: cls.is_public as boolean,
     sessions: (sessions ?? []).map((s) => {
       const sf = facts.filter((f) => f.sessionId === s.id);
       return {
@@ -83,4 +84,33 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/classes/[id
       };
     }).sort((x, y) => (x.mastery ?? 1) - (y.mastery ?? 1)),
   });
+}
+
+const patchSchema = z.object({
+  name: z.string().trim().min(1).max(100).optional(),
+  /** Public: anyone with the code may join this class's exams. Private: members only. */
+  isPublic: z.boolean().optional(),
+});
+
+/** Rename a class or change who may join its exams (teacher only). */
+export async function PATCH(request: Request, ctx: RouteContext<"/api/classes/[id]">) {
+  const { id } = await ctx.params;
+  const { user, db } = await getViewer();
+  if (!user) return jsonError("Unauthorized", 401);
+  const rl = checkRateLimit(`${user.id}:class-patch`, LIMITS.standard);
+  if (!rl.allowed) return rateLimitError(rl.resetAt);
+
+  const parsed = patchSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return jsonError("Invalid request", 400);
+  const { data: cls } = await db.from("classes").select("teacher_id").eq("id", id).maybeSingle();
+  if (!cls || cls.teacher_id !== user.id) return jsonError("Not found", 404);
+
+  const updates: Record<string, unknown> = {};
+  if (parsed.data.name) updates.name = parsed.data.name;
+  if (parsed.data.isPublic !== undefined) updates.is_public = parsed.data.isPublic;
+  if (Object.keys(updates).length) {
+    const { error } = await db.from("classes").update(updates).eq("id", id);
+    if (error) return jsonError(error.message, 500);
+  }
+  return Response.json({ ok: true });
 }

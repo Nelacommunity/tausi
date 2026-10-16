@@ -107,15 +107,49 @@ function Shell({ children, title, name, score }: { children: React.ReactNode; ti
   );
 }
 
+function AutoJoin({ code, onJoined }: { code: string; onJoined: (token: string | null) => void }) {
+  const L = useT().T.learn;
+  const [error, setError] = useState<string | null>(null);
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    api<{ token: string | null }>(`/api/live/${code}/join`, { method: "POST", json: {} })
+      .then((r) => onJoined(r.token))
+      .catch((e: Error) => setError(e.message));
+  }, [code, onJoined]);
+  return (
+    <Card className="text-center py-12 space-y-2">
+      <p className="font-mono text-2xl font-bold tracking-[0.25em] text-teal">{code}</p>
+      {error ? <ErrorNote message={error} /> : <p className="flex items-center justify-center gap-2 text-sm text-dim"><Spinner className="w-3.5 h-3.5" /> {L.joiningExam}</p>}
+    </Card>
+  );
+}
+
 function JoinForm({ code, state, token, onJoined }: { code: string; state: PlayerState; token: string | null; onJoined: (token: string | null) => void }) {
   const L = useT().T.learn;
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const needLogin = state.session.requireLogin && !state.signedIn;
+  const access = state.access;
   const next = encodeURIComponent(`/play/${code}`);
 
-  if (needLogin) {
+  // Private class and this account isn't a member: no way in from here.
+  if (!access.allowed && access.reason === "CLASS_ONLY") {
+    return (
+      <Card className="text-center py-10 space-y-3">
+        <p className="font-display text-xl font-bold">{L.classOnlyTitle}</p>
+        {state.session.className && <p className="text-sm text-teal font-semibold">{state.session.className}</p>}
+        <p className="text-sm text-body max-w-sm mx-auto">{L.classOnlyBody}</p>
+        <Link href="/learn" className="inline-block text-sm text-teal">{L.goToLearning}</Link>
+      </Card>
+    );
+  }
+
+  // Signed in and allowed: join straight away with the profile name — one tap from a notification or QR.
+  if (access.allowed && state.signedIn) return <AutoJoin code={code} onJoined={onJoined} />;
+
+  if (!access.allowed) {
     return (
       <Card className="text-center py-10 space-y-4">
         <p className="text-body">{L.loginRequired}</p>
