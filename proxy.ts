@@ -11,7 +11,7 @@ const PUBLIC_API_PATTERNS = [
 ];
 
 // Mirrors the baseline in next.config.ts (which also sets CSP/HSTS), so the
-// responses this middleware returns itself (401/400) carry them too.
+// responses this proxy returns itself (401/400) carry them too.
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
@@ -35,7 +35,7 @@ function isPublicApiPath(pathname: string, method: string) {
   return PUBLIC_API_PATTERNS.some((re) => re.test(pathname));
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
   // Supabase OAuth sometimes redirects to the site root with ?code= instead of

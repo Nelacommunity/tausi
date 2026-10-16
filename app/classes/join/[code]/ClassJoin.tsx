@@ -7,7 +7,7 @@ import { api } from "@/app/components/learn/api";
 import { Card, Spinner } from "@/app/components/learn/ui";
 
 /**
- * Where a class QR code / link lands. Sign-in is enforced by the middleware
+ * Where a class QR code / link lands. Sign-in is enforced by proxy.ts
  * (it redirects here afterwards), so by now the student has an account.
  */
 export function ClassJoin({ code }: { code: string }) {

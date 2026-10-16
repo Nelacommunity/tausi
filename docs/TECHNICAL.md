@@ -35,7 +35,7 @@ Key folders:
 
 ## Security & performance
 
-- **Authentication:** every request's access token is verified locally with `getClaims()` (signature and expiry against the project's ES256 keys) in the middleware and the API routes, instead of a network call to the Auth server on each request (~4 ms vs ~350 ms). Verification failures fail closed: the visitor is treated as signed out.
+- **Authentication:** every request's access token is verified locally with `getClaims()` (signature and expiry against the project's ES256 keys) in the proxy (`proxy.ts`) and the API routes, instead of a network call to the Auth server on each request (~4 ms vs ~350 ms). Verification failures fail closed: the visitor is treated as signed out.
 - **Authorisation:** API routes check ownership/membership in code before using the service-role client; RLS is on for every table. Live-session access goes through one check (`sessionAccess`).
 - **Storage:** users can read only their own folder in `exam-papers`; public exams' source papers are signed or downloaded by the server after it checks the exam is public. Teaching resources live in a private bucket served through short-lived signed URLs.
 - **Headers:** Content-Security-Policy (no-nonce variant, so pages stay static), HSTS in production, `frame-ancestors 'none'` / `X-Frame-Options: DENY`, `nosniff`, strict `Referrer-Policy`, restrictive `Permissions-Policy`, `Cross-Origin-Opener-Policy: same-origin`, no `X-Powered-By`.
