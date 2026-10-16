@@ -146,8 +146,11 @@ export default function RootLayout({
         {/* Set theme class before paint to avoid a flash of the wrong theme */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         {/* Preconnect to external domains for performance */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://generativelanguage.googleapis.com" />
+        {/* The browser talks to Supabase for sign-in and live updates — warm that connection.
+            (Fonts are self-hosted by next/font and AI calls are server-side, so no other preconnects.) */}
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <link rel="preconnect" href={new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin} crossOrigin="anonymous" />
+        )}
       </head>
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegistration />

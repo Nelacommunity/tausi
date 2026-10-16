@@ -1,6 +1,6 @@
 import { getViewer, jsonError } from "@/app/lib/learning/server";
 import { processResource, type ResourceRow } from "@/app/lib/learning/resources";
-import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { checkAiRateLimit, rateLimitError } from "@/app/lib/rate-limit";
 
 // Extraction + AI topic analysis of a long document can take a while.
 export const maxDuration = 300;
@@ -10,7 +10,7 @@ export async function POST(_request: Request, ctx: RouteContext<"/api/resources/
   const { id } = await ctx.params;
   const { user, db } = await getViewer();
   if (!user) return jsonError("Unauthorized", 401);
-  const rl = checkRateLimit(`${user.id}:resource-process`, LIMITS.ai);
+  const rl = await checkAiRateLimit(`${user.id}:resource-process`);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
   const { data } = await db.from("resources").select("*").eq("id", id).maybeSingle();

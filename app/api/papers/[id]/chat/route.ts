@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GEMINI_MODEL } from "@/app/lib/ai";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 import { STUDY_SYSTEM_PROMPT } from "@/app/lib/prompts";
-import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { checkAiRateLimit, rateLimitError } from "@/app/lib/rate-limit";
 
 type GeminiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
 type Turn = { role: "user" | "model"; parts: GeminiPart[] };
@@ -22,7 +22,7 @@ function jsonErr(msg: string, status: number) {
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return jsonErr("Unauthorized", 401);
 
   const { data: messages } = await supabase
@@ -41,10 +41,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!apiKey) return jsonErr("GEMINI_API_KEY not configured", 500);
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return jsonErr("Unauthorized", 401);
 
-  const rl = checkRateLimit(`${user.id}:paper-chat`, LIMITS.ai);
+  const rl = await checkAiRateLimit(`${user.id}:paper-chat`);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
   const body = await request.json().catch(() => ({}));

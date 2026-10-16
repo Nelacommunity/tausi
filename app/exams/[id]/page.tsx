@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getAuthUser } from "@/app/lib/supabase/server";
+import { createAdminClient } from "@/app/lib/supabase/admin";
 import { withSharedKeywords } from "@/app/lib/seo";
 import type { Exam, ChatMessage } from "@/app/lib/types";
 import { ExamViewer } from "./ExamViewer";
@@ -133,7 +134,7 @@ export default async function ExamPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
 
   const { data: profile } = user
     ? await supabase.from("profiles").select("tier").eq("id", user.id).single()
@@ -175,7 +176,9 @@ export default async function ExamPage({
   const [messagesResult, sourceUrlResult] = await Promise.all([
     messagesQuery,
     sourcePaths.length && user
-      ? supabase.storage.from("exam-papers").createSignedUrls(sourcePaths, 3600)
+      // Access was checked above (owner, or a public exam); files live in the
+      // owner's private folder, so sign them with the server's client.
+      ? createAdminClient().storage.from("exam-papers").createSignedUrls(sourcePaths, 3600)
       : Promise.resolve({ data: null }),
   ]);
 

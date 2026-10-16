@@ -1,4 +1,4 @@
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
@@ -31,7 +31,7 @@ async function uploadFile(supabase: SupabaseClient, file: File, userId: string):
 export async function GET(request: Request) {
   void request;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const rl = checkRateLimit(`${user.id}:exams-list`, LIMITS.standard);
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const rl = checkRateLimit(`${user.id}:exams-create`, LIMITS.upload);

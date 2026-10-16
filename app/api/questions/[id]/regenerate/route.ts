@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getViewer, jsonError } from "@/app/lib/learning/server";
 import { assessmentDetail, ownedAssessment, QUESTION_COLUMNS, type QuestionRow } from "@/app/lib/learning/queries";
 import { draftForAssessment, insertQuestions, levelKps, swapItem } from "@/app/lib/learning/builder";
-import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { checkAiRateLimit, rateLimitError } from "@/app/lib/rate-limit";
 
 const schema = z.object({ assessmentId: z.string().uuid(), note: z.string().trim().max(300).optional() });
 
@@ -11,7 +11,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/questions/[
   const { id } = await ctx.params;
   const { user, db } = await getViewer();
   if (!user) return jsonError("Unauthorized", 401);
-  const rl = checkRateLimit(`${user.id}:ai-draft`, LIMITS.ai);
+  const rl = await checkAiRateLimit(`${user.id}:ai-draft`);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
   const parsed = schema.safeParse(await request.json().catch(() => null));

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 import { Header } from "@/app/components/Header";
 import type { ExamPaper } from "@/app/lib/types";
 import { PaperActions } from "./PaperActions";
@@ -50,7 +50,7 @@ function formatDate(iso: string) {
 
 export default async function PapersPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect("/login");
 
   const { data: papers } = await supabase

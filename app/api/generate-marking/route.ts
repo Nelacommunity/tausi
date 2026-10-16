@@ -1,15 +1,15 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GEMINI_MODEL } from "@/app/lib/ai";
 import { MARKING_SYSTEM_PROMPT } from "@/app/lib/prompts";
-import { createClient } from "@/app/lib/supabase/server";
-import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { createClient, getAuthUser } from "@/app/lib/supabase/server";
+import { checkAiRateLimit, rateLimitError } from "@/app/lib/rate-limit";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return jsonErr("You must be signed in to use AI features.", 401);
 
-  const rl = checkRateLimit(`${user.id}:generate-marking`, LIMITS.ai);
+  const rl = await checkAiRateLimit(`${user.id}:generate-marking`);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
   const apiKey = process.env.GEMINI_API_KEY;

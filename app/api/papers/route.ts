@@ -1,4 +1,4 @@
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 const ACCEPTED = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
@@ -6,7 +6,7 @@ const ACCEPTED = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
 export async function GET(request: Request) {
   void request;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const rl = checkRateLimit(`${user.id}:papers-list`, LIMITS.standard);
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const rl = checkRateLimit(`${user.id}:papers-upload`, LIMITS.upload);

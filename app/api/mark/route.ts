@@ -1,12 +1,12 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GEMINI_MODEL } from "@/app/lib/ai";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 import { AI_MARKER_SYSTEM_PROMPT } from "@/app/lib/prompts";
-import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { checkAiRateLimit, checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const rl = checkRateLimit(`${user.id}:mark-list`, LIMITS.standard);
@@ -28,10 +28,10 @@ export async function POST(request: Request) {
   if (!apiKey) return jsonErr("GEMINI_API_KEY not configured", 500);
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return jsonErr("Unauthorized", 401);
 
-  const rl2 = checkRateLimit(`${user.id}:mark-create`, LIMITS.ai);
+  const rl2 = await checkAiRateLimit(`${user.id}:mark-create`);
   if (!rl2.allowed) return rateLimitError(rl2.resetAt);
 
   const formData = await request.formData().catch(() => null);

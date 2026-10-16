@@ -12,7 +12,8 @@
 //   3. A slow poll of GET /api/live/<CODE> — last-resort safety net
 // Every signal just triggers a refetch, so the server stays the source of truth.
 
-import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { AuthUser } from "./server";
 import { QUESTION_COLUMNS, toStudentQuestion, type QuestionRow } from "./queries";
 import type { StudentQuestion } from "./types";
 
@@ -82,7 +83,7 @@ export async function sessionQuestions(db: SupabaseClient, session: Pick<Session
 
 /** The caller's participant record: by account when signed in, otherwise by guest token. */
 export async function findParticipant(
-  db: SupabaseClient, sessionId: string, user: User | null, token: string | null,
+  db: SupabaseClient, sessionId: string, user: AuthUser | null, token: string | null,
 ): Promise<ParticipantRow | null> {
   if (user) {
     const { data } = await db.from("session_participants").select("*").eq("session_id", sessionId).eq("user_id", user.id).maybeSingle();
@@ -155,7 +156,7 @@ export interface PlayerState {
 }
 
 export async function playerState(
-  db: SupabaseClient, s: SessionRow, user: User | null, token: string | null,
+  db: SupabaseClient, s: SessionRow, user: AuthUser | null, token: string | null,
 ): Promise<PlayerState> {
   const questions = await sessionQuestions(db, s);
   const me = await findParticipant(db, s.id, user, token);
@@ -213,7 +214,7 @@ export type SessionAccess =
  *  - a public class's session, or one with no class: anyone, signed in if
  *    the teacher required sign-in.
  */
-export async function sessionAccess(db: SupabaseClient, s: SessionRow, user: User | null): Promise<SessionAccess> {
+export async function sessionAccess(db: SupabaseClient, s: SessionRow, user: AuthUser | null): Promise<SessionAccess> {
   if (user && user.id === s.host_id) return { allowed: true };
   if (s.class_id && s.classes && !s.classes.is_public) {
     if (!user) return { allowed: false, reason: "LOGIN_REQUIRED" };

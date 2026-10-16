@@ -1,8 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GEMINI_MODEL } from "@/app/lib/ai";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getAuthUser } from "@/app/lib/supabase/server";
+import { createAdminClient } from "@/app/lib/supabase/admin";
 import { CHAT_SYSTEM_PROMPT } from "@/app/lib/prompts";
-import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { checkAiRateLimit, rateLimitError } from "@/app/lib/rate-limit";
 
 type GeminiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
 
@@ -11,10 +12,10 @@ export async function POST(request: Request) {
   if (!apiKey) return jsonErr("GEMINI_API_KEY not configured", 500);
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return jsonErr("Unauthorized", 401);
 
-  const rl = checkRateLimit(`${user.id}:chat`, LIMITS.ai);
+  const rl = await checkAiRateLimit(`${user.id}:chat`);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
   let body: { examId?: string; message?: string; context?: string };
@@ -53,7 +54,8 @@ export async function POST(request: Request) {
   if (isFirstMessage && exam.pdf_storage_paths.length > 0) {
     for (const storagePath of exam.pdf_storage_paths) {
       try {
-        const { data: fileData } = await supabase.storage.from("exam-papers").download(storagePath);
+        // Access checked above (owner or public exam); files are in the owner's private folder.
+        const { data: fileData } = await createAdminClient().storage.from("exam-papers").download(storagePath);
         if (fileData) {
           const bytes = await fileData.arrayBuffer();
           if (bytes.byteLength <= 20 * 1024 * 1024) {

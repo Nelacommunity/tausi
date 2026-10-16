@@ -2,7 +2,7 @@ import { z } from "zod";
 import { clientIp, getViewer, jsonError } from "@/app/lib/learning/server";
 import { findParticipant, loadSession, participantToken } from "@/app/lib/learning/live";
 import { explanationsFor } from "@/app/lib/learning/review";
-import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { checkAiRateLimit, rateLimitError } from "@/app/lib/rate-limit";
 
 const schema = z.object({
   questionIds: z.array(z.string().uuid()).min(1).max(60),
@@ -18,7 +18,7 @@ const schema = z.object({
  */
 export async function POST(request: Request) {
   const { user, db } = await getViewer();
-  const rl = checkRateLimit(`${user?.id ?? clientIp(request)}:explain`, LIMITS.ai);
+  const rl = await checkAiRateLimit(`${user?.id ?? clientIp(request)}:explain`);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
   const parsed = schema.safeParse(await request.json().catch(() => null));

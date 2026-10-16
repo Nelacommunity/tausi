@@ -26,7 +26,7 @@ export async function GET() {
 const schema = z.object({ name: z.string().trim().min(1).max(100), curriculumId: z.string().uuid().nullable().optional() });
 
 export async function POST(request: Request) {
-  const { user, role, db } = await getViewer();
+  const { user, role, db } = await getViewer({ withRole: true });
   if (!user) return jsonError("Unauthorized", 401);
   if (role !== "teacher") return jsonError("Teachers only", 403);
   const rl = checkRateLimit(`${user.id}:classes-create`, LIMITS.standard);

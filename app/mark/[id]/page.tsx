@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 import { Header } from "@/app/components/Header";
 import { ExamOutput } from "@/app/components/ExamOutput";
 import type { MarkingSession } from "@/app/lib/types";
@@ -38,7 +38,7 @@ function GradeDisplay({ pct, total, max }: { pct: number; total: number; max: nu
 export default async function MarkingResultPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) notFound();
 
   const { data, error } = await supabase

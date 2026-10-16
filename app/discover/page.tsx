@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 import { Header } from "@/app/components/Header";
 import { PageHero } from "@/app/components/PageHero";
 import { withSharedKeywords } from "@/app/lib/seo";
@@ -46,7 +46,7 @@ function formatDate(iso: string) {
 export default async function DiscoverPage() {
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
 
   const { data: exams } = await supabase
     .from("exams")

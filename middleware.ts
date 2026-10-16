@@ -10,12 +10,14 @@ const PUBLIC_API_PATTERNS = [
   /^\/api\/explanations$/,             // checks the caller answered the questions
 ];
 
+// Mirrors the baseline in next.config.ts (which also sets CSP/HSTS), so the
+// responses this middleware returns itself (401/400) carry them too.
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
-  "X-XSS-Protection": "1; mode=block",
+  "X-XSS-Protection": "0",
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
 };
 
 function applySecurityHeaders(res: NextResponse | Response) {
@@ -76,15 +78,17 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  // getUser() fully verifies the JWT with the Supabase Auth server.
-  let user = null;
+  // getClaims() refreshes an expired session (writing new cookies via setAll)
+  // and verifies the access token's signature locally against the project's
+  // published keys (ES256) — ~4 ms instead of a ~350 ms round trip to the
+  // Auth server on every request. Fails closed: if verification is impossible
+  // the visitor is treated as signed out.
+  let user: { id: string } | null = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getClaims();
+    user = data?.claims?.sub ? { id: data.claims.sub } : null;
   } catch {
-    // If Supabase is unreachable, allow all requests through
-    applySecurityHeaders(supabaseResponse);
-    return supabaseResponse;
+    user = null;
   }
 
   const method = request.method;

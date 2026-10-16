@@ -36,7 +36,7 @@ const schema = z.object({
 
 /** Host a published practice exam live. Returns the join code. */
 export async function POST(request: Request) {
-  const { user, role, db } = await getViewer();
+  const { user, role, db } = await getViewer({ withRole: true });
   if (!user) return jsonError("Unauthorized", 401);
   if (role !== "teacher") return jsonError("Teachers only", 403);
   const rl = checkRateLimit(`${user.id}:live-create`, LIMITS.standard);

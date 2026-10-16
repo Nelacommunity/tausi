@@ -4,7 +4,7 @@ import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 import type { AssessmentSummary } from "@/app/lib/learning/types";
 
 export async function GET() {
-  const { user, role, db } = await getViewer();
+  const { user, role, db } = await getViewer({ withRole: true });
   if (!user) return jsonError("Unauthorized", 401);
   if (role !== "teacher") return jsonError("Teachers only", 403);
   const rl = checkRateLimit(`${user.id}:assessments`, LIMITS.standard);
@@ -31,7 +31,7 @@ const createSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const { user, role, db } = await getViewer();
+  const { user, role, db } = await getViewer({ withRole: true });
   if (!user) return jsonError("Unauthorized", 401);
   if (role !== "teacher") return jsonError("Teachers only", 403);
   const rl = checkRateLimit(`${user.id}:assessments-create`, LIMITS.standard);

@@ -1,4 +1,4 @@
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 export async function GET(
@@ -8,7 +8,7 @@ export async function GET(
   const { id } = await ctx.params;
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
 
   const rlKey = user ? `${user.id}:exam-get` : `anon:exam-get:${id}`;
   const rl = checkRateLimit(rlKey, LIMITS.standard);
@@ -57,7 +57,7 @@ export async function PATCH(
   const { id } = await ctx.params;
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const rl = checkRateLimit(`${user.id}:exam-patch`, LIMITS.standard);
@@ -100,7 +100,7 @@ export async function DELETE(
   const { id } = await ctx.params;
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const rl = checkRateLimit(`${user.id}:exam-delete`, LIMITS.standard);

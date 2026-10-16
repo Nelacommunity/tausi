@@ -1,22 +1,39 @@
-import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/app/lib/supabase/server";
 import { createAdminClient } from "@/app/lib/supabase/admin";
 
 export type Role = "student" | "teacher";
 
+/** The signed-in user as established from their verified access token. */
+export interface AuthUser { id: string; email: string | null }
+
 export interface Viewer {
-  user: User | null;
+  user: AuthUser | null;
+  /** Only looked up when requested (`withRole`) — most routes don't need it. */
   role: Role | null;
   /** Service-role client: routes do their own authorisation before using it. */
   db: SupabaseClient;
 }
 
-/** Current user (if any), their role, and a service-role client. */
-export async function getViewer(): Promise<Viewer> {
+/**
+ * Current user (if any) and a service-role client. The access token is
+ * verified locally with getClaims() (signature + expiry against the project's
+ * published ES256 keys) — milliseconds, versus a round trip to the Auth
+ * server with getUser().
+ */
+export async function getViewer(opts: { withRole?: boolean } = {}): Promise<Viewer> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
   const db = createAdminClient();
+  let user: AuthUser | null = null;
+  try {
+    const { data } = await supabase.auth.getClaims();
+    const c = data?.claims;
+    if (c?.sub) user = { id: c.sub, email: typeof c.email === "string" ? c.email : null };
+  } catch {
+    user = null; // fail closed
+  }
   if (!user) return { user: null, role: null, db };
+  if (!opts.withRole) return { user, role: null, db };
   const { data: profile } = await db.from("profiles").select("role").eq("id", user.id).maybeSingle();
   return { user, role: (profile?.role as Role) ?? "student", db };
 }

@@ -1,9 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GEMINI_MODEL } from "@/app/lib/ai";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 import { EXAM_STRUCTURE_PROMPT } from "@/app/lib/prompts";
 
-import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { checkAiRateLimit, rateLimitError } from "@/app/lib/rate-limit";
 
 function mimeFromPath(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase() ?? "";
@@ -14,10 +14,10 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return jsonErr("Unauthorized", 401);
 
-  const rl = checkRateLimit(`${user.id}:paper-analyze`, LIMITS.ai);
+  const rl = await checkAiRateLimit(`${user.id}:paper-analyze`);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
   const apiKey = process.env.GEMINI_API_KEY;

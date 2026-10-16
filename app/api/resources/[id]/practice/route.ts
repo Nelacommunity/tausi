@@ -6,7 +6,7 @@ import { insertQuestions, levelKps } from "@/app/lib/learning/builder";
 import { levelKpStates } from "@/app/lib/learning/mastery-store";
 import { toStudentQuestion } from "@/app/lib/learning/queries";
 import { MAX_PER_DRAFT, MAX_PER_TYPE } from "@/app/lib/learning/limits";
-import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { checkAiRateLimit, rateLimitError } from "@/app/lib/rate-limit";
 import type { QuestionType } from "@/app/lib/learning/grading";
 
 export const maxDuration = 120;
@@ -30,7 +30,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/resources/[
   const { id } = await ctx.params;
   const { user, db } = await getViewer();
   if (!user) return jsonError("Unauthorized", 401);
-  const rl = checkRateLimit(`${user.id}:resource-practice`, LIMITS.ai);
+  const rl = await checkAiRateLimit(`${user.id}:resource-practice`);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
   const parsed = schema.safeParse(await request.json().catch(() => null));

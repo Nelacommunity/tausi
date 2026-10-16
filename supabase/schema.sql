@@ -230,9 +230,16 @@ WITH CHECK (
   AND (storage.foldername(name))[1] = auth.uid()::text
 );
 
+-- Users read only their own folder. (This used to allow any signed-in user to
+-- read every file — other students' answer sheets included.) Public exams'
+-- source papers are served by the server after it checks the exam is public.
 drop policy if exists "authenticated users read files" on storage.objects;
-create policy "authenticated users read files" on storage.objects FOR SELECT TO authenticated
-USING (bucket_id = 'exam-papers');
+drop policy if exists "users read own files" on storage.objects;
+create policy "users read own files" on storage.objects FOR SELECT TO authenticated
+USING (
+  bucket_id = 'exam-papers'
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
 
 drop policy if exists "users update own files" on storage.objects;
 create policy "users update own files" on storage.objects FOR UPDATE TO authenticated
@@ -547,6 +554,45 @@ begin
     begin alter publication supabase_realtime add table notifications; exception when duplicate_object then null; end;
   end if;
 end $$;
+
+-- ── Performance indexes ─────────────────────────────────────
+create index if not exists live_sessions_class_idx on live_sessions(class_id, created_at desc);
+create index if not exists classes_teacher_idx on classes(teacher_id, created_at desc);
+create index if not exists answers_question_idx on answers(question_id);
+
+-- ── Shared rate limiting ────────────────────────────────────
+-- The app's in-memory limiter is per server instance; when the host runs
+-- several instances, this shared fixed-window counter caps the expensive
+-- (AI) endpoints across all of them. Called only with the service role.
+create table if not exists rate_limits (
+  key          text primary key,
+  window_start timestamptz not null,
+  hits         integer not null
+);
+alter table rate_limits enable row level security;
+
+create or replace function rate_limit_hit(p_key text, p_window_seconds integer, p_max integer)
+returns boolean as $$
+declare
+  v_now  timestamptz := now();
+  v_hits integer;
+begin
+  insert into rate_limits (key, window_start, hits) values (p_key, v_now, 1)
+  on conflict (key) do update set
+    hits = case when rate_limits.window_start < v_now - make_interval(secs => p_window_seconds)
+                then 1 else rate_limits.hits + 1 end,
+    window_start = case when rate_limits.window_start < v_now - make_interval(secs => p_window_seconds)
+                then v_now else rate_limits.window_start end
+  returning hits into v_hits;
+  -- Opportunistic cleanup so the table stays small.
+  if random() < 0.01 then
+    delete from rate_limits where window_start < v_now - interval '1 day';
+  end if;
+  return v_hits <= p_max;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+revoke execute on function rate_limit_hit(text, integer, integer) from public, anon, authenticated;
 
 -- Make the API pick up new tables immediately.
 notify pgrst, 'reload schema';

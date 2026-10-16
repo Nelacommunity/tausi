@@ -70,3 +70,29 @@ export function rateLimitError(resetAt: number): Response {
     }
   );
 }
+
+// ── Shared limit for expensive AI routes ─────────────────────────────────
+// The limiter above lives in one server process. When the host runs several
+// instances behind a load balancer, each keeps its own count, so the real
+// limit multiplies. AI routes therefore also check a shared counter in
+// Postgres (rate_limit_hit in schema.sql). It costs a few ms — negligible
+// next to an AI call — and fails open if the database function is missing
+// or unreachable, leaving the local limiter in force.
+
+import { createAdminClient } from "@/app/lib/supabase/admin";
+
+export async function checkAiRateLimit(key: string): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
+  const local = checkRateLimit(key, LIMITS.ai);
+  if (!local.allowed) return local;
+  try {
+    const { data, error } = await createAdminClient().rpc("rate_limit_hit", {
+      p_key: `ai:${key}`,
+      p_window_seconds: Math.round(LIMITS.ai.windowMs / 1000),
+      p_max: LIMITS.ai.max,
+    });
+    if (!error && data === false) return { allowed: false, remaining: 0, resetAt: Date.now() + LIMITS.ai.windowMs };
+  } catch {
+    // fail open — the local limit still applies
+  }
+  return local;
+}

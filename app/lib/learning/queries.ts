@@ -32,12 +32,16 @@ export function toStudentQuestion(row: Pick<QuestionRow, "id" | "type" | "prompt
 
 /** Public curricula plus the viewer's own private ones (their class materials). */
 export async function curriculumTree(db: SupabaseClient, viewerId: string): Promise<CurriculumNode[]> {
-  const { data: curricula } = await db
-    .from("curricula")
-    .select("id, slug, name, subject, description, curriculum_levels(id, code, name, ordinal, knowledge_points(id, code, name, description, category, is_core, ordinal))")
-    .or(`owner_id.is.null,owner_id.eq.${viewerId}`)
-    .order("name");
-  const { data: counts } = await db.from("question_kps").select("kp_id, questions!inner(status)").eq("questions.status", "approved");
+  const cols = "id, slug, name, subject, description, curriculum_levels(id, code, name, ordinal, knowledge_points(id, code, name, description, category, is_core, ordinal))";
+  // Independent queries — run together.
+  const [scoped, { data: counts }] = await Promise.all([
+    db.from("curricula").select(cols).or(`owner_id.is.null,owner_id.eq.${viewerId}`).order("name"),
+    db.from("question_kps").select("kp_id, questions!inner(status)").eq("questions.status", "approved"),
+  ]);
+  // Databases that predate curricula.owner_id (schema.sql not re-run yet): every curriculum is public.
+  const curricula = scoped.error
+    ? (await db.from("curricula").select(cols).order("name")).data
+    : scoped.data;
   const perKp = new Map<string, number>();
   for (const r of counts ?? []) perKp.set(r.kp_id as string, (perKp.get(r.kp_id as string) ?? 0) + 1);
 

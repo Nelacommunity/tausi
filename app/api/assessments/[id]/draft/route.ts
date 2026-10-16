@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getViewer, jsonError } from "@/app/lib/learning/server";
 import { assessmentDetail, ownedAssessment } from "@/app/lib/learning/queries";
 import { appendItems, draftForAssessment, insertQuestions, levelKps } from "@/app/lib/learning/builder";
-import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { checkAiRateLimit, rateLimitError } from "@/app/lib/rate-limit";
 import { MAX_PER_DRAFT, MAX_PER_TYPE } from "@/app/lib/learning/limits";
 import { viewableResource } from "@/app/lib/learning/resources";
 
@@ -26,7 +26,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/assessments
   const { id } = await ctx.params;
   const { user, db } = await getViewer();
   if (!user) return jsonError("Unauthorized", 401);
-  const rl = checkRateLimit(`${user.id}:ai-draft`, LIMITS.ai);
+  const rl = await checkAiRateLimit(`${user.id}:ai-draft`);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
   const a = await ownedAssessment(db, id, user.id);

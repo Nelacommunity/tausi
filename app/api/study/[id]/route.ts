@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GEMINI_MODEL } from "@/app/lib/ai";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 import { STUDY_SYSTEM_PROMPT } from "@/app/lib/prompts";
-import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { checkAiRateLimit, checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 type GeminiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
 type Ctx = { params: Promise<{ id: string }> };
@@ -10,7 +10,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function GET(_req: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const rl = checkRateLimit(`${user.id}:study-get`, LIMITS.standard);
@@ -32,10 +32,10 @@ export async function POST(request: Request, ctx: Ctx) {
   if (!apiKey) return jsonErr("GEMINI_API_KEY not configured", 500);
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return jsonErr("Unauthorized", 401);
 
-  const rl = checkRateLimit(`${user.id}:study-chat`, LIMITS.ai);
+  const rl = await checkAiRateLimit(`${user.id}:study-chat`);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
   const { message } = await request.json().catch(() => ({ message: "" }));
@@ -105,7 +105,7 @@ export async function POST(request: Request, ctx: Ctx) {
 export async function DELETE(_req: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data } = await supabase.from("study_sessions").select("document_paths").eq("id", id).eq("user_id", user.id).single();
