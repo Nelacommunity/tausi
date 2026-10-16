@@ -1,9 +1,9 @@
 /**
  * Seed curricula and (optionally) the demo dataset.
  *
- *   node --env-file=.env.local scripts/seed.ts            # curricula only (idempotent)
- *   node --env-file=.env.local scripts/seed.ts --demo     # + demo teacher, class, students, history
- *   node --env-file=.env.local scripts/seed.ts --reset-questions   # replace seed questions
+ *   npm run seed                           # curricula only (idempotent)
+ *   npm run seed -- --demo     # + demo teacher, class, students, history
+ *   npm run seed -- --reset-questions   # replace seed questions
  *
  * Needs NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.
  * Demo accounts use DEMO_PASSWORD (default below).

@@ -170,10 +170,11 @@ create table if not exists session_participants (
   joined_at    timestamptz not null default now(),
   submitted_at timestamptz
 );
+-- NULLs are distinct in unique indexes, so guests (no user_id) never collide.
 create unique index if not exists session_participants_user_uq
-  on session_participants(session_id, user_id) where user_id is not null;
+  on session_participants(session_id, user_id);
 create unique index if not exists session_participants_guest_uq
-  on session_participants(session_id, guest_token) where guest_token is not null;
+  on session_participants(session_id, guest_token);
 
 -- ── Answers (live + self-practice) — the source of truth for mastery ─
 create table if not exists answers (
@@ -189,8 +190,9 @@ create table if not exists answers (
   source         text not null default 'live' check (source in ('live', 'practice')),
   created_at     timestamptz not null default now()
 );
+-- Practice answers have no participant (NULL), so only live answers are unique.
 create unique index if not exists answers_participant_question_uq
-  on answers(participant_id, question_id) where participant_id is not null;
+  on answers(participant_id, question_id);
 create index if not exists answers_user_idx on answers(user_id, created_at desc);
 create index if not exists answers_session_idx on answers(session_id);
 
