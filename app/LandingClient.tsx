@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useT } from "./lib/language-context";
 import { useTheme } from "./lib/theme-context";
-import { CREDIT_COSTS } from "./lib/usage";
 
 /* ── Scroll reveal + progress bar ──────────────────────────────────────────
    Injected client-side only so SSR HTML never contains them. */
@@ -870,8 +869,8 @@ function FaqAccordion() {
   ] as [string, string][];
 
   return (
-    <div className="reveal max-w-2xl mx-auto mt-20">
-      <h3 className="font-display text-xl font-bold mb-8 text-snow">Common questions</h3>
+    <div className="reveal max-w-2xl mx-auto">
+      <h3 className="font-display text-xl font-bold mb-8 text-snow">{L.faqHeading}</h3>
       <div>
         {items.map(([q, a], i) => {
           const isOpen = open === i;
@@ -904,114 +903,6 @@ function FaqAccordion() {
           );
         })}
       </div>
-    </div>
-  );
-}
-
-/* ── Lissajous SVG decoration (per card) ──────────────────────────────── */
-function LissajousDecor({ a, b, delta, className }: { a: number; b: number; delta: number; className?: string }) {
-  const d = useMemo(() => {
-    const N = 360;
-    const pts: string[] = [];
-    for (let i = 0; i <= N; i++) {
-      const tt = (i / N) * Math.PI * 2;
-      const x = (40 + 36 * Math.sin(a * tt + delta)).toFixed(2);
-      const y = (20 + 16 * Math.sin(b * tt)).toFixed(2);
-      pts.push(`${i === 0 ? "M" : "L"}${x} ${y}`);
-    }
-    return pts.join(" ") + " Z";
-  }, [a, b, delta]);
-
-  return (
-    <svg viewBox="0 0 80 40" className={className} aria-hidden="true" preserveAspectRatio="xMidYMid meet">
-      <path d={d} fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"
-        className="pricing-lissajous" />
-    </svg>
-  );
-}
-
-/* ── Individual credit card ────────────────────────────────────────────── */
-function CreditCard({
-  title, credits, packCredits, price, badge, highlighted,
-  la, lb, ldelta, accentClass, borderClass, ctaClass,
-}: {
-  title: string; credits: string; packCredits: number; price: string; badge?: string; highlighted: boolean;
-  la: number; lb: number; ldelta: number;
-  accentClass: string; borderClass: string; ctaClass: string;
-}) {
-  const { T } = useT();
-  const L = T.landing;
-  const ref = useRef<HTMLDivElement>(null);
-  const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
-  const [hover, setHover] = useState(false);
-
-  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = ref.current;
-    if (!el) return;
-    const { left, top, width, height } = el.getBoundingClientRect();
-    const x = ((e.clientX - left) / width - 0.5) * 2;
-    const y = ((e.clientY - top) / height - 0.5) * 2;
-    setTilt({ rx: -y * 5, ry: x * 7 });
-    if (!hover) setHover(true);
-  };
-  const handleLeave = () => { setTilt({ rx: 0, ry: 0 }); setHover(false); };
-
-  const costs: [string, number][] = [
-    [L.costPredict, CREDIT_COSTS.exam_prediction],
-    [L.costMark,    CREDIT_COSTS.ai_marking],
-    [L.costTutor,   CREDIT_COSTS.study_chat],
-    [L.costPaper,   CREDIT_COSTS.paper_prediction],
-  ];
-
-  return (
-    <div
-      ref={ref}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      className={`reveal relative rounded-2xl ${borderClass} bg-ink-2/90 p-7 flex flex-col ${highlighted ? "md:-mt-5 md:pb-9 md:pt-9" : ""}`}
-      style={{
-        transform: hover
-          ? `perspective(900px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`
-          : "perspective(900px) rotateX(0deg) rotateY(0deg)",
-        transition: "transform 0.09s ease-out, box-shadow 0.2s ease",
-        boxShadow: hover && highlighted
-          ? "0 30px 80px -20px rgba(40,185,165,0.18)"
-          : undefined,
-      }}
-    >
-      {badge && (
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-          <span className={`text-[10px] font-bold px-4 py-1 rounded-full whitespace-nowrap tracking-widest ${highlighted ? "bg-teal text-ink" : "bg-gold text-on-gold"}`}>
-            {badge}
-          </span>
-        </div>
-      )}
-
-      <LissajousDecor a={la} b={lb} delta={ldelta}
-        className={`w-full h-8 mb-5 transition-opacity duration-300 ${accentClass} ${hover ? "opacity-60" : "opacity-25"}`} />
-
-      <p className={`font-mono text-[10px] tracking-[0.18em] uppercase mb-2 ${accentClass}`}>{title}</p>
-      <p className="font-display text-[2.8rem] font-bold leading-none text-snow mb-1">{credits}</p>
-      <p className={`text-2xl font-semibold mb-7 ${accentClass}`}>TZS {price}</p>
-
-      <div className="space-y-0 mb-7 flex-1">
-        {costs.map(([label, cost]) => (
-          <div key={label} className="flex items-center justify-between py-2.5 border-b border-line/30">
-            <span className="text-sm text-body">{label}</span>
-            <span className={`font-mono text-xs font-bold ${accentClass}`}>
-              {cost} {L.creditUnit} · ≈{Math.floor(packCredits / cost)} uses
-            </span>
-          </div>
-        ))}
-      </div>
-
-      <p className="text-[10px] text-dim text-center mb-3 leading-snug">{L.payPrompt}</p>
-      <button
-        type="button"
-        className={`w-full text-center rounded-xl font-semibold py-3 text-sm transition-colors ${ctaClass}`}
-      >
-        {L.buyBtn}
-      </button>
     </div>
   );
 }
@@ -1056,7 +947,7 @@ export function LandingClient() {
           <div className="hidden md:flex items-center text-sm text-body">
             <Link href="/discover" className="hover:text-snow px-3 py-2 rounded-full hover:bg-snow/10 transition-colors whitespace-nowrap">{T.nav.discover}</Link>
             <Link href="#features" className="hover:text-snow px-3 py-2 rounded-full hover:bg-snow/10 transition-colors whitespace-nowrap">{L.featuresTitle}</Link>
-            <Link href="#pricing" className="hover:text-snow px-3 py-2 rounded-full hover:bg-snow/10 transition-colors whitespace-nowrap">{L.pricingTitle}</Link>
+            <Link href="#faq" className="hover:text-snow px-3 py-2 rounded-full hover:bg-snow/10 transition-colors whitespace-nowrap">{L.faqTitle}</Link>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
             <button onClick={toggleTheme} aria-label="Toggle theme"
@@ -1330,58 +1221,9 @@ export function LandingClient() {
           </div>
         </section>
 
-        {/* ── Pricing ───────────────────────────────────────────── */}
-        <section id="pricing" className="relative py-28 px-4 border-t border-line/40 scroll-mt-24 overflow-hidden">
-
-          <div className="relative max-w-5xl mx-auto">
-            <div className="reveal text-center mb-16">
-              <h2 className="font-display text-3xl sm:text-[2.6rem] sm:leading-tight font-bold mb-4 text-snow">{L.pricingHeading}</h2>
-              <p className="text-body max-w-lg mx-auto text-sm leading-relaxed">{L.pricingSub}</p>
-            </div>
-
-            {/* Credit pack cards — Scholar elevated in center */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-center mb-12">
-              <CreditCard
-                title={L.starterTitle}
-                credits={L.starterCredits}
-                packCredits={20}
-                price="2,500"
-                highlighted={false}
-                la={1} lb={2} ldelta={Math.PI / 2}
-                accentClass="text-teal"
-                borderClass="border border-teal/20"
-                ctaClass="border border-teal/40 hover:border-teal text-body hover:text-snow"
-              />
-              <CreditCard
-                title={L.scholarTitle}
-                credits={L.scholarCredits}
-                packCredits={60}
-                price="6,000"
-                badge={L.scholarBadge}
-                highlighted={true}
-                la={3} lb={2} ldelta={Math.PI / 4}
-                accentClass="text-teal"
-                borderClass="border-2 border-teal/60"
-                ctaClass="bg-teal text-ink hover:bg-teal/90 font-bold"
-              />
-              <CreditCard
-                title={L.championTitle}
-                credits={L.championCredits}
-                packCredits={175}
-                price="15,000"
-                highlighted={false}
-                la={3} lb={5} ldelta={Math.PI / 3}
-                accentClass="text-gold"
-                borderClass="border border-gold/30"
-                ctaClass="border border-gold/40 hover:border-gold text-body hover:text-snow"
-              />
-            </div>
-
-            <p className="text-center text-xs text-dim mb-20">Accepted: {L.payMethods}</p>
-
-            {/* FAQ accordion */}
-            <FaqAccordion />
-          </div>
+        {/* ── FAQ ───────────────────────────────────────────────── */}
+        <section id="faq" className="relative py-28 px-4 border-t border-line/40 scroll-mt-24">
+          <FaqAccordion />
         </section>
 
         {/* ── Subjects ticker ───────────────────────────────────── */}
@@ -1435,7 +1277,6 @@ export function LandingClient() {
               </div>
               <div className="flex items-center gap-6 text-xs text-dim">
                 <Link href="/discover" className="hover:text-snow transition-colors">{T.nav.discover}</Link>
-                <Link href="/pricing" className="hover:text-snow transition-colors">{L.pricingTitle}</Link>
                 <Link href="/login" className="hover:text-snow transition-colors">{T.nav.signIn}</Link>
                 <Link href="/signup" className="hover:text-snow transition-colors">{T.nav.signUp}</Link>
               </div>

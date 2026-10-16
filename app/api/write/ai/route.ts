@@ -1,7 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GEMINI_MODEL } from "@/app/lib/ai";
 import { createClient } from "@/app/lib/supabase/server";
-import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 const SYSTEM = `You are an expert writing assistant integrated into Tausi, an AI-powered document editor.
@@ -17,9 +16,6 @@ export async function POST(request: Request) {
 
   const rl = checkRateLimit(`${user.id}:write-ai`, LIMITS.ai);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
-
-  const credit = await checkAndDeductCredits(supabase, user.id, "ai_writer");
-  if (!credit.allowed) return insufficientCreditsError("ai_writer", credit.balance, CREDIT_COSTS.ai_writer);
 
   const { mode, prompt, document: docContent = "", selection = "" } =
     await request.json().catch(() => ({}));

@@ -116,7 +116,7 @@ function ThemeToggle({ compact = false }: { compact?: boolean }) {
 }
 
 export function Header() {
-  const { user, credits } = useSession();
+  const { user } = useSession();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileSheet, setMobileSheet] = useState(false);
   const pathname = usePathname();
@@ -245,36 +245,6 @@ export function Header() {
           })}
         </nav>
 
-        {/* ── Credits ───────────────────────────────────────── */}
-        {user && (
-          <div className={`px-2 py-3 border-t border-line shrink-0 ${collapsed ? "flex justify-center" : ""}`}>
-            {collapsed ? (
-              <Link href="/pricing" title={T.nav.buyCredits}
-                className="flex items-center justify-center w-10 h-10 rounded-xl border border-teal/30 bg-teal-deep/20 hover:bg-teal-deep/40 transition-colors">
-                <svg className="w-4 h-4 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                </svg>
-              </Link>
-            ) : (
-              <Link href="/pricing"
-                className="grad-credit flex items-center justify-between w-full rounded-xl border border-teal/25 px-3 py-2.5 transition-all group hover:border-teal/40">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-teal/15 border border-teal/20 flex items-center justify-center">
-                    <svg className="w-3.5 h-3.5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-snow leading-none">{credits !== null ? credits : "—"}</p>
-                    <p className="text-[10px] text-dim leading-none mt-0.5">{T.nav.creditsLeft}</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold text-teal/70 group-hover:text-teal border border-teal/30 rounded-md px-1.5 py-0.5 transition-colors">+ {T.nav.buy}</span>
-              </Link>
-            )}
-          </div>
-        )}
-
         {/* ── User section ──────────────────────────────────── */}
         <div className={`border-t border-line shrink-0 ${collapsed ? "py-3 flex flex-col items-center gap-2 px-2" : "p-3 space-y-1"}`}>
           {user ? (
@@ -313,14 +283,8 @@ export function Header() {
                 <div className="flex items-center gap-1.5 px-1">
                   <LangPill />
                   <ThemeToggle />
-                  <Link href="/purchases" title={T.nav.purchaseHistory}
-                    className="ml-auto p-1.5 rounded-lg text-dim hover:text-snow hover:bg-white/5 transition-colors cursor-pointer">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-                    </svg>
-                  </Link>
                   <button onClick={signOut} title={T.nav.signOut}
-                    className="p-1.5 rounded-lg text-dim hover:text-bad hover:bg-bad/10 transition-colors cursor-pointer">
+                    className="ml-auto p-1.5 rounded-lg text-dim hover:text-bad hover:bg-bad/10 transition-colors cursor-pointer">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
                     </svg>
@@ -368,9 +332,6 @@ export function Header() {
           {user ? (
             <button onClick={() => setMobileSheet(true)}
               className="flex items-center gap-2 rounded-xl border border-line bg-ink-2/80 px-2.5 py-1.5 cursor-pointer hover:border-line-2 transition-colors">
-              {credits !== null && (
-                <span className="text-xs font-bold text-teal">{credits}</span>
-              )}
               <div className="w-6 h-6 rounded-lg bg-teal/15 border border-teal/25 flex items-center justify-center text-[11px] font-bold text-teal select-none">
                 {initials}
               </div>
@@ -436,21 +397,11 @@ export function Header() {
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-snow truncate">{user?.email}</p>
-              {credits !== null && (
-                <p className="text-xs text-teal mt-0.5">{credits} credits remaining</p>
-              )}
             </div>
           </div>
 
           {/* Actions */}
           <div className="p-3 space-y-1">
-            <Link href="/pricing" onClick={() => setMobileSheet(false)}
-              className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl bg-teal/10 border border-teal/20 text-teal font-semibold text-sm hover:bg-teal/15 transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-              </svg>
-              {T.nav.buyCredits}
-            </Link>
             <Link href="/discover" onClick={() => setMobileSheet(false)}
               className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-dim hover:text-snow hover:bg-white/5 transition-colors text-sm">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -464,13 +415,6 @@ export function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
               </svg>
               {T.nav.profile}
-            </Link>
-            <Link href="/purchases" onClick={() => setMobileSheet(false)}
-              className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-dim hover:text-snow hover:bg-white/5 transition-colors text-sm">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-              </svg>
-              {T.nav.purchaseHistory}
             </Link>
             <button onClick={signOut}
               className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-bad hover:bg-bad/10 transition-colors text-sm cursor-pointer">

@@ -344,7 +344,6 @@ html.tausi-js .reveal.is-in .step-bar {
   [style*="float-bob"]     { animation: none !important; transform: none !important; }
   .step-animate { opacity: 1 !important; animation: none !important; }
   .step-bar     { transform: scaleX(1) !important; animation: none !important; }
-  .pricing-lissajous { stroke-dasharray: none !important; stroke-dashoffset: 0 !important; animation: none !important; opacity: 0.35 !important; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
@@ -355,18 +354,6 @@ html.tausi-js .reveal.is-in .step-bar {
 @keyframes hiw-progress {
   from { width: 0%; }
   to   { width: 100%; }
-}
-
-/* ── Pricing: Lissajous path draw animation ───────────────────────────── */
-.pricing-lissajous {
-  stroke-dasharray: 1200;
-  stroke-dashoffset: 1200;
-}
-html.tausi-js .reveal.is-in .pricing-lissajous {
-  animation: draw-lissajous 2s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.2s;
-}
-@keyframes draw-lissajous {
-  to { stroke-dashoffset: 0; }
 }
 
 /* ── Collapsible sidebar layout shell ───────────────────────── */
@@ -638,8 +625,6 @@ html.light .grad-side-gold { background: linear-gradient(160deg, oklch(0.95 0.06
 .grad-pricing-hero { background: linear-gradient(135deg, oklch(0.32 0.10 72 / 0.5) 0%, var(--tausi-ink-2) 56%, oklch(0.30 0.10 192 / 0.4) 100%); }
 html.light .grad-pricing-hero { background: linear-gradient(135deg, oklch(0.95 0.06 80) 0%, oklch(1 0 0) 60%, oklch(0.93 0.05 192) 100%); }
 
-/* Sidebar surface + credits chip */
+/* Sidebar surface */
 .grad-sidebar { background: linear-gradient(180deg, oklch(0.17 0.012 240) 0%, oklch(0.14 0.008 240) 38%); }
 html.light .grad-sidebar { background: linear-gradient(180deg, oklch(0.995 0.002 240) 0%, oklch(0.965 0.004 240) 40%); }
-.grad-credit { background: linear-gradient(120deg, oklch(0.25 0.10 192 / 0.35) 0%, oklch(0.19 0.010 238 / 0.40) 100%); }
-html.light .grad-credit { background: linear-gradient(120deg, oklch(0.90 0.06 192) 0%, oklch(1 0 0) 100%); }

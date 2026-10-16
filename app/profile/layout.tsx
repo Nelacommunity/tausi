@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Profile",
-  description: "Manage your Tausi account, credit balance and usage stats.",
+  description: "Manage your Tausi account and usage stats.",
   robots: { index: false, follow: false },
 };
 

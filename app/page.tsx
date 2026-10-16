@@ -88,14 +88,7 @@ const softwareSchema = {
       "@type": "Offer",
       price: "0",
       priceCurrency: "TZS",
-      name: "Free plan",
-    },
-    {
-      "@type": "Offer",
-      price: "5000",
-      priceCurrency: "TZS",
-      billingPeriod: "P1M",
-      name: "Premium plan",
+      name: "Free",
     },
   ],
   description:
@@ -136,7 +129,7 @@ const faqSchema = {
       name: "Is Tausi free to use?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Tausi has a free tier that includes AI exam predictions, marking scheme generation, AI answer-sheet marking, Study Room, and Exam Library. Premium plans (TZS 5,000/month) offer 25× higher usage limits.",
+        text: "Yes. Tausi is completely free — AI exam predictions, marking scheme generation, AI answer-sheet marking, Study Room, and Exam Library are all included at no cost.",
       },
     },
     {

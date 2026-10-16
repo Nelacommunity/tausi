@@ -2,7 +2,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GEMINI_MODEL } from "@/app/lib/ai";
 import { MARKING_SYSTEM_PROMPT } from "@/app/lib/prompts";
 import { createClient } from "@/app/lib/supabase/server";
-import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 export async function POST(request: Request) {
@@ -12,9 +11,6 @@ export async function POST(request: Request) {
 
   const rl = checkRateLimit(`${user.id}:generate-marking`, LIMITS.ai);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
-
-  const credit = await checkAndDeductCredits(supabase, user.id, "marking_scheme");
-  if (!credit.allowed) return insufficientCreditsError("marking_scheme", credit.balance, CREDIT_COSTS.marking_scheme);
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return jsonErr("GEMINI_API_KEY is not configured", 500);

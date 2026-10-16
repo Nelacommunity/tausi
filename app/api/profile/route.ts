@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const rl = checkRateLimit(`${user.id}:profile-get`, LIMITS.standard);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
 
-  // Upsert to ensure profile exists (new users get 5 credits via DB trigger)
+  // Upsert to ensure profile exists
   await supabase.from("profiles").upsert({ id: user.id, email: user.email }, { onConflict: "id", ignoreDuplicates: true });
 
   const [
@@ -28,7 +28,6 @@ export async function GET(request: Request) {
   return Response.json({
     profile,
     stats: { exams: examCount ?? 0, markings: markingCount ?? 0, studies: studyCount ?? 0 },
-    credits: (profile?.credits as number) ?? 0,
   });
 }
 

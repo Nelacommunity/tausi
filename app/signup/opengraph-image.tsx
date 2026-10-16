@@ -10,6 +10,6 @@ export default function Image() {
     accent: "teal",
     eyebrow: "Get started free",
     title: "Create your free Tausi account",
-    subtitle: "5 free credits on signup. Predict exams, mark answers, and study with AI.",
+    subtitle: "Free forever. Predict exams, mark answers, and study with AI.",
   });
 }

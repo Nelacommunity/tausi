@@ -82,7 +82,7 @@ export default function SignupClient() {
             Join thousands of East African students acing their exams
           </p>
           <p className="text-sm text-dim leading-relaxed">
-            Sign up free and get your first credits to try AI exam prediction, marking, and study chat.
+            Sign up free to use AI exam prediction, marking, and study chat.
           </p>
         </div>
 

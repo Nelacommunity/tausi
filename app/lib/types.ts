@@ -2,8 +2,6 @@ export interface Profile {
   id: string;
   email: string | null;
   full_name: string | null;
-  // Credits-based system — primary access control
-  credits: number;
   // Legacy subscription fields — kept for backward compat, not used for access control
   tier?: "free" | "premium";
   subscription_status?: string;
@@ -69,17 +67,6 @@ export interface StudyMessage {
   content: string;
   created_at: string;
 }
-
-// Tier limits
-export const FREE_LIMITS = {
-  predictions: 5,
-  marking_schemes: 5,
-  ai_markings: 10,
-  study_sessions: 5,
-} as const;
-
-export const PREMIUM_PRICE_MONTHLY_TZS = 5_000;
-export const PREMIUM_PRICE_ANNUAL_TZS = 50_000;
 
 export interface ExamPaper {
   id: string;

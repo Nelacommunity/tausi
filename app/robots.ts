@@ -9,7 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: [
           "/",
           "/discover",
-          "/pricing",
           "/signup",
           "/exams/",   // public exam pages indexed individually
         ],
@@ -32,7 +31,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         // AI crawlers — same rules but explicitly stated so they follow them
         userAgent: ["GPTBot", "ChatGPT-User", "CCBot", "anthropic-ai", "Claude-Web", "Bytespider"],
-        allow: ["/", "/discover", "/pricing", "/exams/"],
+        allow: ["/", "/discover", "/exams/"],
         disallow: ["/api/", "/dashboard", "/profile", "/mark", "/study", "/write"],
       },
     ],

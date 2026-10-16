@@ -2,7 +2,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GEMINI_MODEL } from "@/app/lib/ai";
 import { createClient } from "@/app/lib/supabase/server";
 import { STUDY_SYSTEM_PROMPT } from "@/app/lib/prompts";
-import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 type GeminiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
@@ -38,9 +37,6 @@ export async function POST(request: Request, ctx: Ctx) {
 
   const rl = checkRateLimit(`${user.id}:study-chat`, LIMITS.ai);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
-
-  const credit = await checkAndDeductCredits(supabase, user.id, "study_chat");
-  if (!credit.allowed) return insufficientCreditsError("study_chat", credit.balance, CREDIT_COSTS.study_chat);
 
   const { message } = await request.json().catch(() => ({ message: "" }));
   if (!message?.trim()) return jsonErr("Message required", 400);

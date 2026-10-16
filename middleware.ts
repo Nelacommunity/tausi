@@ -5,7 +5,6 @@ import { NextResponse, type NextRequest } from "next/server";
 const PUBLIC_API_PATTERNS = [
   /^\/api\/exams\/[0-9a-f-]+$/,        // public exam data (GET)
   /^\/api\/webhook\/polar$/,            // Polar webhook (POST, validated by secret)
-  /^\/api\/webhooks\/snippe$/,          // Snippe webhook (POST, validated by signature)
 ];
 
 const SECURITY_HEADERS: Record<string, string> = {

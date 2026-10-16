@@ -2,7 +2,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GEMINI_MODEL } from "@/app/lib/ai";
 import { EXAM_SYSTEM_PROMPT } from "@/app/lib/prompts";
 import { createClient } from "@/app/lib/supabase/server";
-import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 function mimeFromPath(path: string): string {
@@ -17,9 +16,6 @@ export async function POST(request: Request) {
 
   const rl = checkRateLimit(`${user.id}:generate-exam`, LIMITS.ai);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
-
-  const credit = await checkAndDeductCredits(supabase, user.id, "exam_prediction");
-  if (!credit.allowed) return insufficientCreditsError("exam_prediction", credit.balance, CREDIT_COSTS.exam_prediction);
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return jsonErr("GEMINI_API_KEY is not configured", 500);

@@ -2,7 +2,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GEMINI_MODEL } from "@/app/lib/ai";
 import { createClient } from "@/app/lib/supabase/server";
 import { AI_MARKER_SYSTEM_PROMPT } from "@/app/lib/prompts";
-import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 export async function GET(request: Request) {
@@ -34,9 +33,6 @@ export async function POST(request: Request) {
 
   const rl2 = checkRateLimit(`${user.id}:mark-create`, LIMITS.ai);
   if (!rl2.allowed) return rateLimitError(rl2.resetAt);
-
-  const credit = await checkAndDeductCredits(supabase, user.id, "ai_marking");
-  if (!credit.allowed) return insufficientCreditsError("ai_marking", credit.balance, CREDIT_COSTS.ai_marking);
 
   const formData = await request.formData().catch(() => null);
   if (!formData) return jsonErr("Invalid form data", 400);

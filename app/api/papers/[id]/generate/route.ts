@@ -2,7 +2,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GEMINI_MODEL } from "@/app/lib/ai";
 import { createClient } from "@/app/lib/supabase/server";
 import { EXAM_SYSTEM_PROMPT } from "@/app/lib/prompts";
-import { checkAndDeductCredits, insufficientCreditsError, CREDIT_COSTS } from "@/app/lib/usage";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 function mimeFromPath(path: string): string {
@@ -21,9 +20,6 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   const rl = checkRateLimit(`${user.id}:paper-generate`, LIMITS.ai);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
-
-  const credit = await checkAndDeductCredits(supabase, user.id, "paper_prediction");
-  if (!credit.allowed) return insufficientCreditsError("paper_prediction", credit.balance, CREDIT_COSTS.paper_prediction);
 
   const { data: paper } = await supabase.from("exam_papers").select("*").eq("id", id).eq("user_id", user.id).single();
   if (!paper) return jsonErr("Paper not found", 404);

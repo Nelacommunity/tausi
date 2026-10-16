@@ -21,7 +21,7 @@ function formatDate(iso: string) {
 export default function Dashboard() {
   const { T } = useT();
   const D = T.dashboard;
-  const { user, credits } = useSession();
+  const { user } = useSession();
 
   const [recentExams, setRecentExams] = useState<RecentExam[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(true);
@@ -41,10 +41,6 @@ export default function Dashboard() {
 
   const displayName = user?.email?.split("@")[0] ?? "";
   const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : "?";
-  // Credits ring: treat 100 as max (clamp between 0–100)
-  const ringMax = 100;
-  const ringVal = Math.max(0, Math.min(credits ?? 0, ringMax));
-  const circumference = 2 * Math.PI * 38;
 
   return (
     <div className="min-h-screen bg-ink text-snow page-shell">
@@ -58,33 +54,15 @@ export default function Dashboard() {
 
           {/* ── Stats card ─────────────────────────────────────────── */}
           <div className="rounded-2xl border border-line bg-ink-2 p-6 flex flex-col gap-5">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-bold text-dim uppercase tracking-widest">{D.overview}</p>
-              <Link href="/pricing"
-                className="text-[11px] font-semibold text-teal border border-teal/30 bg-teal/5 hover:bg-teal/10 px-2 py-1 rounded-lg transition-colors cursor-pointer">
-                {D.buyCredits}
-              </Link>
-            </div>
+            <p className="text-xs font-bold text-dim uppercase tracking-widest">{D.overview}</p>
 
-            {/* Avatar with credits ring */}
+            {/* Avatar */}
             <div className="flex flex-col items-center gap-3 py-1">
               <div className="relative w-22 h-22">
-                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 88 88">
-                  <circle cx="44" cy="44" r="38" fill="none" stroke="var(--tausi-line)" strokeWidth="4" />
-                  <circle cx="44" cy="44" r="38" fill="none"
-                    stroke="var(--tausi-teal)" strokeWidth="4" strokeLinecap="round"
-                    strokeDasharray={`${circumference * (ringVal / ringMax)} ${circumference}`} />
-                </svg>
                 <div className="absolute inset-1.75 rounded-full bg-teal/10 border border-teal/20 flex items-center justify-center text-base font-bold text-teal select-none">
                   {initials}
                 </div>
               </div>
-
-              {credits !== null && (
-                <span className="text-[11px] font-semibold bg-teal/10 text-teal border border-teal/20 rounded-full px-3 py-1">
-                  {D.creditsLeftN(credits)}
-                </span>
-              )}
 
               <div className="text-center">
                 <p className="font-display text-xl font-bold text-snow leading-snug">
@@ -94,22 +72,8 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Credits progress bar */}
-            {credits !== null && (
-              <div className="space-y-1.5 px-1">
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-dim">{D.monthlyActivity}</span>
-                  <span className="font-semibold text-body">{ringVal}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-ink-3 overflow-hidden">
-                  <div className="h-full rounded-full bg-teal transition-all duration-700"
-                    style={{ width: `${ringVal}%` }} />
-                </div>
-              </div>
-            )}
-
-            {/* 3 stat tiles */}
-            <div className="grid grid-cols-3 gap-2 mt-auto">
+            {/* Stat tiles */}
+            <div className="grid grid-cols-2 gap-2 mt-auto">
               {([
                 {
                   value: loadingRecent ? "—" : String(recentExams.length),
@@ -122,12 +86,6 @@ export default function Dashboard() {
                   label: D.statPapers,
                   path: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z",
                   accent: "text-brand-magenta bg-brand-magenta/10 border-brand-magenta/20",
-                },
-                {
-                  value: credits !== null ? String(credits) : "—",
-                  label: D.statCredits,
-                  path: "M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z",
-                  accent: "text-gold bg-gold/10 border-gold/20",
                 },
               ] as const).map(({ value, label, path, accent }) => (
                 <div key={label} className={`rounded-xl border p-3 flex flex-col items-center gap-1.5 ${accent}`}>
