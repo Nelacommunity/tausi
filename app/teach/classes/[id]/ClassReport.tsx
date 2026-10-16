@@ -7,6 +7,7 @@ import { useT } from "@/app/lib/language-context";
 import { api } from "@/app/components/learn/api";
 import { QrCode } from "@/app/components/learn/QrCode";
 import { Badge, Card, DistributionBars, ErrorNote, formatDate, pct, SectionTitle, Spinner } from "@/app/components/learn/ui";
+import { shareOrigin } from "@/app/lib/site";
 
 interface ClassData {
   id: string; name: string; code: string; isPublic: boolean;
@@ -19,7 +20,7 @@ interface ClassData {
 
 /** Join link for a class QR code. Only called once data has loaded, i.e. on the client. */
 function classJoinUrl(code: string) {
-  return `${window.location.origin}/classes/join/${code}`;
+  return `${shareOrigin()}/classes/join/${code}`;
 }
 
 export function ClassReport({ id }: { id: string }) {

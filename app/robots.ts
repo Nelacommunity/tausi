@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL, siteUrl } from "@/app/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -33,7 +34,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/dashboard", "/profile", "/mark", "/study"],
       },
     ],
-    sitemap: "https://tausi.app/sitemap.xml",
-    host: "https://tausi.app",
+    sitemap: siteUrl("/sitemap.xml"),
+    host: SITE_URL,
   };
 }

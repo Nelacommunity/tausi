@@ -10,6 +10,8 @@ function mimeFromPath(path: string): string {
 }
 
 export async function POST(request: Request) {
+  const origin = new URL(request.url).origin;
+  const cookie = request.headers.get("cookie") ?? "";
   const supabase = await createClient();
   const user = await getAuthUser(supabase);
   if (!user) return jsonErr("You must be signed in.", 401);
@@ -105,7 +107,8 @@ export async function POST(request: Request) {
         // If some papers lacked structure, trigger background analysis for next time
         const papersWithoutStructure = papers.filter(p => !p.exam_structure);
         for (const p of papersWithoutStructure) {
-          fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/papers/${p.id}/analyze`, { method: "POST" }).catch(() => {});
+          // Same instance that served this request, with the caller's session (the route requires sign-in).
+          fetch(`${origin}/api/papers/${p.id}/analyze`, { method: "POST", headers: { cookie } }).catch(() => {});
         }
 
         controller.close();

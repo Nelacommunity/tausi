@@ -5,8 +5,9 @@ import { createAdminClient } from "@/app/lib/supabase/admin";
 import { withSharedKeywords } from "@/app/lib/seo";
 import type { Exam, ChatMessage } from "@/app/lib/types";
 import { ExamViewer } from "./ExamViewer";
+import { SITE_URL } from "@/app/lib/site";
 
-const APP_URL = "https://tausi.app";
+const APP_URL = SITE_URL;
 
 /* ── Dynamic metadata for public exam pages ──────────────────────────── */
 export async function generateMetadata({

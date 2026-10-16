@@ -8,6 +8,7 @@ import { api } from "@/app/components/learn/api";
 import { QrCode } from "@/app/components/learn/QrCode";
 import { useLiveUpdates } from "@/app/components/learn/useLiveUpdates";
 import { Badge, Button, Card, ErrorNote, SectionTitle, Spinner } from "@/app/components/learn/ui";
+import { shareOrigin } from "@/app/lib/site";
 
 interface HostState {
   session: SessionInfo;
@@ -97,7 +98,7 @@ export function HostScreen({ code }: { code: string }) {
   }
 
   // Only reached on the client (state loads after mount), so window is available.
-  const origin = window.location.origin;
+  const origin = shareOrigin();
   const playUrl = `${origin}/play/${s.code}`;
   const q = state.questions[s.currentIndex];
   const count = state.participants.length;

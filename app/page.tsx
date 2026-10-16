@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LandingClient } from "./LandingClient";
 import { withSharedKeywords } from "./lib/seo";
+import { SITE_URL, siteUrl } from "@/app/lib/site";
 
 const POSITIONING =
   "Tausi turns any curriculum into diagnosis and practice — helping students find their weak areas and helping teachers build curriculum-aligned practice exams.";
@@ -14,9 +15,9 @@ export const metadata: Metadata = {
     "curriculum-aligned questions", "HSK practice", "HSK 1", "HSK 2", "NECTA practice",
     "live classroom quiz", "teacher exam builder", "AI tutor", "tausi.app",
   ),
-  alternates: { canonical: "https://tausi.app" },
+  alternates: { canonical: SITE_URL },
   openGraph: {
-    url: "https://tausi.app",
+    url: SITE_URL,
     title: "Tausi — Find weak areas, practise what matters",
     description: POSITIONING,
   },
@@ -26,8 +27,8 @@ export const metadata: Metadata = {
 const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  "@id": "https://tausi.app/#website",
-  url: "https://tausi.app",
+  "@id": `${SITE_URL}/#website`,
+  url: SITE_URL,
   name: "Tausi",
   description: POSITIONING,
   inLanguage: ["en", "sw", "zh"],
@@ -36,12 +37,12 @@ const websiteSchema = {
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "@id": "https://tausi.app/#organization",
+  "@id": `${SITE_URL}/#organization`,
   name: "Tausi",
-  url: "https://tausi.app",
+  url: SITE_URL,
   logo: {
     "@type": "ImageObject",
-    url: "https://tausi.app/logo/android-chrome-512x512.png",
+    url: siteUrl("/logo/android-chrome-512x512.png"),
     width: 512,
     height: 512,
   },
@@ -56,7 +57,7 @@ const softwareSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: "Tausi",
-  url: "https://tausi.app",
+  url: SITE_URL,
   applicationCategory: "EducationalApplication",
   operatingSystem: "Web",
   offers: [{ "@type": "Offer", price: "0", priceCurrency: "USD", name: "Free" }],

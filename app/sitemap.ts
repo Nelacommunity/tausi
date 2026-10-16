@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { SITE_URL } from "@/app/lib/site";
 
-const APP_URL = "https://tausi.app";
+const APP_URL = SITE_URL;
 
 async function getPublicExams() {
   try {

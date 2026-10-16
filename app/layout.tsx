@@ -7,6 +7,7 @@ import { LanguageProvider } from "./lib/language-context";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "./lib/theme-context";
 import { SessionProvider } from "./lib/session-context";
 import { TAUSI_KEYWORDS } from "./lib/seo";
+import { SITE_URL } from "@/app/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,7 +25,7 @@ const display = Bricolage_Grotesque({
   weight: ["500", "600", "700", "800"],
 });
 
-const APP_URL = "https://tausi.app";
+const APP_URL = SITE_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
@@ -75,7 +76,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     alternateLocale: "sw_TZ",
-    url: APP_URL,
+    // No site-wide og:url — it would make every page claim to be the homepage
+    // when shared. Pages set their own; the canonical link covers the rest.
     siteName: "Tausi",
     title: "Tausi — Find weak areas, practise what matters",
     description:

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { withSharedKeywords } from "@/app/lib/seo";
 import { AboutClient } from "./AboutClient";
+import { siteUrl } from "@/app/lib/site";
 
 export const metadata: Metadata = {
   title: "About Tausi",
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
     "who made Tausi", "Tausi company",
   ),
   robots: { index: true, follow: true },
-  alternates: { canonical: "https://tausi.app/about" },
+  alternates: { canonical: siteUrl("/about") },
 };
 
 export default function AboutPage() {
