@@ -7,5 +7,5 @@ export async function GET() {
   if (!user) return jsonError("Unauthorized", 401);
   const rl = checkRateLimit(`${user.id}:curricula`, LIMITS.standard);
   if (!rl.allowed) return rateLimitError(rl.resetAt);
-  return Response.json(await curriculumTree(db));
+  return Response.json(await curriculumTree(db, user.id));
 }

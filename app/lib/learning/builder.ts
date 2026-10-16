@@ -22,6 +22,7 @@ export async function draftForAssessment(
   kps: LevelKp[],
   counts: Partial<Record<QuestionType, number>>,
   note?: string,
+  source?: { title: string; text: string },
 ): Promise<DraftedQuestion[]> {
   const { data: ex } = await db
     .from("question_kps")
@@ -41,6 +42,7 @@ export async function draftForAssessment(
     counts, examples,
     avoid: existing.map((q) => q.prompt),
     teacherNote: note,
+    source,
   });
 }
 

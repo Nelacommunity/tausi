@@ -55,6 +55,20 @@ HSK vocabulary questions are generated from templates over the public word lists
 
 Question types are auto-gradable: multiple choice, true/false, fill-in-the-blank (normalised exact match).
 
+## Teaching resources
+
+Teachers upload notes, slides and documents (PDF, Word .docx, PowerPoint .pptx, text/Markdown; up to 25 MB), optionally shared with a class.
+
+1. The browser uploads the file straight to a private Supabase Storage bucket using a signed upload URL, so hosting request-size limits do not apply.
+2. The server extracts plain text (`app/lib/learning/extract.ts`): `unpdf` for PDFs, `mammoth` for Word, slide and speaker-note text from the PowerPoint XML via `jszip`. Scanned PDFs with no text layer are transcribed by Gemini.
+3. Gemini summarises the material and splits it into 3–8 topics.
+4. The resource becomes a level in the teacher's private "Class materials" curriculum, with its topics as knowledge points.
+
+Because each resource is an ordinary curriculum level, everything downstream works unchanged:
+
+- **Students** in the class can read the extracted text in the app or download the original. They can **create a practice exam** from it (choosing how many questions of each type): questions are drafted from the resource text only and tagged with its topics. Answers update per-topic mastery, and the resource appears in their readiness view like any curriculum level. These questions are stored with provenance `ai_practice` (AI-generated for self-practice, not teacher-reviewed) and are never offered in the teacher's question bank.
+- **Teachers** can draft exam questions **from notes** in the builder: pick an uploaded resource (or upload one there) and the AI drafts questions grounded in it, tagged with the exam's knowledge points, for the usual approve/edit/reject review.
+
 ## Mastery and readiness (`app/lib/mastery.ts`)
 
 **Mastery** of one KP for one student:
@@ -104,6 +118,7 @@ All AI calls run on the server (`app/lib/learning/ai.ts`) with a JSON response s
    - `ai_draft` — written by AI, approved as-is
    - `ai_edited` — written by AI, edited by the teacher
    - `teacher` — written by the teacher (including edited copies of bank questions)
+   - `ai_practice` — written by AI from a teacher's resource for a student's self-practice (not reviewed; never added to class exams)
 
    The builder shows the counts per exam ("Sources: …") for AI-usage disclosure.
 3. **Explanations.** After a student finishes, explanations are generated in the student's chosen language (English, Kiswahili or Chinese), with a cultural note only where it helps understanding. They are generated once per (question, language), cached in `question_explanations`, and served from the cache to everyone afterwards. Explanations are only returned for questions the requester has already answered.
@@ -128,6 +143,9 @@ UI strings live in `app/lib/translations.ts` (English, Kiswahili), `app/lib/i18n
 | @google/generative-ai | 0.24.1 | Apache-2.0 | Gemini API client |
 | zod | 4.4.3 | MIT | Validation of requests and AI output |
 | qrcode | 1.5.4 | MIT | QR codes for joining sessions |
+| unpdf | 1.9.0 | MIT | Text extraction from PDF resources |
+| mammoth | 1.13.0 | BSD-2-Clause | Text extraction from Word resources |
+| jszip | 3.10.2 | MIT (dual MIT / GPL-3.0; used under MIT) | Reading PowerPoint resources |
 | tailwindcss, @tailwindcss/typography | 4, 0.5.19 | MIT | Styling |
 | react-markdown, remark-gfm, remark-math, rehype-katex | 10.1.0, 4.0.1, 6.0.0, 7.0.1 | MIT | Rendering practice papers |
 | katex | 0.17.0 | MIT | Maths rendering |

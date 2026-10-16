@@ -30,10 +30,12 @@ export function toStudentQuestion(row: Pick<QuestionRow, "id" | "type" | "prompt
   return { id: row.id, type: row.type, prompt: row.prompt, options: row.options ?? [] };
 }
 
-export async function curriculumTree(db: SupabaseClient): Promise<CurriculumNode[]> {
+/** Public curricula plus the viewer's own private ones (their class materials). */
+export async function curriculumTree(db: SupabaseClient, viewerId: string): Promise<CurriculumNode[]> {
   const { data: curricula } = await db
     .from("curricula")
     .select("id, slug, name, subject, description, curriculum_levels(id, code, name, ordinal, knowledge_points(id, code, name, description, category, is_core, ordinal))")
+    .or(`owner_id.is.null,owner_id.eq.${viewerId}`)
     .order("name");
   const { data: counts } = await db.from("question_kps").select("kp_id, questions!inner(status)").eq("questions.status", "approved");
   const perKp = new Map<string, number>();

@@ -33,7 +33,12 @@ export interface DraftRequest {
   /** Prompts already in the exam — drafts must not repeat them. */
   avoid: string[];
   teacherNote?: string;
+  /** Teaching material (notes, slides) the questions must be based on. */
+  source?: { title: string; text: string };
 }
+
+/** Source text sent per AI call; Gemini's context is far larger, this keeps calls fast. */
+const SOURCE_CHARS = 120_000;
 
 export interface DraftedQuestion {
   type: QuestionType;
@@ -144,6 +149,8 @@ export async function draftQuestions(req: DraftRequest): Promise<DraftedQuestion
   });
 }
 
+const SOURCE_RULES = `Base EVERY question on the SOURCE MATERIAL below: each one must be answerable from it alone, using its facts, terms and examples — never outside knowledge. Write the questions in the language the material is written in. Tag each with the closest knowledge point. Ignore page/slide markers.`;
+
 async function draftBatch(req: DraftRequest): Promise<DraftedQuestion[]> {
   const wanted = Object.entries(req.counts).filter(([, n]) => (n ?? 0) > 0).map(([t, n]) => `${n} × ${t}`).join(", ");
   const prompt = [
@@ -155,6 +162,7 @@ async function draftBatch(req: DraftRequest): Promise<DraftedQuestion[]> {
     req.examples.length ? `Style examples from the approved bank:\n${JSON.stringify(req.examples)}` : "",
     req.avoid.length ? `Avoid repeating these prompts:\n${JSON.stringify(req.avoid.slice(0, 60))}` : "",
     req.teacherNote ? `Teacher's note: ${req.teacherNote}` : "",
+    req.source ? SOURCE_RULES + `\n\nSOURCE MATERIAL — "${req.source.title}":\n<<<\n${req.source.text.slice(0, SOURCE_CHARS)}\n>>>` : "",
   ].filter(Boolean).join("\n");
 
   const result = await model(QUESTION_SYSTEM, questionSchema).generateContent(prompt);
@@ -208,4 +216,59 @@ culturalNote: one sentence of cultural context ONLY when it genuinely helps unde
   return (data.items ?? [])
     .filter((i) => ids.has(i.id) && typeof i.explanation === "string" && i.explanation.trim())
     .map((i) => ({ id: i.id, explanation: i.explanation.trim(), culturalNote: i.culturalNote?.trim() || null }));
+}
+
+// ── Teaching resources: topics + scanned-PDF transcription ──────────────
+
+export interface ResourceAnalysis {
+  summary: string;
+  topics: { name: string; description: string }[];
+}
+
+const analysisSchema: ResponseSchema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    summary: { type: SchemaType.STRING },
+    topics: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: { name: { type: SchemaType.STRING }, description: { type: SchemaType.STRING } },
+        required: ["name", "description"],
+      },
+    },
+  },
+  required: ["summary", "topics"],
+};
+
+/**
+ * Summarise a resource and split it into 3–8 teachable topics. The topics
+ * become the knowledge points that questions from this resource are tagged
+ * with, so students get per-topic mastery for their teacher's notes.
+ */
+export async function analyseResource(title: string, text: string): Promise<ResourceAnalysis> {
+  const system = `You organise teaching material for diagnosis. Given a teacher's notes, slides or document, return:
+- summary: 2–3 sentences describing what the material covers, for a student deciding what to study.
+- topics: 3 to 8 distinct, teachable knowledge points covered by the material, in the order taught. Each name is short (2–6 words); each description is one sentence saying what a student should know or be able to do.
+Use the language the material is written in. Only include topics the material actually covers.`;
+  const result = await model(system, analysisSchema).generateContent(`Title: ${title}\n\n<<<\n${text.slice(0, SOURCE_CHARS)}\n>>>`);
+  const data = JSON.parse(result.response.text()) as Partial<ResourceAnalysis>;
+  const topics = (data.topics ?? [])
+    .map((t) => ({ name: String(t.name ?? "").trim().slice(0, 120), description: String(t.description ?? "").trim().slice(0, 400) }))
+    .filter((t) => t.name)
+    .slice(0, 8);
+  if (!topics.length) throw new Error("Could not identify topics in this resource.");
+  return { summary: String(data.summary ?? "").trim().slice(0, 1000), topics };
+}
+
+/** Text of a scanned PDF (no text layer), transcribed by the model. */
+export async function transcribePdf(buf: Buffer): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
+  const m = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: GEMINI_MODEL, generationConfig: { ...LOW_THINKING } });
+  const result = await m.generateContent([
+    { inlineData: { mimeType: "application/pdf", data: buf.toString("base64") } },
+    { text: "Transcribe all text in this document faithfully, page by page, starting each page with a line '--- Page N ---'. Describe diagrams in one short line in square brackets. Output plain text only." },
+  ]);
+  return result.response.text();
 }

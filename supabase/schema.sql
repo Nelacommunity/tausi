@@ -470,5 +470,51 @@ begin
   end if;
 end $$;
 
+-- ── Teaching resources (notes, slides, documents) ───────────
+-- Each processed resource becomes a level in its owner's private
+-- "class materials" curriculum, with AI-extracted topics as knowledge points,
+-- so questions from notes feed the same mastery model as any curriculum.
+
+alter table curricula add column if not exists owner_id uuid references auth.users(id) on delete cascade;  -- null = public curriculum
+
+-- ai_practice: generated from a resource for self-practice, not teacher-reviewed
+alter table questions drop constraint if exists questions_provenance_check;
+alter table questions add constraint questions_provenance_check
+  check (provenance in ('seed', 'ai_draft', 'ai_edited', 'teacher', 'ai_practice'));
+
+create table if not exists resources (
+  id           uuid primary key default gen_random_uuid(),
+  owner_id     uuid not null references auth.users(id) on delete cascade,
+  class_id     uuid references classes(id) on delete set null,  -- null = private to the owner
+  level_id     uuid references curriculum_levels(id) on delete set null,
+  title        text not null,
+  file_name    text not null,
+  file_path    text not null,
+  mime_type    text not null,
+  size_bytes   integer not null default 0,
+  kind         text not null check (kind in ('pdf', 'docx', 'pptx', 'text')),
+  status       text not null default 'uploading' check (status in ('uploading', 'processing', 'ready', 'failed')),
+  error        text,
+  summary      text,
+  content_text text,
+  created_at   timestamptz not null default now()
+);
+create index if not exists resources_owner_idx on resources(owner_id, created_at desc);
+create index if not exists resources_class_idx on resources(class_id, created_at desc);
+alter table resources enable row level security;
+
+-- Private bucket; the API uploads via signed URLs and serves signed download links.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'resources', 'resources', false, 26214400,
+  array[
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain', 'text/markdown'
+  ]
+)
+on conflict (id) do nothing;
+
 -- Make the API pick up new tables immediately.
 notify pgrst, 'reload schema';

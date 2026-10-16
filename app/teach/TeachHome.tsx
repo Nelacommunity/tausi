@@ -9,6 +9,9 @@ import { useT } from "@/app/lib/language-context";
 import { useSession } from "@/app/lib/session-context";
 import type { AssessmentSummary, CurriculumNode } from "@/app/lib/learning/types";
 import { api } from "@/app/components/learn/api";
+import { ResourceList } from "@/app/components/learn/ResourceList";
+import { ResourceUpload } from "@/app/components/learn/ResourceUpload";
+import type { ResourceSummary } from "@/app/lib/learning/types";
 import { Badge, Button, Card, ErrorNote, Field, formatDate, inputClass, SectionTitle, Spinner } from "@/app/components/learn/ui";
 
 interface ClassRow { id: string; name: string; code: string; memberCount: number; curriculumName: string | null }
@@ -26,6 +29,7 @@ export function TeachHome() {
   const [exams, setExams] = useState<AssessmentSummary[] | null>(null);
   const [classes, setClasses] = useState<ClassRow[] | null>(null);
   const [sessions, setSessions] = useState<SessionRow[] | null>(null);
+  const [resources, setResources] = useState<ResourceSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [title, setTitle] = useState("");
@@ -36,6 +40,10 @@ export function TeachHome() {
   const [creatingClass, setCreatingClass] = useState(false);
   const [switching, setSwitching] = useState(false);
 
+  const loadResources = useCallback(() => {
+    api<ResourceSummary[]>("/api/resources").then((r) => setResources(r.filter((x) => x.isOwner))).catch(() => setResources([]));
+  }, []);
+
   const load = useCallback(() => {
     api<CurriculumNode[]>("/api/curricula").then((c) => {
       setCurricula(c);
@@ -44,7 +52,8 @@ export function TeachHome() {
     api<AssessmentSummary[]>("/api/assessments").then(setExams).catch(() => setExams([]));
     api<{ teaching: ClassRow[] }>("/api/classes").then((d) => setClasses(d.teaching)).catch(() => setClasses([]));
     api<SessionRow[]>("/api/live").then(setSessions).catch(() => setSessions([]));
-  }, []);
+    loadResources();
+  }, [loadResources]);
 
   useEffect(() => { if (role === "teacher") load(); }, [role, load]);
 
@@ -182,8 +191,16 @@ export function TeachHome() {
               </div>
             </section>
 
-            {/* Classes */}
+            {/* Classes + resources */}
             <section className="space-y-4">
+              <Card>
+                <SectionTitle>{L.uploadResource}</SectionTitle>
+                <ResourceUpload classes={(classes ?? []).map((c) => ({ id: c.id, name: c.name }))} onDone={loadResources} />
+              </Card>
+              <div>
+                <SectionTitle>{L.resourcesTitle}</SectionTitle>
+                {resources === null ? <Spinner /> : <ResourceList items={resources} onChanged={loadResources} empty={L.noResources} />}
+              </div>
               <Card>
                 <SectionTitle>{L.newClass}</SectionTitle>
                 <form onSubmit={createClass} className="space-y-3">

@@ -126,7 +126,8 @@ export async function middleware(request: NextRequest) {
     pathname === "/teach" ||
     pathname.startsWith("/teach/") ||
     pathname === "/learn" ||
-    pathname.startsWith("/learn/");
+    pathname.startsWith("/learn/") ||
+    pathname.startsWith("/resources/");
 
   // Logged-in users skip auth pages and the marketing home — send them to the app
   if (user && (pathname === "/" || pathname === "/login" || pathname === "/signup")) {

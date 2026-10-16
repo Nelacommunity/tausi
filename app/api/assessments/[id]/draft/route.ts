@@ -4,15 +4,21 @@ import { assessmentDetail, ownedAssessment } from "@/app/lib/learning/queries";
 import { appendItems, draftForAssessment, insertQuestions, levelKps } from "@/app/lib/learning/builder";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 import { MAX_PER_DRAFT, MAX_PER_TYPE } from "@/app/lib/learning/limits";
+import { viewableResource } from "@/app/lib/learning/resources";
+
+export const maxDuration = 120;
 
 const schema = z.object({
-  kpIds: z.array(z.string().uuid()).min(1).max(60),
+  /** Optional when drafting from a resource: then every KP of the level is used. */
+  kpIds: z.array(z.string().uuid()).max(60).default([]),
   counts: z.object({
     mcq: z.number().int().min(0).max(MAX_PER_TYPE).default(0),
     true_false: z.number().int().min(0).max(MAX_PER_TYPE).default(0),
     fill_blank: z.number().int().min(0).max(MAX_PER_TYPE).default(0),
   }),
   note: z.string().trim().max(500).optional(),
+  /** Draft from this uploaded resource's text instead of general knowledge. */
+  resourceId: z.string().uuid().optional(),
 });
 
 /** AI drafts questions for the chosen KPs; they land as "draft" for the teacher to review. */
@@ -27,15 +33,23 @@ export async function POST(request: Request, ctx: RouteContext<"/api/assessments
   if (!a) return jsonError("Not found", 404);
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return jsonError("Choose at least one knowledge point.", 400);
-  const { kpIds, counts, note } = parsed.data;
+  const { kpIds, counts, note, resourceId } = parsed.data;
+  if (!kpIds.length && !resourceId) return jsonError("Choose at least one knowledge point.", 400);
+
+  let source: { title: string; text: string } | undefined;
+  if (resourceId) {
+    const r = await viewableResource(db, resourceId, user.id);
+    if (!r || r.status !== "ready" || !r.content_text) return jsonError("That resource is not ready yet.", 400);
+    source = { title: r.title, text: r.content_text };
+  }
   const total = counts.mcq + counts.true_false + counts.fill_blank;
   if (total < 1 || total > MAX_PER_DRAFT) return jsonError(`Ask for between 1 and ${MAX_PER_DRAFT} questions at a time.`, 400);
 
-  const kps = await levelKps(db, a.level_id, kpIds);
+  const kps = await levelKps(db, a.level_id, kpIds.length ? kpIds : undefined);
   if (!kps.length) return jsonError("Those knowledge points are not in this level.", 400);
 
   try {
-    const drafted = await draftForAssessment(db, a, kps, counts, note);
+    const drafted = await draftForAssessment(db, a, kps, counts, note, source);
     if (!drafted.length) return jsonError("The AI returned no usable questions — try again.", 502);
     const ids = await insertQuestions(db, {
       curriculumId: a.curriculum_id, levelId: a.level_id, userId: user.id, provenance: "ai_draft", status: "draft",

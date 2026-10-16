@@ -1,7 +1,7 @@
 // Shapes shared by the learning API routes and the client pages.
 import type { QuestionType } from "./grading";
 
-export type Provenance = "seed" | "ai_draft" | "ai_edited" | "teacher";
+export type Provenance = "seed" | "ai_draft" | "ai_edited" | "teacher" | "ai_practice";
 export type QuestionStatus = "draft" | "approved" | "rejected";
 
 export interface KpNode {
@@ -67,4 +67,20 @@ export interface AssessmentDetail {
   curriculumName: string;
   levelName: string;
   questions: TeacherQuestion[];
+}
+
+export interface ResourceSummary {
+  id: string;
+  title: string;
+  fileName: string;
+  kind: string;
+  sizeBytes: number;
+  status: string;
+  error: string | null;
+  summary: string | null;
+  classId: string | null;
+  className: string | null;
+  levelId: string | null;
+  isOwner: boolean;
+  createdAt: string;
 }

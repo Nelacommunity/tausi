@@ -24,10 +24,11 @@ export async function POST(request: Request, ctx: RouteContext<"/api/assessments
 
   const { data } = await db
     .from("question_kps")
-    .select("kp_id, questions!inner(id, status, level_id)")
+    .select("kp_id, questions!inner(id, status, level_id, provenance)")
     .in("kp_id", parsed.data.kpIds)
     .eq("questions.status", "approved")
-    .eq("questions.level_id", a.level_id);
+    .eq("questions.level_id", a.level_id)
+    .neq("questions.provenance", "ai_practice");
 
   const already = new Set((await assessmentQuestions(db, id)).map((q) => q.id));
   // Round-robin across KPs so one big KP doesn't crowd out the rest.

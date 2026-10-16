@@ -7,7 +7,10 @@ import { Header } from "@/app/components/Header";
 import { useT } from "@/app/lib/language-context";
 import type { AssessmentDetail, CurriculumNode, KpNode, TeacherQuestion } from "@/app/lib/learning/types";
 import type { QuestionType } from "@/app/lib/learning/grading";
-import { MAX_PER_DRAFT, MAX_PER_TYPE } from "@/app/lib/learning/limits";
+import { MAX_PER_DRAFT } from "@/app/lib/learning/limits";
+import { CountSteppers } from "@/app/components/learn/CountSteppers";
+import { ResourceUpload } from "@/app/components/learn/ResourceUpload";
+import type { ResourceSummary } from "@/app/lib/learning/types";
 import { api } from "@/app/components/learn/api";
 import { Badge, Button, Card, ErrorNote, Field, inputClass, SectionTitle, Spinner } from "@/app/components/learn/ui";
 
@@ -22,7 +25,13 @@ export function Builder({ id }: { id: string }) {
   const [kps, setKps] = useState<KpNode[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [tab, setTab] = useState<"ai" | "bank">("ai");
+  // ?notes=<resourceId> (from a resource's "Build a class exam") opens the notes tab with it selected.
+  const [notesParam] = useState(() => (typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("notes")));
+  const [tab, setTab] = useState<"ai" | "bank" | "notes">(notesParam ? "notes" : "ai");
+  const [resources, setResources] = useState<ResourceSummary[]>([]);
+  const [resourceId, setResourceId] = useState(notesParam ?? "");
+  const [showUpload, setShowUpload] = useState(false);
+  const [myClasses, setMyClasses] = useState<{ id: string; name: string }[]>([]);
   const [counts, setCounts] = useState<Counts>({ mcq: 5, true_false: 2, fill_blank: 1 });
   const [bankCount, setBankCount] = useState(8);
   const [note, setNote] = useState("");
@@ -43,6 +52,24 @@ export function Builder({ id }: { id: string }) {
       .catch((e: Error) => setError(e.message));
   }, [id]);
 
+  const loadResources = (select?: string) => {
+    api<ResourceSummary[]>("/api/resources").then((list) => {
+      const ready = list.filter((r) => r.status === "ready");
+      setResources(ready);
+      if (select && ready.some((r) => r.id === select)) { setResourceId(select); setShowUpload(false); }
+      else setResourceId((cur) => cur || ready[0]?.id || "");
+    }).catch(() => {});
+  };
+  useEffect(() => {
+    if (tab !== "notes") return;
+    api<ResourceSummary[]>("/api/resources").then((list) => {
+      const ready = list.filter((r) => r.status === "ready");
+      setResources(ready);
+      setResourceId((cur) => cur || ready[0]?.id || "");
+    }).catch(() => {});
+    api<{ teaching: { id: string; name: string }[] }>("/api/classes").then((d) => setMyClasses(d.teaching)).catch(() => {});
+  }, [tab]);
+
   const kpById = useMemo(() => new Map(kps.map((k) => [k.id, k])), [kps]);
   const grouped = useMemo(() => {
     const g = new Map<string, KpNode[]>();
@@ -58,11 +85,14 @@ export function Builder({ id }: { id: string }) {
   };
 
   const addQuestions = async () => {
-    if (!selected.size) return;
+    if (tab === "notes" ? !resourceId : !selected.size) return;
     setAdding(true);
-    await run(() => tab === "ai"
-      ? api(`/api/assessments/${id}/draft`, { method: "POST", json: { kpIds: [...selected], counts, note: note || undefined } })
-      : api(`/api/assessments/${id}/bank`, { method: "POST", json: { kpIds: [...selected], count: bankCount } }));
+    await run(() => tab === "bank"
+      ? api(`/api/assessments/${id}/bank`, { method: "POST", json: { kpIds: [...selected], count: bankCount } })
+      : api(`/api/assessments/${id}/draft`, {
+          method: "POST",
+          json: { kpIds: [...selected], counts, note: note || undefined, resourceId: tab === "notes" ? resourceId : undefined },
+        }));
     setAdding(false);
   };
 
@@ -171,38 +201,38 @@ export function Builder({ id }: { id: string }) {
             </div>
 
             <div className="flex rounded-xl border border-line overflow-hidden" role="tablist">
-              {(["ai", "bank"] as const).map((t) => (
+              {(["ai", "notes", "bank"] as const).map((t) => (
                 <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
                   className={`flex-1 py-2 text-xs font-semibold cursor-pointer transition-colors ${tab === t ? "bg-teal text-ink" : "text-dim hover:text-snow"}`}>
-                  {t === "ai" ? L.aiDraft : L.fromBank}
+                  {t === "ai" ? L.aiDraft : t === "notes" ? L.fromNotes : L.fromBank}
                 </button>
               ))}
             </div>
 
-            {tab === "ai" ? (
+            {tab === "notes" ? (
               <div className="space-y-3">
-                <div className="space-y-2">
-                  {([["mcq", L.countMcq], ["true_false", L.countTf], ["fill_blank", L.countFill]] as const).map(([k, label]) => {
-                    // Each type may go up to MAX_PER_TYPE, as long as the total stays within MAX_PER_DRAFT.
-                    const cap = Math.min(MAX_PER_TYPE, counts[k] + MAX_PER_DRAFT - total);
-                    const set = (v: number) => setCounts((c) => ({ ...c, [k]: Math.max(0, Math.min(cap, v)) }));
-                    return (
-                      <div key={k} className="flex items-center justify-between gap-3 rounded-xl border border-line bg-ink px-3 py-2">
-                        <label htmlFor={`count-${k}`} className="text-sm text-snow min-w-0">{label}</label>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button type="button" aria-label={`${L.less}: ${label}`} onClick={() => set(counts[k] - 1)} disabled={counts[k] <= 0}
-                            className="w-8 h-8 rounded-lg border border-line text-snow hover:border-line-2 disabled:opacity-40 cursor-pointer">−</button>
-                          <input id={`count-${k}`} type="number" inputMode="numeric" min={0} max={cap} value={counts[k]}
-                            onChange={(e) => set(Number(e.target.value) || 0)}
-                            className="w-14 h-8 rounded-lg border border-line bg-ink-2 text-center text-sm font-semibold text-snow outline-none focus:border-teal" />
-                          <button type="button" aria-label={`${L.more}: ${label}`} onClick={() => set(counts[k] + 1)} disabled={counts[k] >= cap}
-                            className="w-8 h-8 rounded-lg border border-line text-snow hover:border-line-2 disabled:opacity-40 cursor-pointer">+</button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <p className={`text-right text-xs font-semibold ${total > MAX_PER_DRAFT ? "text-bad" : "text-dim"}`}>{L.totalOf(total, MAX_PER_DRAFT)}</p>
-                </div>
+                {resources.length > 0 ? (
+                  <Field label={L.chooseResource}>
+                    <select className={inputClass} value={resourceId} onChange={(e) => setResourceId(e.target.value)}>
+                      {resources.map((r) => <option key={r.id} value={r.id}>{r.title}</option>)}
+                    </select>
+                  </Field>
+                ) : !showUpload && <p className="text-xs text-dim">{L.noReadyResources}</p>}
+                {showUpload || !resources.length ? (
+                  <ResourceUpload compact classes={myClasses} onDone={(rid) => loadResources(rid)} />
+                ) : (
+                  <button type="button" onClick={() => setShowUpload(true)} className="text-xs text-teal hover:underline cursor-pointer">+ {L.orUploadNew}</button>
+                )}
+                <CountSteppers counts={counts} onChange={setCounts} />
+                <Field label={L.note}>
+                  <textarea className={`${inputClass} resize-none`} rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={L.notePh} maxLength={500} />
+                </Field>
+                {!selected.size && <p className="text-[11px] text-gold">{L.allKpsUsed}</p>}
+                <p className="text-[11px] text-dim leading-relaxed">{L.notesHint}</p>
+              </div>
+            ) : tab === "ai" ? (
+              <div className="space-y-3">
+                <CountSteppers counts={counts} onChange={setCounts} />
                 <Field label={L.note}>
                   <textarea className={`${inputClass} resize-none`} rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={L.notePh} maxLength={500} />
                 </Field>
@@ -214,8 +244,8 @@ export function Builder({ id }: { id: string }) {
               </Field>
             )}
             <Button variant="teal" className="w-full" onClick={addQuestions}
-              disabled={adding || !selected.size || (tab === "ai" && (total < 1 || total > MAX_PER_DRAFT))}>
-              {adding ? <><Spinner /> {tab === "ai" ? L.drafting : L.loading}</> : tab === "ai" ? L.draftBtn : L.addFromBank}
+              disabled={adding || (tab === "notes" ? !resourceId : !selected.size) || (tab !== "bank" && (total < 1 || total > MAX_PER_DRAFT))}>
+              {adding ? <><Spinner /> {tab === "bank" ? L.loading : L.drafting}</> : tab === "bank" ? L.addFromBank : L.draftBtn}
             </Button>
             <p className="text-[11px] text-dim leading-relaxed">{L.reviewHint}</p>
           </Card>
@@ -252,6 +282,7 @@ function useProvenance() {
     ai_draft: { label: L.provAiDraft, tone: "magenta" as const },
     ai_edited: { label: L.provAiEdited, tone: "coral" as const },
     teacher: { label: L.provTeacher, tone: "teal" as const },
+    ai_practice: { label: L.provAiPractice, tone: "gold" as const },
   })[p];
 }
 

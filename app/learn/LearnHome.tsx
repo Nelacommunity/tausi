@@ -8,6 +8,8 @@ import { useT } from "@/app/lib/language-context";
 import type { LevelProgress, SessionResult } from "@/app/lib/learning/progress";
 import type { CurriculumNode } from "@/app/lib/learning/types";
 import { api } from "@/app/components/learn/api";
+import { ResourceList } from "@/app/components/learn/ResourceList";
+import type { ResourceSummary } from "@/app/lib/learning/types";
 import { Badge, Button, Card, ErrorNote, formatDate, inputClass, MasteryRow, pct, READINESS_TONE, SectionTitle, Spinner, useReadinessLabel } from "@/app/components/learn/ui";
 
 export const LEARN_ICON = "M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6";
@@ -59,6 +61,7 @@ export function LearnHome() {
   const [overview, setOverview] = useState<{ levels: LevelProgress[]; sessions: SessionResult[] } | null>(null);
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const [curricula, setCurricula] = useState<CurriculumNode[]>([]);
+  const [resources, setResources] = useState<ResourceSummary[]>([]);
   const [code, setCode] = useState("");
   const [joinMsg, setJoinMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +71,7 @@ export function LearnHome() {
     api<{ levels: LevelProgress[]; sessions: SessionResult[] }>("/api/learn/overview").then(setOverview).catch((e: Error) => setError(e.message));
     api<{ member: { id: string; name: string }[] }>("/api/classes").then((d) => setClasses(d.member)).catch(() => {});
     api<CurriculumNode[]>("/api/curricula").then(setCurricula).catch(() => {});
+    api<ResourceSummary[]>("/api/resources").then((r) => setResources(r.filter((x) => !x.isOwner))).catch(() => {});
   }, []);
 
   const joinClass = async (e: React.FormEvent) => {
@@ -129,6 +133,10 @@ export function LearnHome() {
                   {classes.map((c) => <li key={c.id} className="text-sm text-body">• {c.name}</li>)}
                 </ul>
               )}
+            </Card>
+            <Card>
+              <SectionTitle>{L.classResources}</SectionTitle>
+              <ResourceList items={resources} onChanged={() => {}} empty={L.noClassResources} />
             </Card>
             <Card>
               <SectionTitle>{L.recentResults}</SectionTitle>
