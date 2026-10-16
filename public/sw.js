@@ -1,4 +1,5 @@
-const CACHE = "tausi-v2";
+// Bump on any caching change: activate() deletes every other cache.
+const CACHE = "tausi-v3";
 const PRECACHE = ["/", "/offline"];
 
 self.addEventListener("install", (event) => {
@@ -36,22 +37,31 @@ self.addEventListener("fetch", (event) => {
   const offlineFallback = () =>
     caches.match("/offline").then((r) => r || caches.match("/"));
 
-  // Network-first for navigation; cache-first for assets
+  // Network-first for navigation
   if (event.request.mode === "navigate") {
     event.respondWith(fetch(event.request).catch(offlineFallback));
-  } else {
-    event.respondWith(
-      caches.match(event.request).then(
-        (cached) =>
-          cached ||
-          fetch(event.request).then((response) => {
-            if (!response || response.status >= 400) return response;
-
-            const clone = response.clone();
-            caches.open(CACHE).then((cache) => cache.put(event.request, clone));
-            return response;
-          }).catch(offlineFallback)
-      )
-    );
+    return;
   }
+
+  // Cache-first only for immutable assets: hashed build output and static
+  // files. Everything else — notably RSC page payloads (?_rsc=…) fetched on
+  // client navigation — must go to the network, or users see stale pages.
+  const immutable =
+    url.pathname.startsWith("/_next/static/") ||
+    /\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff2?)$/.test(url.pathname);
+  if (!immutable || url.searchParams.has("_rsc")) return;
+
+  event.respondWith(
+    caches.match(event.request).then(
+      (cached) =>
+        cached ||
+        fetch(event.request).then((response) => {
+          if (!response || response.status >= 400) return response;
+
+          const clone = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(event.request, clone));
+          return response;
+        }).catch(offlineFallback)
+    )
+  );
 });
