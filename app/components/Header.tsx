@@ -178,7 +178,7 @@ export function Header() {
           DESKTOP SIDEBAR
           ══════════════════════════════════════════════════════ */}
       <aside className={`grad-sidebar hidden md:flex fixed top-3 bottom-3 left-3 z-40 flex-col rounded-2xl border border-line shadow-xl shadow-black/20 transition-[width] duration-200 ease-out-expo overflow-hidden ${
-        collapsed ? "w-14" : "w-56"
+        collapsed ? "w-14" : "w-60"
       }`}>
 
         {/* ── Logo ─────────────────────────────────────────── */}
