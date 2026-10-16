@@ -8,7 +8,7 @@ Tausi turns any curriculum into diagnosis and practice — helping students find
 |---|---|
 | Web app | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4 |
 | Data & auth | Supabase: Postgres, Auth (email/password), Storage, Realtime |
-| AI | Google Gemini (`gemini-2.5-flash`) via `@google/generative-ai`, server-side only |
+| AI | Google Gemini (`gemini-3.8-flash` by default, set with `GEMINI_MODEL`) via `@google/generative-ai`, server-side only |
 | Hosting | Any Node host for Next.js; database on Supabase |
 
 ```
@@ -98,7 +98,7 @@ At-risk KPs are practised KPs below 50 %, weakest first.
 
 All AI calls run on the server (`app/lib/learning/ai.ts`) with a JSON response schema, and every result is validated with zod before it is stored.
 
-1. **Question drafting (teacher-in-the-loop).** The teacher picks a level, KPs and counts per type. The prompt includes KP names and descriptions, a few approved bank questions as style examples, and the prompts already in the exam (to avoid duplicates). Drafts are stored with `status = draft`, `provenance = ai_draft`.
+1. **Question drafting (teacher-in-the-loop).** The teacher picks a level, KPs and counts per type (up to 30 per type, 40 per request; larger requests run as parallel batches of 10 and are de-duplicated). The prompt includes KP names and descriptions, a few approved bank questions as style examples, and the prompts already in the exam (to avoid duplicates). Drafts are stored with `status = draft`, `provenance = ai_draft`.
 2. **Teacher review.** Each draft is approved, edited, regenerated or rejected. Only approved questions are published. Provenance is tracked per question:
    - `seed` — from the curriculum seed
    - `ai_draft` — written by AI, approved as-is

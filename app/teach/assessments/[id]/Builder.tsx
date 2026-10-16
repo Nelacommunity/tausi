@@ -7,6 +7,7 @@ import { Header } from "@/app/components/Header";
 import { useT } from "@/app/lib/language-context";
 import type { AssessmentDetail, CurriculumNode, KpNode, TeacherQuestion } from "@/app/lib/learning/types";
 import type { QuestionType } from "@/app/lib/learning/grading";
+import { MAX_PER_DRAFT, MAX_PER_TYPE } from "@/app/lib/learning/limits";
 import { api } from "@/app/components/learn/api";
 import { Badge, Button, Card, ErrorNote, Field, inputClass, SectionTitle, Spinner } from "@/app/components/learn/ui";
 
@@ -174,13 +175,27 @@ export function Builder({ id }: { id: string }) {
 
             {tab === "ai" ? (
               <div className="space-y-3">
-                <div className="grid grid-cols-3 gap-2">
-                  {([["mcq", L.countMcq], ["true_false", L.countTf], ["fill_blank", L.countFill]] as const).map(([k, label]) => (
-                    <Field key={k} label={label}>
-                      <input type="number" min={0} max={20} className={inputClass} value={counts[k]}
-                        onChange={(e) => setCounts((c) => ({ ...c, [k]: Math.max(0, Math.min(20, Number(e.target.value) || 0)) }))} />
-                    </Field>
-                  ))}
+                <div className="space-y-2">
+                  {([["mcq", L.countMcq], ["true_false", L.countTf], ["fill_blank", L.countFill]] as const).map(([k, label]) => {
+                    // Each type may go up to MAX_PER_TYPE, as long as the total stays within MAX_PER_DRAFT.
+                    const cap = Math.min(MAX_PER_TYPE, counts[k] + MAX_PER_DRAFT - total);
+                    const set = (v: number) => setCounts((c) => ({ ...c, [k]: Math.max(0, Math.min(cap, v)) }));
+                    return (
+                      <div key={k} className="flex items-center justify-between gap-3 rounded-xl border border-line bg-ink px-3 py-2">
+                        <label htmlFor={`count-${k}`} className="text-sm text-snow min-w-0">{label}</label>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button type="button" aria-label={`${L.less}: ${label}`} onClick={() => set(counts[k] - 1)} disabled={counts[k] <= 0}
+                            className="w-8 h-8 rounded-lg border border-line text-snow hover:border-line-2 disabled:opacity-40 cursor-pointer">−</button>
+                          <input id={`count-${k}`} type="number" inputMode="numeric" min={0} max={cap} value={counts[k]}
+                            onChange={(e) => set(Number(e.target.value) || 0)}
+                            className="w-14 h-8 rounded-lg border border-line bg-ink-2 text-center text-sm font-semibold text-snow outline-none focus:border-teal" />
+                          <button type="button" aria-label={`${L.more}: ${label}`} onClick={() => set(counts[k] + 1)} disabled={counts[k] >= cap}
+                            className="w-8 h-8 rounded-lg border border-line text-snow hover:border-line-2 disabled:opacity-40 cursor-pointer">+</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <p className={`text-right text-xs font-semibold ${total > MAX_PER_DRAFT ? "text-bad" : "text-dim"}`}>{L.totalOf(total, MAX_PER_DRAFT)}</p>
                 </div>
                 <Field label={L.note}>
                   <textarea className={`${inputClass} resize-none`} rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={L.notePh} maxLength={500} />
@@ -193,7 +208,7 @@ export function Builder({ id }: { id: string }) {
               </Field>
             )}
             <Button variant="teal" className="w-full" onClick={addQuestions}
-              disabled={adding || !selected.size || (tab === "ai" && (total < 1 || total > 20))}>
+              disabled={adding || !selected.size || (tab === "ai" && (total < 1 || total > MAX_PER_DRAFT))}>
               {adding ? <><Spinner /> {tab === "ai" ? L.drafting : L.loading}</> : tab === "ai" ? L.draftBtn : L.addFromBank}
             </Button>
             <p className="text-[11px] text-dim leading-relaxed">{L.reviewHint}</p>

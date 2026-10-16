@@ -5,7 +5,7 @@ import { appendItems } from "@/app/lib/learning/builder";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
 
 const schema = z.object({
-  kpIds: z.array(z.string().uuid()).min(1).max(20),
+  kpIds: z.array(z.string().uuid()).min(1).max(60),
   count: z.number().int().min(1).max(30),
 });
 

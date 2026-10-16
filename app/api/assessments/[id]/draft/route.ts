@@ -3,13 +3,14 @@ import { getViewer, jsonError } from "@/app/lib/learning/server";
 import { assessmentDetail, ownedAssessment } from "@/app/lib/learning/queries";
 import { appendItems, draftForAssessment, insertQuestions, levelKps } from "@/app/lib/learning/builder";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { MAX_PER_DRAFT, MAX_PER_TYPE } from "@/app/lib/learning/limits";
 
 const schema = z.object({
-  kpIds: z.array(z.string().uuid()).min(1).max(20),
+  kpIds: z.array(z.string().uuid()).min(1).max(60),
   counts: z.object({
-    mcq: z.number().int().min(0).max(20).default(0),
-    true_false: z.number().int().min(0).max(20).default(0),
-    fill_blank: z.number().int().min(0).max(20).default(0),
+    mcq: z.number().int().min(0).max(MAX_PER_TYPE).default(0),
+    true_false: z.number().int().min(0).max(MAX_PER_TYPE).default(0),
+    fill_blank: z.number().int().min(0).max(MAX_PER_TYPE).default(0),
   }),
   note: z.string().trim().max(500).optional(),
 });
@@ -28,7 +29,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/assessments
   if (!parsed.success) return jsonError("Choose at least one knowledge point.", 400);
   const { kpIds, counts, note } = parsed.data;
   const total = counts.mcq + counts.true_false + counts.fill_blank;
-  if (total < 1 || total > 20) return jsonError("Ask for between 1 and 20 questions at a time.", 400);
+  if (total < 1 || total > MAX_PER_DRAFT) return jsonError(`Ask for between 1 and ${MAX_PER_DRAFT} questions at a time.`, 400);
 
   const kps = await levelKps(db, a.level_id, kpIds);
   if (!kps.length) return jsonError("Those knowledge points are not in this level.", 400);

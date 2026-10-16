@@ -5,7 +5,8 @@
 
 import { GoogleGenerativeAI, SchemaType, type ResponseSchema } from "@google/generative-ai";
 import { z } from "zod";
-import { GEMINI_MODEL } from "@/app/lib/ai";
+import { GEMINI_MODEL, LOW_THINKING } from "@/app/lib/ai";
+import { DRAFT_BATCH } from "./limits";
 import type { QuestionType } from "./grading";
 
 function model(system: string, schema: ResponseSchema) {
@@ -14,7 +15,7 @@ function model(system: string, schema: ResponseSchema) {
   return new GoogleGenerativeAI(apiKey).getGenerativeModel({
     model: GEMINI_MODEL,
     systemInstruction: system,
-    generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.8 },
+    generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.8, ...LOW_THINKING },
   });
 }
 
@@ -104,7 +105,46 @@ export function validateDrafted(raw: unknown, allowedKps: Set<string>): DraftedQ
   return { ...q, difficulty: q.difficulty as 1 | 2 | 3, kpCodes };
 }
 
+/**
+ * Split a request into batches of at most DRAFT_BATCH questions, keeping the
+ * type mix: e.g. 12 mcq + 18 fill_blank → three batches of 10.
+ */
+function batchCounts(counts: Partial<Record<QuestionType, number>>): Partial<Record<QuestionType, number>>[] {
+  const queue = (Object.entries(counts) as [QuestionType, number][]).flatMap(([t, n]) => Array<QuestionType>(n ?? 0).fill(t));
+  const batches: Partial<Record<QuestionType, number>>[] = [];
+  for (let i = 0; i < queue.length; i += DRAFT_BATCH) {
+    const b: Partial<Record<QuestionType, number>> = {};
+    for (const t of queue.slice(i, i + DRAFT_BATCH)) b[t] = (b[t] ?? 0) + 1;
+    batches.push(b);
+  }
+  return batches;
+}
+
+const promptKey = (p: string) => p.replace(/\s+/g, "").toLowerCase();
+
+/**
+ * Draft questions for the requested counts. Large requests run as parallel
+ * batches (each told about the others' focus via a batch note) and are
+ * de-duplicated by prompt before returning.
+ */
 export async function draftQuestions(req: DraftRequest): Promise<DraftedQuestion[]> {
+  const batches = batchCounts(req.counts);
+  const results = await Promise.allSettled(batches.map((counts, i) => draftBatch({
+    ...req, counts,
+    teacherNote: [req.teacherNote, batches.length > 1 ? `This is batch ${i + 1} of ${batches.length}; vary the knowledge points and sentence topics so batches do not overlap.` : ""].filter(Boolean).join(" "),
+  })));
+  const ok = results.filter((r): r is PromiseFulfilledResult<DraftedQuestion[]> => r.status === "fulfilled");
+  if (!ok.length) throw (results[0] as PromiseRejectedResult).reason;
+  const seen = new Set(req.avoid.map(promptKey));
+  return ok.flatMap((r) => r.value).filter((q) => {
+    const k = promptKey(q.prompt);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+async function draftBatch(req: DraftRequest): Promise<DraftedQuestion[]> {
   const wanted = Object.entries(req.counts).filter(([, n]) => (n ?? 0) > 0).map(([t, n]) => `${n} × ${t}`).join(", ");
   const prompt = [
     `Curriculum: ${req.curriculum}`,
