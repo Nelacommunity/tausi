@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Keep the dev-tools badge away from the sidebar's sign-out controls (bottom-left).
+  devIndicators: { position: "bottom-right" },
   allowedDevOrigins: [
     "192.168.1.185",
     "192.168.0.*",

@@ -190,9 +190,14 @@ export function Header() {
               <span className="font-display text-sm font-bold text-snow tracking-tight truncate">Tausi</span>
             )}
           </Link>
+          {!collapsed && user && (
+            <div className="ml-auto shrink-0">
+              <NotificationBell side compact />
+            </div>
+          )}
           {!collapsed && (
             <button onClick={toggleSidebar} title="Collapse sidebar"
-              className="ml-auto p-1.5 rounded-lg text-dim hover:text-snow hover:bg-ink-3 transition-colors cursor-pointer shrink-0">
+              className={`${user ? "" : "ml-auto "}p-1.5 rounded-lg text-dim hover:text-snow hover:bg-ink-3 transition-colors cursor-pointer shrink-0`}>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 19l-7-7 7-7M21 19l-7-7 7-7" />
               </svg>
@@ -287,17 +292,17 @@ export function Header() {
                     <p className="text-[10px] text-dim">{T.nav.viewProfile}</p>
                   </div>
                 </Link>
-                <div className="flex items-center gap-1.5 px-1">
+                <div className="flex items-center justify-between gap-2 px-1">
                   <LangPill />
-                  <ThemeToggle />
-                  <NotificationBell side />
-                  <button onClick={signOut} title={T.nav.signOut}
-                    className="ml-auto p-1.5 rounded-lg text-dim hover:text-bad hover:bg-bad/10 transition-colors cursor-pointer">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
-                    </svg>
-                  </button>
+                  <ThemeToggle compact />
                 </div>
+                <button onClick={signOut}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-sm text-dim hover:text-bad hover:bg-bad/10 transition-colors cursor-pointer">
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                  </svg>
+                  {T.nav.signOut}
+                </button>
               </>
             )
           ) : (
