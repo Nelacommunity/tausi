@@ -89,7 +89,7 @@ export default function SignupClient() {
             Join thousands of East African students acing their exams
           </p>
           <p className="text-sm text-dim leading-relaxed">
-            Sign up free to use AI exam prediction, marking, and study chat.
+            Sign up free to find your weak areas, join live class sessions, and practise what matters.
           </p>
         </div>
 
@@ -97,7 +97,7 @@ export default function SignupClient() {
           <p className="text-xs text-dim mb-3 uppercase tracking-wider font-semibold">Free to start</p>
           <div className="space-y-2">
             {[
-              "AI Exam Prediction",
+              "Weak-area diagnosis",
               "Marking Scheme Generator",
               "AI Answer Marking",
               "24/7 Study Chat",

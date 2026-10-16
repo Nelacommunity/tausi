@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useT } from "@/app/lib/language-context";
 
 const SECTION_ICON = [
-  // Vylos.co — building
+  // What Tausi does — building
   "M3.75 21h16.5M4.5 3h15l-.75 18h-13.5L4.5 3zM9 9h1.5M9 12h1.5M9 15h1.5m4.5-6H15m1.5 3H15m1.5 3H15",
-  // Founders — users
+  // How diagnosis works — users
   "M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z",
   // Mission — sparkle
   "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z",
@@ -17,15 +17,6 @@ const SECTION_ACCENT = [
   { box: "bg-teal/15 border-teal/25 text-teal", blob: "oklch(0.72 0.20 192)" },
   { box: "bg-brand-magenta/15 border-brand-magenta/25 text-brand-magenta", blob: "oklch(0.62 0.21 340)" },
 ];
-
-const AVATAR_GRAD = [
-  "linear-gradient(135deg, oklch(0.72 0.20 192), oklch(0.56 0.16 200))",
-  "linear-gradient(135deg, oklch(0.62 0.21 340), oklch(0.50 0.18 320))",
-];
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-}
 
 export function AboutClient() {
   const { T } = useT();
@@ -62,7 +53,6 @@ export function AboutClient() {
         <div className="space-y-6">
           {A.sections.map((s, i) => {
             const accent = SECTION_ACCENT[i % SECTION_ACCENT.length];
-            const isFounders = s.list.length > 0 && s.list.some((li) => li.includes("—"));
 
             return (
               <section
@@ -86,27 +76,7 @@ export function AboutClient() {
                     <p key={j} className="text-dim mb-3 last:mb-0">{para}</p>
                   ))}
 
-                  {isFounders ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                      {s.list.map((li, j) => {
-                        const [name, role] = li.split("—").map((p) => p.trim());
-                        return (
-                          <div key={j} className="flex items-center gap-3 rounded-xl border border-line bg-ink-3/50 px-4 py-3">
-                            <div
-                              className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                              style={{ background: AVATAR_GRAD[j % AVATAR_GRAD.length] }}
-                            >
-                              {initials(name)}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-semibold text-snow truncate">{name}</p>
-                              {role && <p className="text-xs text-dim truncate">{role}</p>}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : s.list.length > 0 ? (
+                  {s.list.length > 0 ? (
                     <ul className="space-y-2 list-disc list-inside text-dim mt-1">
                       {s.list.map((li, j) => <li key={j}>{li}</li>)}
                     </ul>

@@ -11,20 +11,20 @@ const DISCOVER_ICON = "M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.
 const APP_URL = "https://tausi.app";
 
 export const metadata: Metadata = {
-  title: "Discover — Public AI-Predicted NECTA, ACSEE & CSEE Papers",
+  title: "Discover — Public Practice Papers",
   description:
-    "Browse community-shared AI-predicted exam papers for NECTA — ACSEE, CSEE, FTNA, PSLE — plus KCSE, IGCSE & WAEC. Study from public exams created by students on Tausi.",
+    "Browse community-shared practice papers. Study from public practice exams created by students on Tausi.",
   keywords: withSharedKeywords(
-    "discover exam papers", "public predicted exams", "browse NECTA papers",
+    "discover exam papers", "public practice papers", "browse NECTA papers",
     "ACSEE past papers", "CSEE past papers", "shared exam papers Tanzania",
-    "free past papers", "predicted exam papers East Africa",
+    "free past papers", "practice papers East Africa",
   ),
   alternates: { canonical: `${APP_URL}/discover` },
   openGraph: {
     url: `${APP_URL}/discover`,
-    title: "Discover Public Exam Predictions | Tausi",
+    title: "Discover Public Practice Papers | Tausi",
     description:
-      "Browse AI-predicted exam papers shared by the Tausi community. NECTA, KCSE, IGCSE, WAEC and more.",
+      "Browse practice papers shared by the Tausi community.",
   },
 };
 
@@ -60,8 +60,8 @@ export default async function DiscoverPage() {
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "Public AI-Predicted Exam Papers on Tausi",
-    description: "Community-shared AI-predicted exam papers for NECTA, KCSE, IGCSE, WAEC and other East African examinations.",
+    name: "Public Practice Papers on Tausi",
+    description: "Community-shared practice papers.",
     url: `${APP_URL}/discover`,
     numberOfItems: publicExams.length,
     itemListElement: publicExams.slice(0, 50).map((exam, i) => ({
@@ -91,7 +91,7 @@ export default async function DiscoverPage() {
 
         {/* ── Page hero ───────────────────────────────────── */}
         <PageHero d={DISCOVER_ICON} accent="coral" title="Discover"
-          subtitle="Browse AI-predicted exams shared by the community"
+          subtitle="Browse practice papers shared by the community"
           action={!user && (
             <Link href="/signup"
               className="shrink-0 rounded-xl bg-coral hover:opacity-90 text-white font-bold px-4 py-2.5 text-sm transition-opacity cursor-pointer">
@@ -120,7 +120,7 @@ export default async function DiscoverPage() {
             <Link href="/dashboard"
               className="rounded-2xl border border-gold/20 bg-gold/10 hover:bg-gold/15 p-4 flex flex-col justify-center gap-1 transition-all col-span-2 sm:col-span-1 cursor-pointer group text-gold">
               <span className="text-sm font-bold transition-colors">Create exam →</span>
-              <span className="text-[11px] opacity-70">predict your next paper</span>
+              <span className="text-[11px] opacity-70">build a practice paper</span>
             </Link>
           )}
         </div>
@@ -134,7 +134,7 @@ export default async function DiscoverPage() {
               </svg>
             </div>
             <p className="text-sm font-medium text-body mb-1">No public exams yet</p>
-            <p className="text-xs text-dim mb-4">Be the first to share a predicted exam with the community.</p>
+            <p className="text-xs text-dim mb-4">Be the first to share a practice paper with the community.</p>
             {user && (
               <Link href="/dashboard"
                 className="inline-flex items-center gap-2 text-sm text-teal hover:text-snow font-medium transition-colors">

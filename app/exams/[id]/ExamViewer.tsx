@@ -367,7 +367,7 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
           activeTab === "chat" ? "hidden md:flex" : "flex"
         }`}>
           <div className="border-b border-line bg-ink shrink-0">
-            {/* ── Primary picker: Source Paper vs Predicted Exam ── */}
+            {/* ── Primary picker: Source Paper vs Practice Paper ── */}
             <div className="flex items-center gap-2 px-3 pt-2 pb-2">
               {sourceSignedUrls.length > 0 ? (
                 <div className="flex rounded-lg bg-ink-2 border border-line p-0.5 gap-px">
@@ -391,7 +391,7 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
                     }`}
                   >
                     <Icon d={ICONS.sparkle} size={3} />
-                    Predicted Exam
+                    {T.examViewer.predictedExam}
                   </button>
                 </div>
               ) : (
@@ -427,7 +427,7 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
               </button>
             </div>
 
-            {/* ── Sub-tabs: Exam / Marking Scheme (only when Predicted is active) ── */}
+            {/* ── Sub-tabs: Exam / Marking Scheme (only when the practice paper is active) ── */}
             {sourceSignedUrls.length > 0 && (activeTab === "exam" || activeTab === "marking") && (
               <div className="flex items-center gap-1 px-3 border-t border-line/60">
                 {([
@@ -561,7 +561,7 @@ export function ExamViewer({ exam: initialExam, initialMessages, isOwner, userTi
                     }`}
                   >
                     <Icon d={ICONS.sparkle} size={3} />
-                    Predicted Exam
+                    {T.examViewer.predictedExam}
                   </button>
                   <button
                     onClick={() => setChatContext("source")}

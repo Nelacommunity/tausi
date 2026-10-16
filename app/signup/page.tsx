@@ -5,7 +5,7 @@ import { withSharedKeywords } from "@/app/lib/seo";
 export const metadata: Metadata = {
   title: "Sign Up — Create Your Free Tausi Account",
   description:
-    "Create a free Tausi account to predict NECTA exams — ACSEE, CSEE, FTNA, PSLE — plus KCSE & IGCSE, with marking schemes and AI tutoring.",
+    "Create a free Tausi account to find your weak areas, practise with your class, and track your readiness.",
   keywords: withSharedKeywords(
     "Tausi sign up", "Tausi register", "free Tausi account", "create Tausi account",
     "Tausi login", "join Tausi",

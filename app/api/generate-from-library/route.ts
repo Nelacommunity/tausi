@@ -56,8 +56,8 @@ export async function POST(request: Request) {
       .join("\n\n---\n\n");
 
     const prompt = papers.length === 1
-      ? `Generate a new predicted exam paper based on the following structure extracted from the original past paper:\n\n${descriptions}`
-      : `Generate a new predicted exam paper that combines patterns from the following ${papers.length} past papers. Incorporate question styles, topic distribution, and format from all papers:\n\n${descriptions}`;
+      ? `Generate a new practice exam paper based on the following structure extracted from the original past paper:\n\n${descriptions}`
+      : `Generate a new practice exam paper that combines patterns from the following ${papers.length} past papers. Incorporate question styles, topic distribution, and format from all papers:\n\n${descriptions}`;
 
     parts = [{ text: notes ? `${prompt}\n\nAdditional instructions: ${notes}` : prompt }];
   } else {
@@ -80,8 +80,8 @@ export async function POST(request: Request) {
     if (!parts.length) return jsonErr("Could not load paper files", 500);
 
     const prompt = papers.length === 1
-      ? `Analyse this past exam paper and generate a new predicted exam paper that follows the exact same format and structure.`
-      : `Analyse these ${papers.length} past exam papers and generate a new predicted exam paper that follows the exact same format and structure, incorporating patterns from all papers.`;
+      ? `Analyse this past exam paper and generate a new practice exam paper that follows the exact same format and structure.`
+      : `Analyse these ${papers.length} past exam papers and generate a new practice exam paper that follows the exact same format and structure, incorporating patterns from all papers.`;
     parts.push({ text: notes ? `${prompt}\n\nAdditional instructions: ${notes}` : prompt });
   }
 

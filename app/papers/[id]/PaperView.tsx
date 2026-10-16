@@ -532,7 +532,7 @@ export function PaperView({ paper, signedUrls }: PaperViewProps) {
                   onClick={() => { setPhase("idle"); setPreview(""); setExamId(null); }}
                   className="w-full py-2.5 rounded-xl border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 text-sm transition-colors"
                 >
-                  Generate Another Prediction
+                  {T.paperView.generateAnother}
                 </button>
 
                 {/* Preview */}

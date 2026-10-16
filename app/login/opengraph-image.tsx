@@ -10,6 +10,6 @@ export default function Image() {
     accent: "teal",
     eyebrow: "Welcome back",
     title: "Sign in to Tausi",
-    subtitle: "Continue predicting exams, marking answers, and studying with AI.",
+    subtitle: "Continue finding weak areas and practising what matters.",
   });
 }

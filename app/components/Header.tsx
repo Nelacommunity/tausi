@@ -205,7 +205,7 @@ export function Header() {
 
         {/* ── Nav links ─────────────────────────────────────── */}
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
-          {/* Prominent Predict CTA — the key feature */}
+          {/* Practice paper CTA */}
           <Link href="/predict" title={collapsed ? T.nav.predictExam : undefined}
             className={`group relative flex items-center gap-2.5 rounded-xl bg-teal text-ink font-bold shadow-sm hover:opacity-90 transition-all cursor-pointer mb-2 ${
               collapsed ? "justify-center p-2" : "px-2.5 py-2.5"

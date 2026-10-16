@@ -59,7 +59,7 @@ function deriveTitleFromFiles(files: File[]) {
 }
 function deriveTitleFromPapers(papers: ExamPaper[]) {
   if (!papers.length) return `Exam — ${new Date().toLocaleDateString("en-GB")}`;
-  return `${papers[0].name} — Predicted ${new Date().getFullYear()}`;
+  return `${papers[0].name} — Practice paper`;
 }
 
 export function ExamGenerator() {
@@ -244,7 +244,7 @@ export function ExamGenerator() {
   const cleanExamContent = examContent.replace(/<!--FROM_STRUCTURE-->\n?/, "");
   const fromStructure = examContent.startsWith("<!--FROM_STRUCTURE-->");
 
-  // Brief celebratory "Ready" pill the moment a prediction finishes streaming.
+  // Brief celebratory "Ready" pill the moment a practice paper finishes streaming.
   useEffect(() => {
     if (status !== "done-exam") return;
     setJustRevealed(true);
@@ -267,7 +267,7 @@ export function ExamGenerator() {
             </div>
             <div>
               <h2 className="text-sm font-bold text-snow leading-none">{D.pageHeading}</h2>
-              <p className="text-[11px] text-dim mt-0.5">Upload past papers — get AI-predicted exam questions</p>
+              <p className="text-[11px] text-dim mt-0.5">{T.dashboard.uploadSub}</p>
             </div>
           </div>
           <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-teal border border-teal/25 bg-teal/5 px-2 py-1 rounded-lg">

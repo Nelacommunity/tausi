@@ -31,16 +31,16 @@ export async function generateMetadata({
     .replace(/[_-]/g, " ")
     .trim();
 
-  const title = `${exam.title} — AI Predicted Exam`;
-  const description = `AI-predicted exam paper for "${exam.title}". Includes full marking scheme and weak-points analysis. Study free on Tausi.${subjectHint ? ` Based on: ${subjectHint}.` : ""}`;
+  const title = `${exam.title} — Practice Paper`;
+  const description = `Practice paper for "${exam.title}". Includes full marking scheme and weak-points analysis. Study free on Tausi.${subjectHint ? ` Based on: ${subjectHint}.` : ""}`;
   const url = `${APP_URL}/exams/${id}`;
 
   return {
     title,
     description,
     keywords: withSharedKeywords(
-      exam.title, "predicted exam", "AI exam", "marking scheme",
-      "KCSE", "East Africa", "past paper prediction",
+      exam.title, "practice paper", "AI exam", "marking scheme",
+      "KCSE", "East Africa", "past paper practice",
     ),
     alternates: { canonical: url },
     // og:image / twitter:image are supplied by the dynamic
@@ -75,9 +75,9 @@ function buildLearningResourceSchema(exam: Exam) {
     "@context": "https://schema.org",
     "@type": "LearningResource",
     "@id": `${APP_URL}/exams/${exam.id}`,
-    name: `${exam.title} — AI Predicted Exam`,
+    name: `${exam.title} — Practice Paper`,
     url: `${APP_URL}/exams/${exam.id}`,
-    description: `AI-generated predicted exam paper for "${exam.title}" based on past papers. Includes marking scheme and weak-points analysis.`,
+    description: `AI-generated practice paper for "${exam.title}" based on past papers. Includes marking scheme and weak-points analysis.`,
     learningResourceType: ["Practice problem set", "Exam"],
     educationalUse: ["Practice", "Self-assessment"],
     inLanguage: "en",

@@ -60,7 +60,7 @@ export function LoginForm() {
             AI-powered exam preparation for East African students
           </p>
           <p className="text-sm text-dim leading-relaxed">
-            Predict exams, get marking schemes, mark your answers with AI, and chat with a study tutor — all in one place.
+            Find your weak areas, practise with your class, and review every answer with an AI tutor — all in one place.
           </p>
         </div>
 

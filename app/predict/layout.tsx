@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Predict Exam",
-  description: "Upload past papers and let Tausi AI predict your next exam, complete with a marking scheme.",
+  title: "Practice paper",
+  description: "Upload past papers and Tausi builds a new practice paper in the same format, with a marking scheme and weak-points analysis.",
   robots: { index: false, follow: false },
 };
 

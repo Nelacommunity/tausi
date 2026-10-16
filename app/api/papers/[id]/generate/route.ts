@@ -37,7 +37,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   if (!parts.length) return jsonErr("Could not load paper files", 500);
 
   const count = parts.length;
-  parts.push({ text: `Analyse ${count === 1 ? "this" : `these ${count}`} past exam paper${count === 1 ? "" : "s"} for ${paper.subject} (${paper.exam_type} ${paper.year}) and generate a new predicted exam paper that follows the exact same format and structure.` });
+  parts.push({ text: `Analyse ${count === 1 ? "this" : `these ${count}`} past exam paper${count === 1 ? "" : "s"} for ${paper.subject} (${paper.exam_type} ${paper.year}) and generate a new practice exam paper that follows the exact same format and structure.` });
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: GEMINI_MODEL, systemInstruction: EXAM_SYSTEM_PROMPT });
@@ -55,7 +55,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
         const { data: exam } = await supabase.from("exams").insert({
           user_id: user.id,
-          title: `${paper.name} — Predicted ${new Date().getFullYear()}`,
+          title: `${paper.name} — Practice paper`,
           original_filenames: paper.original_filenames,
           pdf_storage_paths: paper.file_paths,
           predicted_exam: fullContent,

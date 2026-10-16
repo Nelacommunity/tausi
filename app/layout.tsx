@@ -32,22 +32,22 @@ export const metadata: Metadata = {
   applicationName: "Tausi",
 
   title: {
-    default: "Tausi — AI Exam Prediction for NECTA: ACSEE, CSEE, FTNA & PSLE",
+    default: "Tausi — Find weak areas, practise what matters",
     template: "%s | Tausi",
   },
 
   description:
-    "Tausi is an AI exam app for Tanzanian & East African students. Predict NECTA exams — ACSEE, CSEE, FTNA, PSLE — plus KCSE, IGCSE, WAEC & ZIMSEC, with marking schemes and an AI tutor. Free to use.",
+    "Tausi turns any curriculum into diagnosis and practice — helping students find their weak areas and helping teachers build curriculum-aligned practice exams.",
 
   keywords: Array.from(new Set([
     "Tausi", "tausi.app",
     "NECTA exams", "NECTA past papers", "NECTA mock exams",
-    "KCSE past papers", "KCSE prediction",
+    "KCSE past papers", "HSK practice", "HSK 1", "HSK 2",
     "mock exams Tanzania", "Tanzania education", "Tanzania exam papers",
     "East Africa education", "East African students",
-    "exam creator", "AI exam generator", "predicted exam",
+    "learning diagnosis", "weak areas", "practice exams", "mastery tracking",
     "marking scheme generator", "AI tutor", "exam preparation",
-    "IGCSE predicted exam", "WAEC mock", "ZIMSEC past papers",
+    "live classroom quiz", "teacher exam builder", "curriculum-aligned questions",
     "UNEB exams", "form four exams Tanzania", "O level exams East Africa",
     "study assistant AI", "AI education",
     ...TAUSI_KEYWORDS,
@@ -77,9 +77,9 @@ export const metadata: Metadata = {
     alternateLocale: "sw_TZ",
     url: APP_URL,
     siteName: "Tausi",
-    title: "Tausi — AI Exam Prediction for East African Students",
+    title: "Tausi — Find weak areas, practise what matters",
     description:
-      "Upload NECTA, KCSE, IGCSE or WAEC past papers. Get AI-predicted exams, marking schemes, and AI tutoring — free for East African students.",
+      "Tausi turns any curriculum into diagnosis and practice — helping students find their weak areas and helping teachers build curriculum-aligned practice exams.",
     // og:image is supplied by the file-based app/opengraph-image.tsx route.
   },
 
@@ -88,9 +88,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@tausiapp",
     creator: "@tausiapp",
-    title: "Tausi — AI Exam Prediction for East African Students",
+    title: "Tausi — Find weak areas, practise what matters",
     description:
-      "Upload NECTA, KCSE or IGCSE past papers. Get AI-predicted exams, marking schemes, and AI tutoring.",
+      "Tausi turns any curriculum into diagnosis and practice — helping students find their weak areas and helping teachers build curriculum-aligned practice exams.",
   },
 
   // App

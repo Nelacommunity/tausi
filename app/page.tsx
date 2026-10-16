@@ -2,24 +2,23 @@ import type { Metadata } from "next";
 import { LandingClient } from "./LandingClient";
 import { withSharedKeywords } from "./lib/seo";
 
+const POSITIONING =
+  "Tausi turns any curriculum into diagnosis and practice — helping students find their weak areas and helping teachers build curriculum-aligned practice exams.";
+
 /* ── Page-level metadata (overrides layout defaults) ─────────────────── */
 export const metadata: Metadata = {
-  title: "Tausi — AI NECTA Exam Prediction: ACSEE, CSEE, FTNA & PSLE",
-  description:
-    "Tausi AI predicts your NECTA exams — ACSEE, CSEE, FTNA & PSLE — plus KCSE, IGCSE & WAEC. Upload past papers to get a predicted exam, full marking scheme, and an AI tutor. Free for Tanzanian & East African students.",
+  title: "Tausi — Find weak areas, practise what matters",
+  description: POSITIONING,
   keywords: withSharedKeywords(
-    "Tausi", "NECTA exams", "mock exams", "Tanzania education", "East Africa education",
-    "exam creator", "exam prediction", "AI exam generator", "NECTA past papers",
-    "KCSE past papers", "IGCSE predicted exam", "WAEC mock exam", "marking scheme",
-    "AI tutor", "study assistant", "form four exams", "O level Tanzania",
-    "predicted exam paper", "AI study tool East Africa", "tausi.app",
+    "Tausi", "learning diagnosis", "weak areas", "mastery tracking", "practice exams",
+    "curriculum-aligned questions", "HSK practice", "HSK 1", "HSK 2", "NECTA practice",
+    "live classroom quiz", "teacher exam builder", "AI tutor", "tausi.app",
   ),
   alternates: { canonical: "https://tausi.app" },
   openGraph: {
     url: "https://tausi.app",
-    title: "Tausi — AI NECTA Exam Prediction (ACSEE, CSEE, FTNA, PSLE)",
-    description:
-      "Upload past NECTA, KCSE or IGCSE papers. Get AI-predicted exams, full marking schemes, and an AI tutor — free for Tanzanian & East African students.",
+    title: "Tausi — Find weak areas, practise what matters",
+    description: POSITIONING,
   },
 };
 
@@ -30,17 +29,8 @@ const websiteSchema = {
   "@id": "https://tausi.app/#website",
   url: "https://tausi.app",
   name: "Tausi",
-  alternateName: ["Tausi AI", "Tausi App", "Tausi Tanzania", "tausi.app"],
-  description: "AI-powered NECTA exam prediction (ACSEE, CSEE, FTNA, PSLE) and study platform for Tanzanian and East African students",
-  inLanguage: ["en", "sw"],
-  potentialAction: {
-    "@type": "SearchAction",
-    target: {
-      "@type": "EntryPoint",
-      urlTemplate: "https://tausi.app/discover?q={search_term_string}",
-    },
-    "query-input": "required name=search_term_string",
-  },
+  description: POSITIONING,
+  inLanguage: ["en", "sw", "zh"],
 };
 
 const organizationSchema = {
@@ -48,7 +38,6 @@ const organizationSchema = {
   "@type": "Organization",
   "@id": "https://tausi.app/#organization",
   name: "Tausi",
-  alternateName: ["Tausi AI", "Tausi App", "Tausi Tanzania"],
   url: "https://tausi.app",
   logo: {
     "@type": "ImageObject",
@@ -56,24 +45,11 @@ const organizationSchema = {
     width: 512,
     height: 512,
   },
-  description:
-    "Tausi provides AI-powered exam prediction, marking scheme generation, answer-sheet marking, and AI tutoring for students preparing for NECTA (ACSEE, CSEE, FTNA, PSLE), KCSE, IGCSE, WAEC, and other East African examinations.",
-  areaServed: ["Tanzania", "Kenya", "Uganda", "East Africa"],
+  description: POSITIONING,
   knowsAbout: [
-    "NECTA examinations", "ACSEE", "CSEE", "FTNA", "PSLE",
-    "KCSE", "IGCSE", "WAEC", "exam preparation",
-    "AI tutoring", "marking schemes", "past papers",
+    "learning diagnosis", "knowledge points", "mastery tracking", "HSK Chinese",
+    "NECTA", "practice exams", "formative assessment",
   ],
-  parentOrganization: {
-    "@type": "Organization",
-    name: "Vylos.co",
-    url: "https://vylos.co",
-  },
-  founder: [
-    { "@type": "Person", name: "Aaron Rweyongeza" },
-    { "@type": "Person", name: "Brown Mafuru" },
-  ],
-  sameAs: [],
 };
 
 const softwareSchema = {
@@ -82,25 +58,17 @@ const softwareSchema = {
   name: "Tausi",
   url: "https://tausi.app",
   applicationCategory: "EducationalApplication",
-  operatingSystem: "Web, Android, iOS",
-  offers: [
-    {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "TZS",
-      name: "Free",
-    },
-  ],
-  description:
-    "Upload past exam papers and let Tausi AI generate a predicted exam, full marking scheme, and provide AI tutoring. Supports NECTA, KCSE, IGCSE, WAEC and more.",
+  operatingSystem: "Web",
+  offers: [{ "@type": "Offer", price: "0", priceCurrency: "USD", name: "Free" }],
+  description: POSITIONING,
   featureList: [
-    "AI exam prediction from past papers",
-    "Automatic marking scheme generation",
-    "AI answer-sheet marking",
-    "AI tutor chat",
-    "Study Room",
-    "Exam Library",
-    "Kiswahili and English interface",
+    "Weak-area diagnosis per knowledge point",
+    "Readiness estimate per curriculum level",
+    "Adaptive practice on weak areas",
+    "Teacher-in-the-loop AI exam builder",
+    "Live class sessions via QR code, link or join code",
+    "Explanations in English, Kiswahili and Chinese",
+    "Class and student reports for teachers",
   ],
 };
 
@@ -111,100 +79,41 @@ const faqSchema = {
     {
       "@type": "Question",
       name: "What is Tausi?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Tausi is an AI-powered exam prediction platform for East African students. It analyses uploaded NECTA, KCSE, IGCSE, WAEC or other past exam papers and generates realistic predicted exams, full marking schemes, and provides an AI tutor — all for free.",
-      },
+      acceptedAnswer: { "@type": "Answer", text: POSITIONING },
     },
     {
       "@type": "Question",
-      name: "How does Tausi predict NECTA exams?",
+      name: "How does Tausi find my weak areas?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Tausi AI analyses the structure, section types, mark allocation, topics, and question patterns of uploaded past NECTA papers. It then generates a brand-new predicted exam that follows the same format with different questions.",
+        text: "Every question is tagged with the curriculum's knowledge points. Each answer updates your mastery of those points, with recent answers counting most, so Tausi can show which topics are weak and how ready you are for a level.",
       },
     },
     {
       "@type": "Question",
       name: "Is Tausi free to use?",
+      acceptedAnswer: { "@type": "Answer", text: "Yes. Every feature is free to use." },
+    },
+    {
+      "@type": "Question",
+      name: "Which curricula does Tausi support?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Tausi is completely free — AI exam predictions, marking scheme generation, AI answer-sheet marking, Study Room, and Exam Library are all included at no cost.",
+        text: "Tausi ships with HSK Chinese (levels 1–2) and a NECTA mathematics sample. Curricula are stored as data, so new syllabuses can be added without changing the app.",
       },
     },
     {
       "@type": "Question",
-      name: "Which exams does Tausi support?",
+      name: "Do students need to install anything?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Tausi supports all NECTA Tanzania examinations — ACSEE (Form 6), CSEE (Form 4), FTNA (Form 2), and PSLE (Standard 7) — plus KCSE and KCPE (Kenya), IGCSE, Cambridge A-Level, IEB and NSC (South Africa), WAEC, NECO (Nigeria), ZIMSEC (Zimbabwe), UNEB and UACE (Uganda), and any other past paper in PDF or image format.",
+        text: "No. Students join a live session in the browser by scanning a QR code, opening a link, or typing a short join code.",
       },
     },
     {
       "@type": "Question",
-      name: "Does Tausi predict ACSEE, CSEE, FTNA and PSLE exams?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes. Tausi predicts every NECTA examination level in Tanzania: ACSEE (Advanced Certificate of Secondary Education, Form 6), CSEE (Certificate of Secondary Education, Form 4), FTNA (Form Two National Assessment), and PSLE (Primary School Leaving Examination, Standard 7). Upload a past paper and Tausi AI generates a predicted exam in the same format with a full marking scheme.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Can Tausi mark my answer sheet?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes. Upload the question paper and your completed answer sheet (PDF or image). Tausi AI derives the marking criteria from the question paper and marks every question with detailed feedback, a total score, percentage, and grade.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Does Tausi work in Kiswahili?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes. Tausi's interface is fully available in both English and Kiswahili (Swahili). You can switch between languages at any time using the EN/SW toggle in the navigation bar.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Who made Tausi?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Tausi is built by Vylos.co, its parent company. Tausi was founded by Aaron Rweyongeza and Brown Mafuru.",
-      },
-    },
-  ],
-};
-
-const howToSchema = {
-  "@context": "https://schema.org",
-  "@type": "HowTo",
-  name: "How to predict your NECTA or KCSE exam using Tausi",
-  description: "Step-by-step guide to generating an AI-predicted exam from past papers using Tausi.",
-  step: [
-    {
-      "@type": "HowToStep",
-      name: "Upload your past exam papers",
-      text: "Go to tausi.app, sign in, and upload up to 3 past NECTA, KCSE, or other exam papers as PDFs or images.",
-    },
-    {
-      "@type": "HowToStep",
-      name: "Tausi AI analyses the papers",
-      text: "Tausi AI reads the exam structure, sections, question types, mark allocation, and topic distribution.",
-    },
-    {
-      "@type": "HowToStep",
-      name: "Receive your predicted exam",
-      text: "A brand-new predicted exam is generated in real time — same format, same sections, new questions.",
-    },
-    {
-      "@type": "HowToStep",
-      name: "Generate a marking scheme",
-      text: "Click 'Generate Marking Scheme' to get a full memo with per-question answers, mark breakdowns, and a weak-points analysis.",
-    },
-    {
-      "@type": "HowToStep",
-      name: "Study with your AI tutor",
-      text: "Open the chat panel and ask Tausi AI to explain questions, walk through solutions, or plan your revision schedule.",
+      name: "Which languages does Tausi support?",
+      acceptedAnswer: { "@type": "Answer", text: "The interface and answer explanations are available in English, Kiswahili and Chinese." },
     },
   ],
 };
@@ -225,7 +134,6 @@ export default function LandingPage() {
       <JsonLd data={organizationSchema} />
       <JsonLd data={softwareSchema} />
       <JsonLd data={faqSchema} />
-      <JsonLd data={howToSchema} />
       <LandingClient />
     </>
   );

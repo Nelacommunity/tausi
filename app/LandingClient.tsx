@@ -38,141 +38,70 @@ function useReveal() {
 
 
 /* ── How-it-works: step detail panels ───────────────────────────────────── */
-function UploadDetail() {
-  return (
-    <div className="mt-5 rounded-xl bg-ink border border-line/60 p-4">
-      <div className="border-2 border-dashed border-line/60 rounded-lg p-4 mb-4 flex flex-col items-center gap-1.5 step-animate" style={{ animationDelay: "0.1s" }}>
-        <svg className="w-8 h-8 text-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-        </svg>
-        <p className="text-xs text-dim">Drop PDFs or images — or browse</p>
-      </div>
-      <div className="space-y-2">
-        {[
-          { name: "Physics_2023.pdf", pages: "12 pages", board: "NECTA" },
-          { name: "Physics_2022.pdf", pages: "14 pages", board: "NECTA" },
-          { name: "Physics_2021.pdf", pages: "11 pages", board: "NECTA" },
-        ].map((f, i) => (
-          <div key={i} className="step-animate flex items-center gap-2 px-3 py-2 rounded-lg bg-ink-3 border border-line/50"
-            style={{ animationDelay: `${0.3 + i * 0.18}s` }}>
-            <svg className="w-3.5 h-3.5 text-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-            </svg>
-            <span className="text-xs text-body flex-1 truncate">{f.name}</span>
-            <span className="font-mono text-[9px] text-dim">{f.pages}</span>
-            <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-teal-deep/30 text-teal">{f.board}</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-good shrink-0" />
-          </div>
-        ))}
-      </div>
-      <div className="step-animate mt-4 rounded-lg bg-ink-3 border border-line/50 px-3 py-2.5" style={{ animationDelay: "0.85s" }}>
-        <p className="text-[9px] font-mono text-dim mb-1">Custom instructions (optional)</p>
-        <p className="text-xs text-body/70">
-          &ldquo;Focus on thermodynamics and form four difficulty&rdquo;
-          <span className="inline-block w-[2px] h-[11px] bg-teal ml-[2px] rounded-sm align-middle" style={{ animation: "cursor-blink 1s step-end infinite" }} />
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function AnalysisDetail() {
-  const sections = [
-    { label: "Section A — Short Answers", pct: 40, color: "bg-teal/55" },
-    { label: "Section B — Structured Essays", pct: 35, color: "bg-gold/55" },
-    { label: "Section C — Problem Solving",  pct: 25, color: "bg-coral/55" },
+function CurriculumDetail() {
+  const kps = [
+    { name: "比 comparison", on: true },
+    { name: "过 experience", on: true },
+    { name: "Measure words 件 张 次", on: true },
+    { name: "因为…所以", on: false },
+    { name: "Tones (HSK 2 words)", on: false },
   ];
-  return (
-    <div className="mt-5 rounded-xl bg-ink border border-line/60 p-4">
-      <p className="step-animate font-mono text-[10px] text-dim mb-4" style={{ animationDelay: "0.1s" }}>
-        Analysing structure...
-      </p>
-      <div className="space-y-3 mb-5">
-        {sections.map((s, i) => (
-          <div key={i} className="step-animate" style={{ animationDelay: `${0.2 + i * 0.18}s` }}>
-            <div className="flex justify-between text-[10px] mb-1.5">
-              <span className="text-body">{s.label}</span>
-              <span className="font-mono text-dim">{s.pct}%</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-ink-3 overflow-hidden">
-              <div className={`step-bar h-full rounded-full ${s.color}`}
-                style={{ width: `${s.pct}%`, animationDelay: `${0.25 + i * 0.2}s` }} />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="step-animate grid grid-cols-3 gap-2" style={{ animationDelay: "0.75s" }}>
-        {[
-          { label: "Questions", val: "24" },
-          { label: "Topics", val: "8" },
-          { label: "Total marks", val: "100" },
-        ].map(({ label, val }) => (
-          <div key={label} className="rounded-lg bg-ink-3 border border-line/50 py-3 text-center">
-            <p className="font-display text-xl font-bold text-teal">{val}</p>
-            <p className="text-[9px] text-dim mt-0.5">{label}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ExamDetail() {
-  const lines: { text: string; cls: string; delay: number }[] = [
-    { text: "FORM FOUR EXAMINATION — PHYSICS — 2026",    cls: "font-bold text-[11px] text-center text-body tracking-wide", delay: 0.1 },
-    { text: "Time: 3 Hours  ·  Maximum Marks: 100",      cls: "text-[9px] text-center text-dim",                            delay: 0.35 },
-    { text: "SECTION A — Short Answers (40 Marks)",      cls: "font-semibold text-teal mt-1",                               delay: 0.6 },
-    { text: "1. A body of mass 4 kg moves at 6 m/s. Calculate its momentum. (4 marks)", cls: "text-body", delay: 0.85 },
-    { text: "2. State Newton's Third Law and give one example. (3 marks)",               cls: "text-body", delay: 1.1 },
-  ];
-  return (
-    <div className="mt-5 rounded-xl bg-ink border border-line/60 p-4 font-mono text-[10px] space-y-2">
-      {lines.map(({ text, cls, delay }, i) => (
-        <div key={i} className={`step-animate ${cls}`} style={{ animationDelay: `${delay}s` }}>{text}</div>
-      ))}
-      <div className="step-animate flex items-baseline text-body" style={{ animationDelay: "1.35s" }}>
-        <span>3. R&#8321;&nbsp;=&nbsp;4&#937;, R&#8322;&nbsp;=&nbsp;6&#937; in series. Calculate total resistance</span>
-        <span className="inline-block w-[2px] h-[11px] bg-teal ml-[2px] rounded-sm align-middle"
-          style={{ animation: "cursor-blink 1s step-end infinite" }} />
-      </div>
-    </div>
-  );
-}
-
-function TutorDetail() {
   return (
     <div className="mt-5 rounded-xl bg-ink border border-line/60 p-4 space-y-3">
-      <div className="step-animate flex justify-end" style={{ animationDelay: "0.1s" }}>
-        <div className="max-w-[78%] rounded-2xl rounded-tr-sm bg-teal-deep/50 border border-teal-deep/70 px-3 py-2">
-          <p className="text-xs text-body">How do I calculate resistance in a parallel circuit?</p>
-        </div>
+      <div className="step-animate flex gap-2" style={{ animationDelay: "0.1s" }}>
+        {["HSK", "HSK 2"].map((c, i) => (
+          <span key={c} className={`font-mono text-[10px] px-2 py-1 rounded-md border ${i ? "border-teal/50 bg-teal/10 text-teal" : "border-line text-body"}`}>{c}</span>
+        ))}
       </div>
-      <div className="step-animate flex gap-2 items-start" style={{ animationDelay: "0.4s" }}>
-        <div className="w-6 h-6 rounded-full bg-teal-deep border border-teal/40 flex items-center justify-center shrink-0 mt-0.5">
-          <span className="font-bold text-[8px] text-teal">T</span>
-        </div>
-        <div className="max-w-[80%] rounded-2xl rounded-bl-sm bg-ink-3 border border-line px-3 py-2 space-y-1.5">
-          <p className="text-xs text-body leading-relaxed">
-            Use: <span className="font-mono text-teal text-[10px]">1/R = 1/R&#8321; + 1/R&#8322;</span>
-          </p>
-          <p className="text-xs text-body leading-relaxed">
-            For 4&#937; and 6&#937;: 1/R = 1/4 + 1/6 = 5/12, so R = 2.4&#937;
-          </p>
-        </div>
+      <div className="space-y-1.5">
+        {kps.map((k, i) => (
+          <div key={k.name} className="step-animate flex items-center gap-2 px-3 py-2 rounded-lg bg-ink-3 border border-line/50" style={{ animationDelay: `${0.25 + i * 0.12}s` }}>
+            <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${k.on ? "bg-teal border-teal" : "border-line"}`}>
+              {k.on && <CheckIcon className="text-ink !w-2.5 !h-2.5" />}
+            </span>
+            <span className="text-xs text-body">{k.name}</span>
+          </div>
+        ))}
       </div>
-      <div className="step-animate flex justify-end" style={{ animationDelay: "0.85s" }}>
-        <div className="max-w-[65%] rounded-2xl rounded-tr-sm bg-teal-deep/30 border border-teal-deep/50 px-3 py-2">
-          <p className="text-xs text-body">What if there are 3 resistors?</p>
+    </div>
+  );
+}
+
+function BuilderDetail() {
+  const qs = [
+    { q: "哥哥___我高。", tag: "比", state: "ok" },
+    { q: "我去___中国。(I have been to China.)", tag: "过", state: "ok" },
+    { q: "一___衣服", tag: "件 张 次", state: "review" },
+  ];
+  return (
+    <div className="mt-5 rounded-xl bg-ink border border-line/60 p-4 space-y-2">
+      {qs.map((x, i) => (
+        <div key={i} className="step-animate rounded-lg bg-ink-3 border border-line/50 p-2.5" style={{ animationDelay: `${0.15 + i * 0.3}s` }}>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-brand-magenta/15 text-brand-magenta">AI</span>
+            <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-teal-deep/40 text-teal">{x.tag}</span>
+            <span className={`ml-auto font-mono text-[9px] ${x.state === "ok" ? "text-good" : "text-gold"}`}>{x.state === "ok" ? "✓" : "…"}</span>
+          </div>
+          <p className="text-xs text-body">{x.q}</p>
         </div>
+      ))}
+    </div>
+  );
+}
+
+function LiveDetail() {
+  return (
+    <div className="mt-5 rounded-xl bg-ink border border-line/60 p-4 flex items-center gap-4">
+      <div className="step-animate grid grid-cols-5 gap-0.5 w-16 h-16 shrink-0 bg-white p-1.5 rounded-md" style={{ animationDelay: "0.1s" }}>
+        {Array.from({ length: 25 }, (_, i) => (
+          <span key={i} className={[0, 1, 3, 5, 6, 8, 12, 14, 16, 18, 19, 20, 22, 24].includes(i) ? "bg-[#111]" : "bg-white"} />
+        ))}
       </div>
-      <div className="step-animate flex gap-2 items-center" style={{ animationDelay: "1.05s" }}>
-        <div className="w-6 h-6 rounded-full bg-teal-deep border border-teal/40 flex items-center justify-center shrink-0">
-          <span className="font-bold text-[8px] text-teal">T</span>
-        </div>
-        <div className="flex items-center gap-1 bg-ink-3 border border-line rounded-2xl rounded-bl-sm px-3 py-2">
-          {[0, 1, 2].map((i) => (
-            <span key={i} className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse motion-reduce:animate-none"
-              style={{ animationDelay: `${i * 0.2}s` }} />
+      <div className="min-w-0 flex-1 space-y-2">
+        <p className="step-animate font-mono text-xl font-bold tracking-[0.25em] text-teal" style={{ animationDelay: "0.3s" }}>K7MPQ4</p>
+        <div className="step-animate flex flex-wrap gap-1" style={{ animationDelay: "0.55s" }}>
+          {["Simba", "Twiga", "Panda", "Tembo", "+18"].map((n) => (
+            <span key={n} className="text-[10px] px-2 py-0.5 rounded-full bg-ink-3 border border-line text-body">{n}</span>
           ))}
         </div>
       </div>
@@ -180,7 +109,42 @@ function TutorDetail() {
   );
 }
 
-const STEP_DETAILS = [UploadDetail, AnalysisDetail, ExamDetail, TutorDetail];
+function DiagnosisDetail() {
+  return (
+    <div className="mt-5 rounded-xl bg-ink border border-line/60 p-4 space-y-3">
+      <MasteryBars />
+      <div className="step-animate rounded-lg bg-gold/15 border border-gold/40 px-3 py-2 text-center" style={{ animationDelay: "0.9s" }}>
+        <p className="text-[11px] font-bold text-gold">Practice my weak areas →</p>
+      </div>
+    </div>
+  );
+}
+
+function MasteryBars() {
+  const rows = [
+    { k: "Measure words", m: 38, c: "bg-bad/70" },
+    { k: "比 comparison", m: 61, c: "bg-gold/70" },
+    { k: "Tones", m: 84, c: "bg-good/70" },
+    { k: "Greetings", m: 91, c: "bg-good/70" },
+  ];
+  return (
+    <div className="space-y-2.5" aria-hidden="true">
+      {rows.map((r, i) => (
+        <div key={r.k} className="step-animate" style={{ animationDelay: `${0.15 + i * 0.15}s` }}>
+          <div className="flex justify-between text-[10px] mb-1">
+            <span className="text-body">{r.k}</span>
+            <span className="font-mono text-dim">{r.m}%</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-ink-3 overflow-hidden">
+            <div className={`step-bar h-full rounded-full ${r.c}`} style={{ width: `${r.m}%`, animationDelay: `${0.2 + i * 0.15}s` }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const STEP_DETAILS = [CurriculumDetail, BuilderDetail, LiveDetail, DiagnosisDetail];
 
 /* ── Canvas: starfield + mathematical curves ────────────────────────────────
    Paints the full background on every frame:
@@ -469,69 +433,55 @@ function HeroProductWindow() {
           </div>
           <div className="flex-1 flex justify-center">
             <div className="bg-ink rounded-md px-3 py-1 text-[11px] text-dim font-mono">
-              tausi.app/dashboard
+              tausi.app/teach
             </div>
           </div>
         </div>
 
         {/* Two-panel content */}
         <div className="grid grid-cols-[130px_1fr] sm:grid-cols-[160px_1fr] divide-x divide-line/60">
-          {/* Left: controls */}
+          {/* Left: curriculum + knowledge points */}
           <div className="p-3 bg-ink/40 flex flex-col gap-2 min-h-[260px] sm:min-h-[300px]">
-            <p className="text-[10px] text-dim mb-1">Source file</p>
-            <div className="flex items-start gap-1.5 rounded-lg bg-teal-deep/30 border border-teal-deep/70 px-2 py-1.5">
-              <svg className="w-3.5 h-3.5 text-teal mt-px shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-              </svg>
-              <div>
-                <p className="text-[10px] font-medium text-body leading-tight">Physics_2023.pdf</p>
-                <p className="font-mono text-[9px] text-dim mt-0.5">NECTA · 12 pages</p>
-              </div>
-            </div>
             <div className="flex gap-1 flex-wrap">
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-teal-deep/40 text-teal">NECTA</span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-ink-3 text-dim">Form 4</span>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-teal-deep/40 text-teal">HSK</span>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-ink-3 text-body">HSK 2</span>
             </div>
-            <div className="flex items-center gap-1.5 mt-auto">
-              <span className="w-1.5 h-1.5 rounded-full bg-good" />
-              <span className="font-mono text-[9px] text-good">Structure ready</span>
-            </div>
+            {["比 comparison", "过 experience", "件 张 次"].map((k) => (
+              <div key={k} className="flex items-center gap-1.5 rounded-lg bg-teal-deep/30 border border-teal-deep/70 px-2 py-1.5">
+                <CheckIcon className="text-teal !w-3 !h-3" />
+                <span className="text-[10px] text-body leading-tight">{k}</span>
+              </div>
+            ))}
             <button
-              className="gen-pulse rounded-lg bg-gold/20 border border-gold/50 px-2 py-2 text-center cursor-pointer"
-              aria-label="Generate predicted exam"
+              className="gen-pulse mt-auto rounded-lg bg-gold/20 border border-gold/50 px-2 py-2 text-center cursor-pointer"
+              aria-hidden="true" tabIndex={-1}
             >
-              <p className="text-[10px] font-bold text-gold leading-none">Generate Exam</p>
-              <p className="font-mono text-[9px] text-gold/70 mt-0.5">AI powered</p>
+              <p className="text-[10px] font-bold text-gold leading-none">AI draft</p>
+              <p className="font-mono text-[9px] text-gold/70 mt-0.5">8 questions</p>
             </button>
           </div>
 
-          {/* Right: streaming exam output */}
-          <div className="p-4 font-mono text-[10px] leading-relaxed space-y-1.5 overflow-hidden">
-            <div className="stream-line font-bold text-[11px] text-center text-body tracking-wide" style={{ animationDelay: DELAYS[0] }}>
-              FORM FOUR EXAMINATION — PHYSICS — 2026
-            </div>
-            <div className="stream-line text-[9px] text-center text-dim" style={{ animationDelay: DELAYS[1] }}>
-              Time: 3 Hours &nbsp;·&nbsp; Maximum Marks: 100
-            </div>
-            <div className="stream-line h-px bg-line/60 my-2" style={{ animationDelay: DELAYS[1] }} />
-            <div className="stream-line font-semibold text-[10px] text-teal" style={{ animationDelay: DELAYS[2] }}>
-              SECTION A — Short Answers (40 Marks)
-            </div>
-            <div className="stream-line text-body" style={{ animationDelay: DELAYS[3] }}>
-              1. A body of mass 4 kg moves at 6 m/s. Calculate its momentum and state the SI unit.&nbsp;
-              <span className="text-dim">(4 marks)</span>
-            </div>
-            <div className="stream-line text-body" style={{ animationDelay: DELAYS[4] }}>
-              2. State Newton&apos;s Third Law and give one practical example.&nbsp;
-              <span className="text-dim">(3 marks)</span>
-            </div>
-            <div className="stream-line flex items-center text-body" style={{ animationDelay: DELAYS[5] }}>
-              3. R₁&nbsp;=&nbsp;4Ω, R₂&nbsp;=&nbsp;6Ω in series. Calculate total resistance
-              <span
-                className="inline-block w-[2px] h-[12px] bg-teal ml-[2px] rounded-sm"
-                style={{ animation: "cursor-blink 1s step-end infinite" }}
-              />
-            </div>
+          {/* Right: drafts for teacher review */}
+          <div className="p-3 sm:p-4 space-y-2 overflow-hidden">
+            {[
+              { q: "哥哥___我高。", opts: ["比", "很", "得", "过"], kp: "比", ok: true },
+              { q: "我去___中国。", opts: ["过", "了", "着", "的"], kp: "过", ok: true },
+              { q: "一___衣服", opts: ["件", "张", "次", "本"], kp: "件 张 次", ok: false },
+            ].map((x, i) => (
+              <div key={i} className="stream-line rounded-lg border border-line/70 bg-ink/50 p-2" style={{ animationDelay: DELAYS[i * 2] }}>
+                <div className="flex items-center gap-1 mb-1">
+                  <span className="font-mono text-[8px] px-1 rounded bg-brand-magenta/15 text-brand-magenta">AI</span>
+                  <span className="font-mono text-[8px] px-1 rounded bg-teal-deep/40 text-teal">{x.kp}</span>
+                  <span className={`ml-auto text-[8px] font-mono ${x.ok ? "text-good" : "text-gold"}`}>{x.ok ? "✓" : "…"}</span>
+                </div>
+                <p className="text-[11px] text-snow mb-1">{x.q}</p>
+                <div className="grid grid-cols-4 gap-1">
+                  {x.opts.map((o, k) => (
+                    <span key={o} className={`text-center text-[10px] rounded py-0.5 border ${k === 0 ? "border-good/60 text-good" : "border-line text-dim"}`}>{o}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -539,7 +489,7 @@ function HeroProductWindow() {
         <div className="px-4 py-2 bg-ink-3 border-t border-line flex items-center gap-3">
           <span className="flex items-center gap-1.5 text-[10px] text-teal font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse" />
-            Streaming...
+            2 / 3 ✓
           </span>
           <span className="ml-auto font-mono text-[9px] text-dim">tausi.app</span>
         </div>
@@ -551,81 +501,69 @@ function HeroProductWindow() {
         style={{ animation: "float-bob 5.2s ease-in-out infinite", animationDelay: "1.4s" }}
       >
         <CheckIcon className="text-good !w-3.5 !h-3.5" />
-        <span className="text-body">Marking ready</span>
+        <span className="text-body">HSK 2 · 68%</span>
       </div>
       <div
         className="hidden lg:flex absolute -left-3 top-[42%] z-10 items-center gap-1.5 rounded-lg border border-brand-magenta/40 bg-ink-3/95 backdrop-blur-sm px-2.5 py-1.5 shadow-lg text-[11px] font-medium text-body whitespace-nowrap pointer-events-none"
         style={{ animation: "float-bob 3.8s ease-in-out infinite", animationDelay: "0.6s" }}
       >
-        <span className="font-mono text-[9px] font-bold text-brand-magenta">PHY</span>
-        Physics · Form 4
+        <span className="font-mono text-[9px] font-bold text-brand-magenta">KP</span>
+        量词 · 38%
       </div>
     </div>
   );
 }
 
 /* ── Feature card visuals ──────────────────────────────────────────────── */
-function PredictVisual() {
+function DiagnosisVisual() {
   return (
-    <div className="flex items-center justify-center gap-4 py-2" aria-hidden="true">
-      {/* Past paper */}
-      <div className="w-[72px] rounded-md bg-[oklch(0.88_0.005_220)] p-2.5 rotate-[-4deg] shadow-md shadow-black/40 shrink-0">
-        <p className="font-serif text-[6px] text-center text-[oklch(0.45_0.01_240)] tracking-wide mb-1.5">PAST PAPER 2023</p>
-        {[11, 9, 12, 8].map((w, i) => (
-          <div key={i} className="h-[3px] rounded-sm bg-[oklch(0.7_0.005_240)] mb-1" style={{ width: `${w * 7}%` }} />
+    <div className="mx-auto w-full max-w-[260px] rounded-xl border border-line bg-ink p-3.5">
+      <MasteryBars />
+    </div>
+  );
+}
+
+function BuilderVisual() {
+  return (
+    <div className="mx-auto w-full max-w-[260px] rounded-xl border border-line bg-ink p-3 space-y-2" aria-hidden="true">
+      <p className="text-[11px] text-snow">我家___学校很近。</p>
+      <div className="grid grid-cols-4 gap-1">
+        {["离", "从", "比", "在"].map((o, k) => (
+          <span key={o} className={`text-center text-[10px] rounded py-0.5 border ${k === 0 ? "border-good/60 text-good" : "border-line text-dim"}`}>{o}</span>
         ))}
       </div>
-
-      {/* Arrow */}
-      <div className="flex flex-col items-center gap-1 shrink-0">
-        <svg className="w-5 h-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12l-7.5 7.5M21 12H3" />
-        </svg>
-        <span className="font-mono text-[8px] text-teal">AI</span>
-      </div>
-
-      {/* Predicted paper */}
-      <div className="relative w-[72px] rounded-md bg-white p-2.5 rotate-[2.5deg] shadow-md shadow-black/40 shrink-0">
-        <p className="font-serif text-[6px] text-center text-[oklch(0.3_0.01_240)] font-bold tracking-wide mb-1.5">PREDICTED 2026</p>
-        {[9, 12, 10, 11].map((w, i) => (
-          <div key={i} className="h-[3px] rounded-sm bg-[oklch(0.55_0.01_240)] mb-1" style={{ width: `${w * 7}%` }} />
+      <div className="flex gap-1 pt-1">
+        {[["✓", "bg-good/20 text-good"], ["✎", "bg-ink-3 text-body"], ["↻", "bg-ink-3 text-body"], ["✕", "bg-ink-3 text-dim"]].map(([g, c]) => (
+          <span key={g} className={`flex-1 text-center rounded-md py-1 text-[11px] font-bold ${c}`}>{g}</span>
         ))}
-        <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-teal shadow-md">
-          <svg className="w-2.5 h-2.5 text-ink" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-          </svg>
-        </span>
       </div>
     </div>
   );
 }
 
-function MarkingVisual() {
-  const rows = [
-    { q: "Q1", pct: "92%", ok: true },
-    { q: "Q2", pct: "76%", ok: true },
-    { q: "Q3", pct: "38%", ok: false },
-    { q: "Q4", pct: "88%", ok: true },
-  ];
+function LiveVisual() {
   return (
-    <div className="mx-auto w-full max-w-[220px] rounded-xl border border-line bg-ink p-3.5" aria-hidden="true">
-      <div className="flex items-baseline justify-between mb-3">
-        <span className="font-mono text-[10px] text-dim">student_answers.pdf</span>
-        <span className="font-mono text-sm font-bold text-gold">42<span className="text-[10px] text-dim">/50</span></span>
-      </div>
-      <div className="space-y-2">
-        {rows.map((r, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <span className={`font-mono text-[9px] w-5 shrink-0 ${r.ok ? "text-good" : "text-coral"}`}>{r.q}</span>
-            <div className="h-1.5 flex-1 rounded-full bg-ink-3 overflow-hidden">
-              <div
-                className={`score-bar score-bar-${i + 1} h-full rounded-full ${r.ok ? "bg-good/70" : "bg-coral/70"}`}
-                style={{ width: r.pct }}
-              />
-            </div>
-            <span className={`font-mono text-[9px] w-6 text-right ${r.ok ? "text-good" : "text-coral"}`}>{r.pct}</span>
-          </div>
+    <div className="flex items-center justify-center gap-3 py-1" aria-hidden="true">
+      <div className="grid grid-cols-5 gap-0.5 w-14 h-14 bg-white p-1 rounded-md">
+        {Array.from({ length: 25 }, (_, i) => (
+          <span key={i} className={[0, 1, 3, 5, 6, 8, 12, 14, 16, 18, 19, 20, 22, 24].includes(i) ? "bg-[#111]" : "bg-white"} />
         ))}
+      </div>
+      <div>
+        <p className="font-mono text-lg font-bold tracking-[0.2em] text-teal">K7MPQ4</p>
+        <p className="font-mono text-[9px] text-dim">23 / 24 ✓</p>
+      </div>
+    </div>
+  );
+}
+
+function ReadinessVisual() {
+  return (
+    <div className="mx-auto w-full max-w-[200px] rounded-lg border border-line bg-ink p-3 text-center" aria-hidden="true">
+      <p className="font-mono text-[9px] text-dim">HSK 2</p>
+      <p className="font-display text-2xl font-bold text-gold">68%</p>
+      <div className="flex flex-wrap justify-center gap-1 mt-1.5">
+        {["量词", "把/比"].map((k) => <span key={k} className="text-[9px] px-1.5 py-0.5 rounded-full bg-bad/15 text-bad">{k}</span>)}
       </div>
     </div>
   );
@@ -636,7 +574,7 @@ function TutorVisual() {
     <div className="space-y-2 py-1" aria-hidden="true">
       <div className="flex justify-end">
         <div className="max-w-[70%] rounded-2xl rounded-tr-sm bg-teal-deep/50 border border-teal-deep px-3 py-1.5">
-          <p className="text-[10px] text-body">What is Ohm&apos;s Law?</p>
+          <p className="text-[10px] text-body">为什么是“两个人”？</p>
         </div>
       </div>
       <div className="flex gap-2 items-end">
@@ -644,47 +582,20 @@ function TutorVisual() {
           <span className="font-bold text-[7px] text-teal">T</span>
         </span>
         <div className="max-w-[75%] rounded-2xl rounded-bl-sm bg-ink-3 border border-line px-3 py-1.5">
-          <p className="text-[10px] text-body leading-snug">V = IR. Voltage equals current times resistance. Here&apos;s a worked example...</p>
+          <p className="text-[10px] text-body leading-snug">Before a measure word, “two” is 两, not 二 — so 两个人.</p>
         </div>
       </div>
     </div>
   );
 }
 
-function LibraryVisual() {
-  const papers = [
-    { label: "Physics 2023", rot: "-4deg", top: "10px", left: "4px" },
-    { label: "Physics 2022", rot: "-1.5deg", top: "6px", left: "2px" },
-    { label: "Physics 2024", rot: "1.5deg", top: "0px", left: "0px" },
-  ];
-  return (
-    <div className="flex justify-center items-end gap-4 py-2 pb-3" aria-hidden="true">
-      <div className="relative h-[72px] w-[56px]">
-        {papers.map((p, i) => (
-          <div
-            key={i}
-            className="absolute w-[52px] rounded-sm bg-[oklch(0.9_0.004_240)] p-1.5 shadow-sm"
-            style={{ transform: `rotate(${p.rot})`, top: p.top, left: p.left, zIndex: i }}
-          >
-            <p className="font-serif text-[6px] text-[oklch(0.4_0.01_240)] leading-tight">{p.label}</p>
-          </div>
-        ))}
-      </div>
-      <div className="text-center">
-        <p className="font-display text-2xl font-bold text-teal">150+</p>
-        <p className="font-mono text-[9px] text-dim">past papers</p>
-      </div>
-    </div>
-  );
-}
-
 const SUBJECTS = [
-  "Mathematics", "Physics", "Chemistry", "Biology", "Computer Science",
+  "Chinese (HSK)", "Kiswahili", "English", "Mathematics", "Physics", "Chemistry", "Biology", "Computer Science",
   "Economics", "Accounting", "History", "Geography", "Law",
   "Statistics", "Engineering", "Medicine", "Business Studies", "Psychology",
 ];
 
-const BOARDS = ["NECTA", "KCSE", "IGCSE", "WAEC", "ZIMSEC", "UNEB", "NSC"];
+const BOARDS = ["HSK", "NECTA", "KCSE", "IGCSE", "WAEC", "UNEB", "NSC"];
 
 /* ── How-it-works: orbital signal canvas ─────────────────────────────── */
 // 4 nodes on a vertical S-curve path; each emits expanding rings.
@@ -927,9 +838,9 @@ export function LandingClient() {
     setHowPaused(true);
   };
 
-  const lead = [L.features[0], L.features[4]];
-  const mid  = [L.features[1], L.features[2], L.features[5]];
-  const compact = [L.features[3], L.features[6], L.features[7]];
+  const lead = [L.features[0], L.features[3]];
+  const mid  = [L.features[4], L.features[5], L.features[1]];
+  const compact = [L.features[2], L.features[6], L.features[7]];
 
   return (
     <>
@@ -1049,14 +960,14 @@ export function LandingClient() {
             {/* Two lead feature panels */}
             <div className="grid md:grid-cols-2 gap-5 mb-5">
               <div className="reveal feat-card-teal feat-accent-teal rounded-2xl border border-line bg-ink-2/90 p-7 flex flex-col">
-                <span className="font-mono text-[10px] tracking-[0.18em] text-teal-deep uppercase mb-4 block">Exam Prediction</span>
-                <PredictVisual />
+                <span className="font-mono text-[10px] tracking-[0.18em] text-teal-deep uppercase mb-4 block">{L.featureTags[0]}</span>
+                <DiagnosisVisual />
                 <h3 className="font-display text-xl font-bold mt-5 mb-2 text-snow">{lead[0].title}</h3>
                 <p className="text-sm text-body leading-relaxed flex-1">{lead[0].desc}</p>
               </div>
               <div className="reveal feat-card-gold feat-accent-gold rounded-2xl border border-line bg-ink-2/90 p-7 flex flex-col">
-                <span className="font-mono text-[10px] tracking-[0.18em] text-gold/50 uppercase mb-4 block">AI Marking</span>
-                <MarkingVisual />
+                <span className="font-mono text-[10px] tracking-[0.18em] text-gold/50 uppercase mb-4 block">{L.featureTags[1]}</span>
+                <BuilderVisual />
                 <h3 className="font-display text-xl font-bold mt-5 mb-2 text-snow">{lead[1].title}</h3>
                 <p className="text-sm text-body leading-relaxed flex-1">{lead[1].desc}</p>
               </div>
@@ -1065,34 +976,22 @@ export function LandingClient() {
             {/* Three supporting feature cards */}
             <div className="grid sm:grid-cols-3 gap-5 mb-10">
               <div className="reveal feat-card-teal feat-accent-teal rounded-2xl border border-line bg-ink-2/90 p-6 flex flex-col">
-                <span className="font-mono text-[10px] tracking-[0.18em] text-teal-deep uppercase mb-3 block">Intelligent Tutor</span>
-                <TutorVisual />
+                <span className="font-mono text-[10px] tracking-[0.18em] text-teal-deep uppercase mb-3 block">{L.featureTags[2]}</span>
+                <LiveVisual />
                 <h3 className="font-display text-base font-bold mb-1.5 mt-4 text-snow">{mid[0].title}</h3>
                 <p className="text-sm text-body leading-relaxed flex-1">{mid[0].desc}</p>
               </div>
 
               <div className="reveal feat-card-coral feat-accent-coral rounded-2xl border border-line bg-ink-2/90 p-6 flex flex-col">
-                <span className="font-mono text-[10px] tracking-[0.18em] text-coral/60 uppercase mb-3 block">Past Papers</span>
-                <LibraryVisual />
-                <h3 className="font-display text-base font-bold mb-1.5 text-snow">{mid[1].title}</h3>
+                <span className="font-mono text-[10px] tracking-[0.18em] text-coral/60 uppercase mb-3 block">{L.featureTags[3]}</span>
+                <TutorVisual />
+                <h3 className="font-display text-base font-bold mb-1.5 mt-4 text-snow">{mid[1].title}</h3>
                 <p className="text-sm text-body leading-relaxed flex-1">{mid[1].desc}</p>
               </div>
 
               <div className="reveal feat-card-magenta feat-accent-magenta rounded-2xl border border-line bg-ink-2/90 p-6 flex flex-col">
-                <span className="font-mono text-[10px] tracking-[0.18em] text-brand-magenta/50 uppercase mb-3 block">Study Room</span>
-                <div className="mx-auto w-full max-w-[180px] rounded-lg border border-line bg-ink p-3 space-y-2 py-3" aria-hidden="true">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-brand-magenta/30 shrink-0" />
-                    <div className="h-1.5 flex-1 rounded-sm bg-line" />
-                  </div>
-                  <div className="h-1.5 w-full rounded-sm bg-teal-deep/60" />
-                  <div className="h-1.5 w-10/12 rounded-sm bg-line" />
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-teal-deep/40 shrink-0" />
-                    <div className="h-1.5 flex-1 rounded-sm bg-teal-deep/50" />
-                  </div>
-                  <div className="h-1.5 w-9/12 rounded-sm bg-line" />
-                </div>
+                <span className="font-mono text-[10px] tracking-[0.18em] text-brand-magenta/50 uppercase mb-3 block">{L.featureTags[4]}</span>
+                <ReadinessVisual />
                 <h3 className="font-display text-base font-bold mb-1.5 mt-4 text-snow">{mid[2].title}</h3>
                 <p className="text-sm text-body leading-relaxed flex-1">{mid[2].desc}</p>
               </div>
@@ -1121,7 +1020,7 @@ export function LandingClient() {
             <div className="reveal mb-10">
               <h2 className="font-display text-3xl sm:text-[2.6rem] font-bold leading-tight mb-3">{L.howHeading}</h2>
               <p className="text-sm text-body max-w-md">
-                Four steps from raw past papers to a predicted exam, fully marked and ready to study.
+                {L.howSub}
               </p>
             </div>
 
@@ -1288,7 +1187,7 @@ export function LandingClient() {
               <Link href="/privacy" className="hover:text-snow transition-colors">{T.legal.footerPrivacy}</Link>
               <Link href="/service" className="hover:text-snow transition-colors">{T.legal.footerTerms}</Link>
               <Link href="/cookies" className="hover:text-snow transition-colors">{T.legal.footerCookies}</Link>
-              <span className="text-dim/40">© {new Date().getFullYear()} Tausi · A Vylos.co product</span>
+              <span className="text-dim/40">© {new Date().getFullYear()} Tausi</span>
             </div>
           </div>
         </footer>

@@ -16,7 +16,7 @@ export default function PredictPage() {
       <Header />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7 pb-bottom-nav md:pb-10 space-y-5">
         <PageHero d={SPARK} accent="teal" title={D.pageHeading}
-          subtitle="Upload past papers — get AI-predicted exam questions"
+          subtitle="Upload past papers — get a new practice paper in the same format"
           action={
             <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-teal border border-teal/30 bg-teal/5 px-2.5 py-1.5 rounded-lg">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

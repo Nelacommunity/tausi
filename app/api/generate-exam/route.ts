@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   const files = formData.getAll("files") as File[];
   const notes = (formData.get("notes") as string) || "";
   if (!files.length) return jsonErr("No files uploaded", 400);
-  if (files.length > 3) return jsonErr("Too many files (max 3 for exam prediction)", 400);
+  if (files.length > 3) return jsonErr("Too many files (max 3 per practice paper)", 400);
   if (notes.length > 2000) return jsonErr("Notes too long (max 2000 characters)", 400);
 
   // Context limit guard: base64 encoding inflates size by ~33%.
@@ -50,8 +50,8 @@ export async function POST(request: Request) {
   }
 
   const prompt = files.length === 1
-    ? "Analyse this past exam paper and generate a new predicted exam paper that follows the exact same format and structure."
-    : `Analyse these ${files.length} past exam papers and generate a new predicted exam paper that follows the exact same format and structure, incorporating patterns from all papers.`;
+    ? "Analyse this past exam paper and generate a new practice exam paper that follows the exact same format and structure."
+    : `Analyse these ${files.length} past exam papers and generate a new practice exam paper that follows the exact same format and structure, incorporating patterns from all papers.`;
   parts.push({ text: notes ? `${prompt}\n\nAdditional instructions: ${notes}` : prompt });
 
   const stream = new ReadableStream({

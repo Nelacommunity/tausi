@@ -21,7 +21,8 @@ function formatDate(iso: string) {
 export default function Dashboard() {
   const { T } = useT();
   const D = T.dashboard;
-  const { user } = useSession();
+  const { user, role } = useSession();
+  const LL = T.learn;
 
   const [recentExams, setRecentExams] = useState<RecentExam[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(true);
@@ -46,6 +47,22 @@ export default function Dashboard() {
     <div className="min-h-screen bg-ink text-snow page-shell">
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-7 pb-bottom-nav md:pb-10 space-y-5">
+
+        {/* ── Diagnosis & teaching entry points ───────────────────── */}
+        <div className={`grid grid-cols-1 gap-3 page-in ${role === "teacher" ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+          {[
+            ...(role === "teacher"
+              ? [{ href: "/teach", title: LL.teachTitle, sub: LL.teachSub, tone: "border-teal/40 bg-teal/[0.06] hover:border-teal" }]
+              : []),
+            { href: "/learn", title: LL.learnTitle, sub: LL.learnSub, tone: role === "teacher" ? "border-line bg-ink-2 hover:border-line-2" : "border-gold/40 bg-gold/[0.06] hover:border-gold" },
+            { href: "/join", title: LL.joinLive, sub: LL.joinSub, tone: "border-line bg-ink-2 hover:border-line-2" },
+          ].map((c) => (
+            <Link key={c.title} href={c.href} className={`rounded-2xl border p-4 transition-colors ${c.tone}`}>
+              <p className="font-display font-bold text-snow">{c.title} →</p>
+              <p className="text-xs text-dim mt-1 leading-relaxed">{c.sub}</p>
+            </Link>
+          ))}
+        </div>
 
         {/* ════════════════════════════════════════════════════════════
             ROW 1 — Stats overview + Recent Exams hero

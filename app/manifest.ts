@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Tausi — AI Exam Prediction & Study Assistant",
+    name: "Tausi — Learning Diagnosis & Practice",
     short_name: "Tausi",
     description:
-      "Upload past exam papers. AI predicts your next exam, generates marking schemes, and chats with you about the content.",
+      "Tausi turns any curriculum into diagnosis and practice — helping students find their weak areas and teachers build curriculum-aligned practice exams.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

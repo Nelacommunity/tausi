@@ -4,12 +4,12 @@ import { ogImage, OG_SIZE, OG_CONTENT_TYPE } from "@/app/lib/og";
 export const runtime = "edge";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
-export const alt = "AI-predicted exam paper on Tausi";
+export const alt = "Practice paper on Tausi";
 
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  let title = "AI-Predicted Exam";
+  let title = "Practice Paper";
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -28,8 +28,8 @@ export default async function Image({ params }: { params: Promise<{ id: string }
 
   return ogImage({
     accent: "teal",
-    eyebrow: "Predicted Exam",
+    eyebrow: "Practice Paper",
     title,
-    subtitle: "AI-predicted exam paper with full marking scheme — study free on Tausi.",
+    subtitle: "Practice paper with full marking scheme — study free on Tausi.",
   });
 }

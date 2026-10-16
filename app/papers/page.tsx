@@ -9,7 +9,7 @@ import { PapersHeader, PapersEmpty } from "./PapersHeader";
 
 export const metadata: Metadata = {
   title: "Exam Library",
-  description: "Your saved past papers. Reuse them to predict new exams with Tausi AI.",
+  description: "Your saved past papers. Reuse them to build practice papers with Tausi AI.",
   robots: { index: false, follow: false },
 };
 
