@@ -47,8 +47,11 @@ export function NotificationBell({ side = false }: { side?: boolean }) {
     if (!userId) return;
     load();
     const supabase = createClient();
+    // Unique topic per mount: the header renders this bell twice (sidebar + mobile bar)
+    // and the browser client is shared, so a fixed name would hand back an
+    // already-subscribed channel and adding a listener to it throws.
     const channel = supabase
-      .channel(`notifications:${userId}`)
+      .channel(`notifications:${userId}:${crypto.randomUUID()}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` }, load)
       .subscribe();
     const poll = setInterval(load, 60_000);

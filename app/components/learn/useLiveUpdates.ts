@@ -36,21 +36,42 @@ export function useLiveUpdates({
   useEffect(() => {
     if (!sessionId) return;
     const supabase = createClient();
-    let channel = supabase
-      .channel(`live:${code}`, { config: { broadcast: { self: false } } })
-      .on("broadcast", { event: "sync" }, signal)
+    let cancelled = false;
+    let rows: RealtimeChannel | null = null;
+    let broadcast: RealtimeChannel | null = null;
+
+    // Row changes: listeners don't depend on the topic, so give it a unique one.
+    rows = supabase
+      .channel(`live-rows:${code}:${crypto.randomUUID()}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "live_sessions", filter: `id=eq.${sessionId}` }, signal);
     if (host) {
-      channel = channel
+      rows = rows
         .on("postgres_changes", { event: "*", schema: "public", table: "session_participants", filter: `session_id=eq.${sessionId}` }, signal)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "answers", filter: `session_id=eq.${sessionId}` }, signal);
     }
-    channel.subscribe((status) => setConnected(status === "SUBSCRIBED"));
-    channelRef.current = channel;
+    rows.subscribe((status) => { if (!cancelled) setConnected(status === "SUBSCRIBED"); });
+
+    // Broadcast must share the topic "live:<CODE>" with every other screen. The
+    // browser client is shared, so first fully remove any stale copy (e.g. from
+    // React's dev-mode double effect) — otherwise channel() returns the old,
+    // already-subscribed channel and adding a listener throws.
+    (async () => {
+      const topic = `realtime:live:${code}`;
+      await Promise.all(supabase.getChannels().filter((c) => c.topic === topic).map((c) => supabase.removeChannel(c)));
+      if (cancelled) return;
+      broadcast = supabase
+        .channel(`live:${code}`, { config: { broadcast: { self: false } } })
+        .on("broadcast", { event: "sync" }, signal)
+        .subscribe();
+      channelRef.current = broadcast;
+    })();
+
     return () => {
+      cancelled = true;
       channelRef.current = null;
       setConnected(false);
-      supabase.removeChannel(channel);
+      if (rows) supabase.removeChannel(rows);
+      if (broadcast) supabase.removeChannel(broadcast);
     };
   }, [code, sessionId, host, signal]);
 
