@@ -18,6 +18,8 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/assessments
 const patchSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
   publish: z.boolean().optional(),
+  /** Approve every draft in this exam that the teacher owns. */
+  approveAll: z.boolean().optional(),
 });
 
 export async function PATCH(request: Request, ctx: RouteContext<"/api/assessments/[id]">) {
@@ -34,6 +36,18 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/assessment
 
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (parsed.data.title) updates.title = parsed.data.title;
+
+  if (parsed.data.approveAll) {
+    const drafts = (await assessmentQuestions(db, id))
+      .filter((q) => q.status === "draft" && q.created_by === user.id)
+      .map((q) => q.id);
+    if (drafts.length) {
+      const { error } = await db.from("questions")
+        .update({ status: "approved", updated_at: new Date().toISOString() })
+        .in("id", drafts);
+      if (error) return jsonError(error.message, 500);
+    }
+  }
 
   if (parsed.data.publish) {
     // Publishing keeps only approved questions — drafts must be reviewed first.

@@ -81,6 +81,7 @@ export function Builder({ id }: { id: string }) {
     run(() => api(`/api/assessments/${id}`, { method: "PATCH", json: { title } }));
   };
   const publish = () => run(() => api(`/api/assessments/${id}`, { method: "PATCH", json: { publish: true } }));
+  const approveAll = () => run(() => api(`/api/assessments/${id}`, { method: "PATCH", json: { approveAll: true } }), "all");
   const deleteExam = async () => {
     if (!confirmDelete) { setConfirmDelete(true); return; }
     try { await api(`/api/assessments/${id}`, { method: "DELETE" }); router.push("/teach"); }
@@ -122,6 +123,11 @@ export function Builder({ id }: { id: string }) {
           <p className="text-sm text-body">{L.reviewSummary(nApproved, nDraft, nRejected)}</p>
           <p className="text-xs text-dim">{L.sourcesLine(src("ai_draft"), src("ai_edited"), src("seed"), src("teacher"))}</p>
           <div className="flex flex-wrap gap-2 pt-1">
+            {nDraft > 0 && (
+              <Button variant="teal" onClick={approveAll} disabled={busyId === "all"}>
+                {busyId === "all" && <Spinner />} {L.approveAll(nDraft)}
+              </Button>
+            )}
             {detail.status === "published" ? (
               <Button variant="primary" onClick={() => setShowHost((v) => !v)}>{L.hostLive}</Button>
             ) : (
@@ -217,6 +223,14 @@ export function Builder({ id }: { id: string }) {
           {/* Questions */}
           <section className="space-y-3 min-w-0">
             {qs.length === 0 && <Card><p className="text-sm text-dim">{L.builderEmpty}</p></Card>}
+            {nDraft > 1 && (
+              <div className="sticky top-2 z-10 flex items-center justify-between gap-3 rounded-xl border border-gold/40 bg-ink-2/95 backdrop-blur px-4 py-2.5">
+                <span className="text-sm text-body">{L.reviewSummary(nApproved, nDraft, nRejected)}</span>
+                <Button variant="teal" className="!py-1.5 !px-3 text-xs shrink-0" onClick={approveAll} disabled={busyId === "all"}>
+                  {busyId === "all" && <Spinner />} {L.approveAll(nDraft)}
+                </Button>
+              </div>
+            )}
             {qs.map((q, i) => (
               editingId === q.id
                 ? <QuestionEditor key={q.id} q={q} kps={kps} busy={busyId === q.id} onCancel={() => setEditingId(null)} onSave={(c) => saveEdit(q, c)} />
