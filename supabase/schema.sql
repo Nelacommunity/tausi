@@ -594,5 +594,38 @@ $$ language plpgsql security definer set search_path = public;
 
 revoke execute on function rate_limit_hit(text, integer, integer) from public, anon, authenticated;
 
+-- ── Shuō (Chinese practice app served at /shuo) ────────────
+-- Saved progress: one row per student per store (settings, progress,
+-- flashcards, mistakes, speaking sessions, custom lessons). Written directly
+-- from the browser, so RLS limits each student to their own rows.
+create table if not exists shuo_state (
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  key        text not null check (char_length(key) <= 64),
+  value      jsonb not null,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, key)
+);
+alter table shuo_state enable row level security;
+drop policy if exists "users manage own shuo state" on shuo_state;
+create policy "users manage own shuo state" on shuo_state
+  for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Results a student shares with a class (a lesson score or a speaking
+-- report). Written only by the server after it checks class membership.
+create table if not exists shuo_results (
+  id         uuid primary key default gen_random_uuid(),
+  student_id uuid not null references auth.users(id) on delete cascade,
+  class_id   uuid not null references classes(id) on delete cascade,
+  kind       text not null check (kind in ('lesson', 'speaking')),
+  title      text not null,
+  score      integer not null check (score between 0 and 100),
+  details    jsonb not null default '{}'::jsonb,
+  auto       boolean not null default false,  -- sent automatically vs. by the student's tap
+  created_at timestamptz not null default now()
+);
+create index if not exists shuo_results_class_idx on shuo_results(class_id, created_at desc);
+create index if not exists shuo_results_student_idx on shuo_results(student_id, created_at desc);
+alter table shuo_results enable row level security;
+
 -- Make the API pick up new tables immediately.
 notify pgrst, 'reload schema';

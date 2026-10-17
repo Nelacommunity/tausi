@@ -7,6 +7,7 @@ export const zhOverrides = {
     myExams: "我的练习卷",
     learn: "我的学习",
     teach: "教学",
+    shuo: "Shuō · 中文",
     aiMarker: "AI 批改",
     studyRoom: "学习室",
     examLibrary: "试卷库",

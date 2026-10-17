@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Shuō is a separate Vite app with its own conventions; its build output is generated.
+    "shuo/**",
+    "public/shuo/**",
+    ".next-verify/**",
   ]),
 ]);
 

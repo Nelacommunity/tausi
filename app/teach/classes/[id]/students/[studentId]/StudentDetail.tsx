@@ -7,10 +7,12 @@ import { useT } from "@/app/lib/language-context";
 import type { LevelProgress, SessionResult } from "@/app/lib/learning/progress";
 import { api } from "@/app/components/learn/api";
 import { LevelReadiness } from "@/app/learn/LearnHome";
+import { ShuoResults, type ShuoResult } from "@/app/components/learn/ShuoResults";
 import { Card, ErrorNote, formatDate, SectionTitle, Spinner } from "@/app/components/learn/ui";
 
 interface Detail {
   className: string;
+  shuoResults: ShuoResult[];
   name: string;
   levels: LevelProgress[];
   history: SessionResult[];
@@ -40,6 +42,7 @@ export function StudentDetail({ classId, studentId }: { classId: string; student
               <section className="lg:col-span-2 space-y-4">
                 {d.levels.length === 0 ? <Card><p className="text-sm text-dim">{L.noData}</p></Card>
                   : d.levels.map((l) => <LevelReadiness key={l.levelId} level={l} />)}
+                <ShuoResults results={d.shuoResults ?? []} showStudent={false} />
               </section>
               <aside className="space-y-4">
                 <Card>

@@ -58,8 +58,17 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/classes/[id
     acc.set(f.userId, s);
   }
 
+  const { data: shuoRows } = await db.from("shuo_results")
+    .select("id, student_id, kind, title, score, details, auto, created_at")
+    .eq("class_id", id).order("created_at", { ascending: false }).limit(40);
+  const nameById = new Map(students.map((s) => [s.id, s.name]));
+
   return Response.json({
     id: cls.id, name: cls.name, code: cls.join_code, isPublic: cls.is_public as boolean,
+    shuoResults: (shuoRows ?? []).map((r) => ({
+      id: r.id, studentId: r.student_id, studentName: nameById.get(r.student_id) ?? "Student",
+      kind: r.kind, title: r.title, score: r.score, details: r.details, auto: r.auto, date: r.created_at,
+    })),
     sessions: (sessions ?? []).map((s) => {
       const sf = facts.filter((f) => f.sessionId === s.id);
       return {

@@ -33,6 +33,15 @@ Key folders:
 - `app/components/learn/` — shared UI: question input, review list, realtime hook, QR code
 - `scripts/seed.ts` — seeds curricula and the demo dataset
 
+## Shuō — Chinese practice (`/shuo`)
+
+Shuō is a Vite + React single-page app in `shuo/`, built to `public/shuo` and served by Tausi at `/shuo` (rewrite to its `index.html`; its pages use `#/` hash routes). It shares Tausi's Supabase session because it's on the same origin.
+
+- **AI without a browser key:** Shuō's text/JSON/speech calls go through `POST /api/shuo/gemini`, which checks sign-in, rate-limits (local + shared Postgres counter), forwards only `contents`, `systemInstruction` and `generationConfig`, and adds the key server-side. The voice tutor opens the Gemini Live websocket with a single-use ephemeral token from `POST /api/shuo/live-token` (one use, must start within a minute, session ends within 30).
+- **Progress sync:** stores marked `sync` are cached per user in localStorage and saved to `shuo_state` (RLS: own rows only).
+- **Teacher results:** the student chooses "ask each time" or "automatic"; `POST /api/shuo/results` accepts only classes the student belongs to, writes `shuo_results`, and notifies each teacher. Results appear on the class page and the student drill-down.
+- **Security headers:** `/shuo` gets its own CSP (Gemini Live websocket, Google Fonts, Hanzi Writer data on jsDelivr, `blob:` for the audio worklet) and `microphone=(self)`; the rest of Tausi keeps the stricter policy.
+
 ## Security & performance
 
 - **Authentication:** every request's access token is verified locally with `getClaims()` (signature and expiry against the project's ES256 keys) in the proxy (`proxy.ts`) and the API routes, instead of a network call to the Auth server on each request (~4 ms vs ~350 ms). Verification failures fail closed: the visitor is treated as signed out.
@@ -161,6 +170,9 @@ UI strings live in `app/lib/translations.ts` (English, Kiswahili), `app/lib/i18n
 | @google/generative-ai | 0.24.1 | Apache-2.0 | Gemini API client |
 | zod | 4.4.3 | MIT | Validation of requests and AI output |
 | qrcode | 1.5.4 | MIT | QR codes for joining sessions |
+| vite, @vitejs/plugin-react | 8.3.0, 6.1.1 | MIT | Building Shuō |
+| hanzi-writer | 3.7.3 | MIT | Shuō stroke-order animation and handwriting quizzes |
+| pinyin-pro | 3.29.4 | MIT | Shuō pinyin conversion |
 | unpdf | 1.9.0 | MIT | Text extraction from PDF resources |
 | mammoth | 1.13.0 | BSD-2-Clause | Text extraction from Word resources |
 | jszip | 3.10.2 | MIT (dual MIT / GPL-3.0; used under MIT) | Reading PowerPoint resources |

@@ -9,6 +9,14 @@ import { useTheme } from "@/app/lib/theme-context";
 import { useSession } from "@/app/lib/session-context";
 import { NotificationBell } from "@/app/components/learn/NotificationBell";
 
+/**
+ * Next <Link> for app routes; a plain <a> for Shuō, which is a separate
+ * single-page app served at /shuo/ and needs a full page load.
+ */
+function NavAnchor(props: React.ComponentProps<"a"> & { href: string }) {
+  return props.href.startsWith("/shuo") ? <a {...props} /> : <Link {...props} />;
+}
+
 function NavIcon({ d, sw = 1.5 }: { d: string; sw?: number }) {
   return (
     <svg className="w-[18px] h-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -25,6 +33,10 @@ const NAV = [
   {
     href: "/learn", key: "learn" as const, label: "My learning", accent: "gold",
     d: "M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6",
+  },
+  {
+    href: "/shuo", key: "shuo" as const, label: "Shuō", accent: "coral",
+    d: "M10.5 21l5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 016-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 01-3.827-5.802",
   },
   {
     href: "/teach", key: "teach" as const, label: "Teach", accent: "teal", teacherOnly: true,
@@ -226,7 +238,7 @@ export function Header() {
           {navItems.map(({ href, key, d, accent }) => {
             const active = isActive(href);
             return (
-              <Link key={href} href={href} title={collapsed ? T.nav[key as NavKey] : undefined}
+              <NavAnchor key={href} href={href} title={collapsed ? T.nav[key as NavKey] : undefined}
                 className={`group relative flex items-center gap-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer ${
                   collapsed ? "justify-center p-1.5" : "px-2 py-1.5"
                 } ${
@@ -251,7 +263,7 @@ export function Header() {
                 {active && !collapsed && (
                   <span className={`ml-auto w-1.5 h-1.5 rounded-full shrink-0 ${ACTIVE_DOT[accent]}`} />
                 )}
-              </Link>
+              </NavAnchor>
             );
           })}
         </nav>
@@ -369,7 +381,7 @@ export function Header() {
             {navItems.slice(0, 5).map(({ href, key, d, accent }) => {
               const active = isActive(href);
               return (
-                <Link key={href} href={href}
+                <NavAnchor key={href} href={href}
                   className={`relative flex flex-col items-center justify-center gap-1.5 transition-colors ${
                     active ? ACTIVE_DOT[accent].replace("bg-", "text-") : "text-dim"
                   }`}>
@@ -382,7 +394,7 @@ export function Header() {
                   <span className="text-[9px] font-semibold leading-none uppercase tracking-wide truncate max-w-full px-0.5">
                     {T.nav[key as NavKey]}
                   </span>
-                </Link>
+                </NavAnchor>
               );
             })}
           </div>
@@ -419,7 +431,7 @@ export function Header() {
             <Link href="/discover" onClick={() => setMobileSheet(false)}
               className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-dim hover:text-snow hover:bg-white/5 transition-colors text-sm">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
               </svg>
               {T.nav.discover}
             </Link>

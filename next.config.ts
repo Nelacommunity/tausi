@@ -28,6 +28,26 @@ const csp = [
   ...(isDev ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
+// Shuō (the Chinese practice app at /shuo) is a static bundle with different
+// needs: the microphone (voice tutor, tone lab), the Gemini Live websocket
+// (single-use token, no key), its audio-capture worklet (loaded from a blob:
+// URL), Google Fonts, and Hanzi Writer's stroke data on jsDelivr.
+const shuoCsp = [
+  "default-src 'self'",
+  "script-src 'self' blob:",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' blob: data:",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  `connect-src 'self' ${supabase} ${supabaseWs} wss://generativelanguage.googleapis.com https://cdn.jsdelivr.net`,
+  "worker-src 'self' blob:",
+  "media-src 'self' blob: data:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  ...(isDev ? [] : ["upgrade-insecure-requests"]),
+].join("; ");
+
 const securityHeaders = [
   { key: "Content-Security-Policy", value: csp },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -58,12 +78,37 @@ const nextConfig: NextConfig = {
     "10.0.0.*",
     "172.16.*.*",
   ],
+  // /shuo serves Shuō's single-page app (its pages use #/ hash routes).
+  async rewrites() {
+    return [
+      { source: "/shuo", destination: "/shuo/index.html" },
+      { source: "/shuo/", destination: "/shuo/index.html" },
+    ];
+  },
   async headers() {
     return [
       {
-        // Security headers applied to every route
-        source: "/(.*)",
+        // Security headers for every route except Shuō (which gets its own set below,
+        // since two CSP headers on one response would both be enforced).
+        source: "/:path((?!shuo(?:/|$)).*)",
         headers: securityHeaders,
+      },
+      {
+        source: "/shuo/:path*",
+        headers: [
+          ...securityHeaders.filter((h) => h.key !== "Content-Security-Policy" && h.key !== "Permissions-Policy"),
+          { key: "Content-Security-Policy", value: shuoCsp },
+          // Microphone for the voice tutor and tone lab — this origin only.
+          { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()" },
+        ],
+      },
+      {
+        source: "/shuo",
+        headers: [
+          ...securityHeaders.filter((h) => h.key !== "Content-Security-Policy" && h.key !== "Permissions-Policy"),
+          { key: "Content-Security-Policy", value: shuoCsp },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()" },
+        ],
       },
       {
         // Logos and icons rarely change: cache for a day, revalidate in the background for a week.

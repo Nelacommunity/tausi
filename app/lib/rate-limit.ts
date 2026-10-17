@@ -33,6 +33,10 @@ export const LIMITS = {
   upload: { windowMs: 60_000, max: 20 },
   /** Standard CRUD routes — 60 req / min */
   standard: { windowMs: 60_000, max: 60 },
+  /** Shuō's many small AI calls (e.g. one speech request per sentence) — 90 req / min */
+  shuo: { windowMs: 60_000, max: 90 },
+  /** Starting a Shuō voice session — 6 / min */
+  shuoLive: { windowMs: 60_000, max: 6 },
 } satisfies Record<string, RateLimitConfig>;
 
 export function checkRateLimit(
@@ -81,18 +85,31 @@ export function rateLimitError(resetAt: number): Response {
 
 import { createAdminClient } from "@/app/lib/supabase/admin";
 
-export async function checkAiRateLimit(key: string): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
-  const local = checkRateLimit(key, LIMITS.ai);
+/**
+ * Local limit, then the shared Postgres counter, for `config`. Fails open on
+ * the shared part (the local limit still applies) if the database function
+ * is missing or unreachable.
+ */
+export async function checkSharedRateLimit(
+  key: string,
+  config: RateLimitConfig,
+): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
+  const local = checkRateLimit(key, config);
   if (!local.allowed) return local;
   try {
     const { data, error } = await createAdminClient().rpc("rate_limit_hit", {
-      p_key: `ai:${key}`,
-      p_window_seconds: Math.round(LIMITS.ai.windowMs / 1000),
-      p_max: LIMITS.ai.max,
+      p_key: `shared:${key}`,
+      p_window_seconds: Math.round(config.windowMs / 1000),
+      p_max: config.max,
     });
-    if (!error && data === false) return { allowed: false, remaining: 0, resetAt: Date.now() + LIMITS.ai.windowMs };
+    if (!error && data === false) return { allowed: false, remaining: 0, resetAt: Date.now() + config.windowMs };
   } catch {
     // fail open — the local limit still applies
   }
   return local;
+}
+
+/** Shared limit for the expensive AI routes (LIMITS.ai). */
+export function checkAiRateLimit(key: string) {
+  return checkSharedRateLimit(`ai:${key}`, LIMITS.ai);
 }

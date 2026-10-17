@@ -25,8 +25,15 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/classes/[id
       .order("created_at", { ascending: false }).limit(8),
   ]);
 
+  const { data: shuoRows } = await db.from("shuo_results")
+    .select("id, kind, title, score, details, auto, created_at")
+    .eq("class_id", id).eq("student_id", studentId).order("created_at", { ascending: false }).limit(20);
+
   return Response.json({
     className: cls.name,
+    shuoResults: (shuoRows ?? []).map((r) => ({
+      id: r.id, kind: r.kind, title: r.title, score: r.score, details: r.details, auto: r.auto, date: r.created_at,
+    })),
     name: displayNameOf(profile ?? {}),
     levels,
     history,

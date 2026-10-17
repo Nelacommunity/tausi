@@ -6,11 +6,13 @@ import { Header } from "@/app/components/Header";
 import { useT } from "@/app/lib/language-context";
 import { api } from "@/app/components/learn/api";
 import { QrCode } from "@/app/components/learn/QrCode";
+import { ShuoResults, type ShuoResult } from "@/app/components/learn/ShuoResults";
 import { Badge, Card, DistributionBars, ErrorNote, formatDate, pct, SectionTitle, Spinner } from "@/app/components/learn/ui";
 import { shareOrigin } from "@/app/lib/site";
 
 interface ClassData {
   id: string; name: string; code: string; isPublic: boolean;
+  shuoResults: ShuoResult[];
   sessions: { id: string; code: string; mode: string; status: string; date: string; title: string; accuracy: number | null; players: number }[];
   distribution: number[];
   hardestQuestions: { questionId: string; prompt: string; answer: string; attempts: number; accuracy: number; commonWrong: string | null }[];
@@ -158,6 +160,8 @@ export function ClassReport({ id }: { id: string }) {
                 </ol>
               )}
             </Card>
+
+            <ShuoResults results={c.shuoResults ?? []} />
 
             <Card>
               <SectionTitle>{L.liveSessions}</SectionTitle>

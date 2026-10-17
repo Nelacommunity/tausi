@@ -4,11 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run build:shuo && next build",
     "start": "next start",
     "lint": "eslint",
     "seed": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/seed.ts",
-    "seed:demo": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/seed.ts --demo"
+    "seed:demo": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/seed.ts --demo",
+    "build:shuo": "vite build --config shuo/vite.config.ts",
+    "predev": "npm run build:shuo",
+    "dev:shuo": "vite build --config shuo/vite.config.ts --watch"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -37,10 +40,14 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.1.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "hanzi-writer": "^3.7.3",
+    "pinyin-pro": "^3.29.4",
     "playwright": "^1.60.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "^8.3.0"
   }
 }

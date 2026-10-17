@@ -10,6 +10,7 @@ const base = {
       myExams:          "My Exams",
       learn:            "My learning",
       teach:            "Teach",
+      shuo:             "Shuō · Chinese",
       aiMarker:         "AI Marker",
       studyRoom:        "Study Room",
       examLibrary:      "Exam Library",
@@ -493,6 +494,7 @@ const base = {
     nav: {
       learn:            "Masomo yangu",
       teach:            "Fundisha",
+      shuo:             "Shuō · Kichina",
       myExams:          "Mitihani Yangu",
       aiMarker:         "Mkaguzi wa AI",
       studyRoom:        "Chumba cha Kusoma",

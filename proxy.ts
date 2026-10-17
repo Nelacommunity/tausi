@@ -20,9 +20,13 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
 };
 
-function applySecurityHeaders(res: NextResponse | Response) {
+function applySecurityHeaders(res: NextResponse | Response, pathname = "") {
   for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
     res.headers.set(k, v);
+  }
+  // Shuō's voice tutor and tone lab need the microphone (this origin only).
+  if (pathname === "/shuo" || pathname.startsWith("/shuo/")) {
+    res.headers.set("Permissions-Policy", SECURITY_HEADERS["Permissions-Policy"].replace("microphone=()", "microphone=(self)"));
   }
   return res;
 }
@@ -132,7 +136,11 @@ export async function proxy(request: NextRequest) {
     pathname === "/learn" ||
     pathname.startsWith("/learn/") ||
     pathname.startsWith("/resources/") ||
-    pathname.startsWith("/classes/");
+    pathname.startsWith("/classes/") ||
+    // Shuō's page (not its static assets): needs an account for AI and saved progress.
+    pathname === "/shuo" ||
+    pathname === "/shuo/" ||
+    pathname === "/shuo/index.html";
 
   // Logged-in users skip auth pages and the marketing home — send them to the app
   if (user && (pathname === "/" || pathname === "/login" || pathname === "/signup")) {
@@ -148,7 +156,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  applySecurityHeaders(supabaseResponse);
+  applySecurityHeaders(supabaseResponse, pathname);
   return supabaseResponse;
 }
 
