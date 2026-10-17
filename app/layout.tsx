@@ -143,6 +143,10 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full antialiased`}
+      // THEME_INIT_SCRIPT adds the saved "light"/"dark" class before React
+      // hydrates (to avoid a flash of the wrong theme). That intentional change
+      // to <html>'s attributes is not a bug; this applies to this element only.
+      suppressHydrationWarning
     >
       <head>
         {/* Set theme class before paint to avoid a flash of the wrong theme */}
