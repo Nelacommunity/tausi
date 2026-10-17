@@ -64,10 +64,10 @@ export function ogImage(opts: {
               overflow: "hidden",
             }}
           >
-            {/* The logo PNG has transparent padding baked in; scale up so the
-                peacock fills the frame (overflow:hidden crops the margins). */}
+            {/* The logo is cropped close to the peacock, so fit it inside the
+                88px tile with a margin rather than letting the corners clip it. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={LOGO_DATA_URI} width={128} height={128} alt="Tausi" style={{ objectFit: "contain" }} />
+            <img src={LOGO_DATA_URI} width={70} height={70} alt="Tausi" style={{ objectFit: "contain" }} />
           </div>
           <span style={{ fontSize: 40, fontWeight: 800, color: "white", letterSpacing: "-1px" }}>Tausi</span>
         </div>

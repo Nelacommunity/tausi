@@ -1,5 +1,5 @@
 // Bump on any caching change: activate() deletes every other cache.
-const CACHE = "tausi-v3";
+const CACHE = "tausi-v4";
 const PRECACHE = ["/", "/offline"];
 
 self.addEventListener("install", (event) => {

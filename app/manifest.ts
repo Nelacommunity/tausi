@@ -22,7 +22,9 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
       },
       {
-        src: "/logo/android-chrome-512x512.png",
+        // White background with the peacock inside the safe zone, so Android's
+        // circle/squircle crop never clips the feathers.
+        src: "/logo/maskable-512x512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
