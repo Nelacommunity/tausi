@@ -94,6 +94,7 @@ export function AboutClient() {
             ["/privacy", T.legal.footerPrivacy],
             ["/service", T.legal.footerTerms],
             ["/cookies", T.legal.footerCookies],
+            ["/security", T.legal.footerSecurity],
             ["/", T.legal.footerHome],
           ].map(([href, label]) => (
             <Link

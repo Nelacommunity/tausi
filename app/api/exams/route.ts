@@ -1,6 +1,7 @@
 import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { checkUploads, MB, safeFileName } from "@/app/lib/file-check";
 
 /** Ensure the exam-papers bucket exists. Safe to call multiple times. */
 async function ensureBucket(supabase: SupabaseClient) {
@@ -15,14 +16,13 @@ async function ensureBucket(supabase: SupabaseClient) {
 }
 
 /** Upload a File to storage and return its path. */
-async function uploadFile(supabase: SupabaseClient, file: File, userId: string): Promise<{ path: string; name: string; error?: string }> {
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const storagePath = `${userId}/${Date.now()}-${safeName}`;
+async function uploadFile(supabase: SupabaseClient, file: File, contentType: string, userId: string): Promise<{ path: string; name: string; error?: string }> {
+  const storagePath = `${userId}/${Date.now()}-${safeFileName(file.name)}`;
   const bytes = await file.arrayBuffer();
 
   const { error } = await supabase.storage
     .from("exam-papers")
-    .upload(storagePath, bytes, { contentType: file.type, upsert: false });
+    .upload(storagePath, bytes, { contentType, upsert: false });
 
   if (error) return { path: "", name: file.name, error: error.message };
   return { path: storagePath, name: file.name };
@@ -101,7 +101,8 @@ export async function POST(request: Request) {
 
   // ── Upload mode: files provided directly ──────────────────────────────────
   const files = formData.getAll("files") as File[];
-  if (files.length > 10) return Response.json({ error: "Too many files (max 10)" }, { status: 400 });
+  const checked = await checkUploads(files, { maxFiles: 10, maxFileBytes: 20 * MB, maxTotalBytes: 100 * MB });
+  if ("error" in checked) return Response.json({ error: checked.error }, { status: 400 });
 
   await ensureBucket(supabase);
 
@@ -111,7 +112,7 @@ export async function POST(request: Request) {
 
   await Promise.all(
     files.map(async (file) => {
-      const result = await uploadFile(supabase, file, user.id);
+      const result = await uploadFile(supabase, file, checked.mimes.get(file)!, user.id);
       if (result.error) {
         uploadErrors.push(`${result.name}: ${result.error}`);
       } else {

@@ -3,6 +3,7 @@ import { GEMINI_MODEL } from "@/app/lib/ai";
 import { EXAM_SYSTEM_PROMPT } from "@/app/lib/prompts";
 import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 import { checkAiRateLimit, rateLimitError } from "@/app/lib/rate-limit";
+import { checkUploads, MB } from "@/app/lib/file-check";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -25,20 +26,10 @@ export async function POST(request: Request) {
   if (files.length > 3) return jsonErr("Too many files (max 3 per practice paper)", 400);
   if (notes.length > 2000) return jsonErr("Notes too long (max 2000 characters)", 400);
 
-  // Context limit guard: base64 encoding inflates size by ~33%.
-  // Gemini 2.5 Flash has a 1M token context window; each MB of PDF ≈ 25K–250K tokens.
-  // Hard-limit total payload at 60 MB to stay well within the context window.
-  const MAX_SINGLE_FILE = 20 * 1024 * 1024;  // 20 MB
-  const MAX_TOTAL_SIZE  = 60 * 1024 * 1024;  // 60 MB
-  for (const file of files) {
-    if (file.size > MAX_SINGLE_FILE) {
-      return jsonErr(`File "${file.name}" is too large (max 20 MB per file).`, 400);
-    }
-  }
-  const totalSize = files.reduce((s, f) => s + f.size, 0);
-  if (totalSize > MAX_TOTAL_SIZE) {
-    return jsonErr(`Combined file size ${(totalSize / 1024 / 1024).toFixed(1)} MB exceeds the 60 MB limit. Use fewer or smaller files.`, 400);
-  }
+  // Real file types (from the bytes, not the browser's claim) and size limits;
+  // the total cap also keeps the AI request well inside its context window.
+  const checked = await checkUploads(files, { maxFiles: 3, maxFileBytes: 20 * MB, maxTotalBytes: 60 * MB });
+  if ("error" in checked) return jsonErr(checked.error, 400);
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: GEMINI_MODEL, systemInstruction: EXAM_SYSTEM_PROMPT });
@@ -46,7 +37,7 @@ export async function POST(request: Request) {
   const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
   for (const file of files) {
     const bytes = await file.arrayBuffer();
-    parts.push({ inlineData: { mimeType: file.type || "application/octet-stream", data: Buffer.from(bytes).toString("base64") } });
+    parts.push({ inlineData: { mimeType: checked.mimes.get(file)!, data: Buffer.from(bytes).toString("base64") } });
   }
 
   const prompt = files.length === 1

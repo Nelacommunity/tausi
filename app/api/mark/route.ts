@@ -3,6 +3,7 @@ import { GEMINI_MODEL } from "@/app/lib/ai";
 import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 import { AI_MARKER_SYSTEM_PROMPT } from "@/app/lib/prompts";
 import { checkAiRateLimit, checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { checkUploads, MB, safeFileName } from "@/app/lib/file-check";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -45,6 +46,9 @@ export async function POST(request: Request) {
   if (!questionFiles.length)  return jsonErr("Upload the question paper", 400);
   if (answerFiles.length > 5) return jsonErr("Too many answer files (max 5)", 400);
   if (title.length > 200)     return jsonErr("Title too long (max 200 characters)", 400);
+  const checked = await checkUploads([...answerFiles, ...questionFiles], { maxFiles: 10, maxFileBytes: 20 * MB, maxTotalBytes: 60 * MB });
+  if ("error" in checked) return jsonErr(checked.error, 400);
+  const mimeOf = (f: File) => checked.mimes.get(f)!;
 
   // Ensure storage bucket
   const { error: bucketErr } = await supabase.storage.getBucket("exam-papers");
@@ -56,11 +60,11 @@ export async function POST(request: Request) {
   const questionPaths: string[] = [], questionNames: string[] = [];
 
   for (const file of answerFiles) {
-    const path = await uploadFile(supabase, file, user.id, "answers");
+    const path = await uploadFile(supabase, file, mimeOf(file), user.id, "answers");
     if (path) { answerPaths.push(path); answerNames.push(file.name); }
   }
   for (const file of questionFiles) {
-    const path = await uploadFile(supabase, file, user.id, "questions");
+    const path = await uploadFile(supabase, file, mimeOf(file), user.id, "questions");
     if (path) { questionPaths.push(path); questionNames.push(file.name); }
   }
 
@@ -78,11 +82,11 @@ export async function POST(request: Request) {
   type Part = { text: string } | { inlineData: { mimeType: string; data: string } };
   const parts: Part[] = [{ text: "QUESTION PAPER:" }];
   for (const file of questionFiles) {
-    parts.push({ inlineData: { mimeType: file.type || "application/pdf", data: Buffer.from(await file.arrayBuffer()).toString("base64") } });
+    parts.push({ inlineData: { mimeType: mimeOf(file), data: Buffer.from(await file.arrayBuffer()).toString("base64") } });
   }
   parts.push({ text: "\n\nSTUDENT'S ANSWER SHEET:" });
   for (const file of answerFiles) {
-    parts.push({ inlineData: { mimeType: file.type || "application/pdf", data: Buffer.from(await file.arrayBuffer()).toString("base64") } });
+    parts.push({ inlineData: { mimeType: mimeOf(file), data: Buffer.from(await file.arrayBuffer()).toString("base64") } });
   }
   parts.push({ text: "\n\nUsing the question paper above, derive the marking criteria and maximum marks for each question. Then mark the student's answer sheet thoroughly." });
 
@@ -148,10 +152,9 @@ export async function POST(request: Request) {
   return new Response(stream, { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-cache" } });
 }
 
-async function uploadFile(supabase: Awaited<ReturnType<typeof import("@/app/lib/supabase/server").createClient>>, file: File, userId: string, folder: string) {
-  const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const path = `${userId}/${folder}/${Date.now()}-${safe}`;
-  const { error } = await supabase.storage.from("exam-papers").upload(path, await file.arrayBuffer(), { contentType: file.type });
+async function uploadFile(supabase: Awaited<ReturnType<typeof import("@/app/lib/supabase/server").createClient>>, file: File, contentType: string, userId: string, folder: string) {
+  const path = `${userId}/${folder}/${Date.now()}-${safeFileName(file.name)}`;
+  const { error } = await supabase.storage.from("exam-papers").upload(path, await file.arrayBuffer(), { contentType });
   return error ? null : path;
 }
 

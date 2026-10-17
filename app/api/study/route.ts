@@ -1,6 +1,7 @@
 import { createClient, getAuthUser } from "@/app/lib/supabase/server";
 
 import { checkRateLimit, LIMITS, rateLimitError } from "@/app/lib/rate-limit";
+import { checkUploads, MB, safeFileName } from "@/app/lib/file-check";
 
 export async function GET(request: Request) {
   void request;
@@ -38,7 +39,8 @@ export async function POST(request: Request) {
   const title = (formData.get("title") as string) || "Study Session";
 
   if (!files.length)     return Response.json({ error: "Upload at least one document" }, { status: 400 });
-  if (files.length > 10) return Response.json({ error: "Too many files (max 10)" },      { status: 400 });
+  const checked = await checkUploads(files, { maxFiles: 10, maxFileBytes: 20 * MB, maxTotalBytes: 100 * MB });
+  if ("error" in checked) return Response.json({ error: checked.error },                 { status: 400 });
   if (title.length > 200) return Response.json({ error: "Title too long (max 200)" },    { status: 400 });
 
   // Ensure bucket exists
@@ -52,12 +54,13 @@ export async function POST(request: Request) {
 
   for (const file of files) {
     const bytes = await file.arrayBuffer();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = `${user.id}/study/${Date.now()}-${safeName}`;
-    await supabase.storage.from("exam-papers").upload(path, bytes, { contentType: file.type });
+    const path = `${user.id}/study/${Date.now()}-${safeFileName(file.name)}`;
+    const { error: upErr } = await supabase.storage.from("exam-papers").upload(path, bytes, { contentType: checked.mimes.get(file)! });
+    if (upErr) continue;
     docPaths.push(path);
     originalFilenames.push(file.name);
   }
+  if (!docPaths.length) return Response.json({ error: "The files could not be saved — try again." }, { status: 500 });
 
   const { data, error } = await supabase
     .from("study_sessions")

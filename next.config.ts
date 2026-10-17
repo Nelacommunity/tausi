@@ -58,6 +58,8 @@ const securityHeaders = [
   // Camera stays off: students scan QR codes with their phone's own camera app.
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  // Block Flash/PDF cross-domain policy files from granting other sites access.
+  { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
   { key: "X-DNS-Prefetch-Control", value: "on" },
   // HTTPS only, for two years, once deployed (never on local http dev).
   ...(isDev ? [] : [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }]),

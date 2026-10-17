@@ -1,13 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
+import { safeNextPath } from "@/app/lib/safe-redirect";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type");
-  const next = searchParams.get("next") ?? "/dashboard";
+  // Only ever redirect within this site (an absolute ?next= would be an open redirect).
+  const next = safeNextPath(searchParams.get("next"));
 
   const cookieStore = await cookies();
   const supabase = createServerClient(

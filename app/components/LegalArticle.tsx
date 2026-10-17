@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useT } from "@/app/lib/language-context";
 
-type Doc = "privacy" | "terms" | "cookies";
+type Doc = "privacy" | "terms" | "cookies" | "security";
 
 export function LegalArticle({ doc }: { doc: Doc }) {
   const { T } = useT();
@@ -49,6 +49,7 @@ export function LegalArticle({ doc }: { doc: Doc }) {
           <Link href="/privacy" className="hover:text-snow transition-colors">{L.footerPrivacy}</Link>
           <Link href="/service" className="hover:text-snow transition-colors">{L.footerTerms}</Link>
           <Link href="/cookies" className="hover:text-snow transition-colors">{L.footerCookies}</Link>
+          <Link href="/security" className="hover:text-snow transition-colors">{L.footerSecurity}</Link>
           <Link href="/" className="hover:text-snow transition-colors">{L.footerHome}</Link>
         </div>
       </div>

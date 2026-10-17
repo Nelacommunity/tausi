@@ -48,6 +48,12 @@ Shuō is a Vite + React single-page app in `shuo/`, built to `public/shuo` and s
 - **Authorisation:** API routes check ownership/membership in code before using the service-role client; RLS is on for every table. Live-session access goes through one check (`sessionAccess`).
 - **Storage:** users can read only their own folder in `exam-papers`; public exams' source papers are signed or downloaded by the server after it checks the exam is public. Teaching resources live in a private bucket served through short-lived signed URLs.
 - **Headers:** Content-Security-Policy (no-nonce variant, so pages stay static), HSTS in production, `frame-ancestors 'none'` / `X-Frame-Options: DENY`, `nosniff`, strict `Referrer-Policy`, restrictive `Permissions-Policy`, `Cross-Origin-Opener-Policy: same-origin`, no `X-Powered-By`.
+- **CSRF:** the proxy refuses API writes (POST/PUT/PATCH/DELETE) whose `Origin` or `Sec-Fetch-Site` says they came from another site; webhooks under `/api/webhook/` are exempt.
+- **Request limits:** API bodies over 10 MB (64 MB for multipart uploads) are refused with 413 before any work is done. API responses are `Cache-Control: private, no-store` and `Cross-Origin-Resource-Policy: same-origin`.
+- **Uploads:** `app/lib/file-check.ts` reads each file's first bytes and accepts only real PDF/PNG/JPEG/WebP (the browser-declared type is ignored), with per-file, total and count limits; storage names are sanitised.
+- **Redirects:** every `?next=` (proxy, login, signup, `/auth/callback`) goes through `safeNextPath()`, which allows only same-site paths (blocks `//host`, `/\host`, control characters).
+- **Passwords:** sign-up requires 10+ characters with letters and numbers, and refuses common passwords and the email name (`app/lib/password.ts`). Set the same minimum in Supabase → Authentication → Policies so the API enforces it too.
+- **Disclosure:** `/.well-known/security.txt` and the `/security` page point researchers to security@tausi.app.
 - **Rate limiting:** an in-memory limiter on every route, plus a shared Postgres counter (`rate_limit_hit`) on the AI routes so limits hold when the host runs several instances behind a load balancer.
 - **Performance:** independent queries run in parallel, indexes cover the filters the reports and class views use, static logos are cached, and the browser preconnects to Supabase only (fonts are self-hosted; AI calls are server-side).
 

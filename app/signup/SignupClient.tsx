@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/app/lib/supabase/client";
 import { useT } from "@/app/lib/language-context";
+import { safeNextPath } from "@/app/lib/safe-redirect";
+import { PASSWORD_MIN, passwordProblem } from "@/app/lib/password";
 
 /** Where to go after signing in: the ?next= path if it's a safe local path. */
 function nextPath(): string {
-  const next = new URLSearchParams(window.location.search).get("next");
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+  return safeNextPath(new URLSearchParams(window.location.search).get("next"));
 }
 
 export default function SignupClient() {
@@ -28,7 +29,11 @@ export default function SignupClient() {
     e.preventDefault();
     setError("");
     if (password !== confirm) { setError(A.passwordsMismatch); return; }
-    if (password.length < 6) { setError(A.passwordTooShort); return; }
+    const problem = passwordProblem(password, email);
+    if (problem) {
+      setError(problem === "short" ? A.passwordTooShort : problem === "weak" ? A.passwordWeak : A.passwordCommon);
+      return;
+    }
     setLoading(true);
     const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { role } } });
@@ -142,11 +147,14 @@ export default function SignupClient() {
                 type="password"
                 autoComplete="new-password"
                 required
+                minLength={PASSWORD_MIN}
+                aria-describedby="password-hint"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={A.passwordNew}
                 className="w-full rounded-xl bg-ink-2 border border-line hover:border-line-2 text-snow placeholder-dim/50 text-sm px-4 py-2.5 outline-none transition-all"
               />
+              <p id="password-hint" className="text-[11px] text-dim">{A.passwordHint}</p>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-dim block" htmlFor="confirm">{A.confirmPassword}</label>

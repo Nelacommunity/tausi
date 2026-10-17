@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/app/lib/supabase/client";
 import { useT } from "@/app/lib/language-context";
+import { safeNextPath } from "@/app/lib/safe-redirect";
 
 /** Where to go after signing in: the ?next= path if it's a safe local path. */
 function nextPath(): string {
-  const next = new URLSearchParams(window.location.search).get("next");
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+  return safeNextPath(new URLSearchParams(window.location.search).get("next"));
 }
 
 const POINT_ICONS = [

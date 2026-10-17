@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { safeNextPath } from "./app/lib/safe-redirect";
 
 // API routes accessible without authentication
 const PUBLIC_API_PATTERNS = [
@@ -29,6 +30,36 @@ function applySecurityHeaders(res: NextResponse | Response, pathname = "") {
     res.headers.set("Permissions-Policy", SECURITY_HEADERS["Permissions-Policy"].replace("microphone=()", "microphone=(self)"));
   }
   return res;
+}
+
+const json = (status: number, error: string) =>
+  applySecurityHeaders(new Response(JSON.stringify({ error }), { status, headers: { "Content-Type": "application/json" } }));
+
+// Server-to-server callers that legitimately POST without a browser Origin.
+const CSRF_EXEMPT = [/^\/api\/webhook\//];
+const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+// Request bodies: file uploads (multipart) are checked again, per file, by their routes.
+const MAX_UPLOAD_BYTES = 64 * 1024 * 1024;
+const MAX_JSON_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Cross-site request forgery guard for cookie-authenticated API writes: a
+ * browser always sends Origin (or Sec-Fetch-Site) on these, so a request that
+ * says it came from another site is refused. Non-browser clients send
+ * neither and carry no victim's cookies, so they pass through to normal auth.
+ */
+function isCrossSite(request: NextRequest) {
+  const site = request.headers.get("sec-fetch-site");
+  if (site && site !== "same-origin" && site !== "none") return true;
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+  if (origin === "null") return true;
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  try {
+    return new URL(origin).host !== host;
+  } catch {
+    return true;
+  }
 }
 
 // Polar webhook is POST; exam reads are GET-only
@@ -110,6 +141,19 @@ export async function proxy(request: NextRequest) {
     return deny;
   }
 
+  if (pathname.startsWith("/api/")) {
+    // ── CSRF: API writes must come from this site ───────────────────────────
+    if (MUTATING.has(method) && !CSRF_EXEMPT.some((re) => re.test(pathname)) && isCrossSite(request)) {
+      return json(403, "Cross-site request refused");
+    }
+    // ── Oversized bodies are refused before any work is done ────────────────
+    const length = Number(request.headers.get("content-length") ?? 0);
+    const multipart = (request.headers.get("content-type") ?? "").startsWith("multipart/form-data");
+    if (length > (multipart ? MAX_UPLOAD_BYTES : MAX_JSON_BYTES)) {
+      return json(413, "Request too large");
+    }
+  }
+
   // ── API route authentication ──────────────────────────────────────────────
   if (pathname.startsWith("/api/") && !user && !isPublicApiPath(pathname, method)) {
     const deny = new Response(
@@ -144,9 +188,7 @@ export async function proxy(request: NextRequest) {
 
   // Logged-in users skip auth pages and the marketing home — send them to the app
   if (user && (pathname === "/" || pathname === "/login" || pathname === "/signup")) {
-    const next = searchParams.get("next");
-    const safe = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
-    return NextResponse.redirect(new URL(safe, request.url));
+    return NextResponse.redirect(new URL(safeNextPath(searchParams.get("next")), request.url));
   }
 
   // Unauthenticated users get redirected to login for protected pages
@@ -157,6 +199,12 @@ export async function proxy(request: NextRequest) {
   }
 
   applySecurityHeaders(supabaseResponse, pathname);
+  if (pathname.startsWith("/api/")) {
+    // Per-user data: never stored by browsers, proxies or CDNs, and never
+    // readable by other sites' pages.
+    supabaseResponse.headers.set("Cache-Control", "private, no-store");
+    supabaseResponse.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+  }
   return supabaseResponse;
 }
 
