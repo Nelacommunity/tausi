@@ -3,8 +3,10 @@ import { ErrorBox, PageHeader, Pinyin, SpeakButton, Spinner, Zh } from '../compo
 import { Recorder, bytesToBase64, encodeWav, levelOf, pitchContour, playSamples } from '../lib/audio';
 import { errorText, generateJSON, learnerProfile } from '../lib/gemini';
 import { ttsAudio, SLOW_STYLE } from '../lib/speech';
-import { addMistakes, award, settingsStore } from '../lib/state';
+import { addMistakes, award, settingsStore, explainIn } from '../lib/state';
 import { syllables, toPinyin } from '../lib/zh';
+import { logActivity } from '../lib/history';
+import { tr, useLang, useT } from '../lib/i18n';
 
 const PRESETS: Record<string, string[]> = {
   'Tone pairs': ['妈麻马骂', '北京', '老师', '很好', '你好', '不客气', '一起', '四是四，十是十'],
@@ -41,6 +43,8 @@ export default function Pronunciation() {
   const [generating, setGenerating] = useState(false);
   const rec = useRef<Recorder | null>(null);
   const meter = useRef<HTMLDivElement>(null);
+  const T = useT();
+  const P = T.tone;
 
   useEffect(() => {
     setNative(null);
@@ -92,7 +96,7 @@ export default function Pronunciation() {
     if (!r) return;
     const samples = r.stop();
     if (samples.length < 16000 * 0.3) {
-      setError('That was too short or too quiet — try again, closer to the mic.');
+      setError(P.tooShort);
       return;
     }
     setClip(samples);
@@ -119,7 +123,7 @@ Return JSON:
 {"heard": "characters of what you actually heard", "heardPinyin": "tone-marked pinyin of what you heard",
  "overall": 0-100, "tones": 0-100, "sounds": 0-100, "fluency": 0-100,
  "syllables": [{"char": "one target character", "target": "target pinyin", "heard": "pinyin you heard", "ok": true/false, "issue": "short issue or empty"}],
- "feedback": "2–3 sentences of specific feedback in ${settings.nativeLanguage}",
+ "feedback": "2–3 sentences of specific feedback in ${explainIn()}",
  "tip": "one concrete physical tip to fix the biggest problem"}
 Include one syllables entry per Chinese character of the target, in order.`,
           },
@@ -129,6 +133,7 @@ Include one syllables entry per Chinese character of the target, in order.`,
       );
       setResult(r);
       award(3, 'drills');
+      logActivity('pronunciation', `${tr().nav.pronounce} · ${target}`, { score: r.overall, xp: 3, details: { target, tones: r.tones, sounds: r.sounds, fluency: r.fluency } });
       if (r.overall < 70) {
         addMistakes([{ source: 'pronunciation', said: r.heardPinyin || r.heard, correct: target, pinyin: toPinyin(target), explanation: r.feedback }]);
       }
@@ -157,14 +162,14 @@ Include one syllables entry per Chinese character of the target, in order.`,
 
   return (
     <div>
-      <PageHeader title="Tone Lab" zh="声调实验室" subtitle="See your pitch next to a native speaker's, and get syllable-by-syllable AI feedback on your tones and sounds." />
+      <PageHeader title={P.title} zh="声调实验室" subtitle={P.subtitle} />
       <ErrorBox error={error} />
 
       <section className="card">
         <div className="preset-groups">
           {Object.entries(PRESETS).map(([group, items]) => (
             <div key={group} className="preset-group">
-              <small className="muted">{group}</small>
+              <small className="muted">{P.presets[group] ?? group}</small>
               <div className="chips">
                 {items.map((p) => (
                   <button key={p} className={`chip ${p === target ? 'active' : ''}`} onClick={() => setTarget(p)} lang="zh-CN">
@@ -178,16 +183,16 @@ Include one syllables entry per Chinese character of the target, in order.`,
         <div className="row gap wrap">
           <input
             className="input grow"
-            placeholder="Type any Chinese phrase to practise…"
+            placeholder={P.placeholder}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && draft.trim() && (setTarget(draft.trim()), setDraft(''))}
           />
           <button className="btn" onClick={() => draft.trim() && (setTarget(draft.trim()), setDraft(''))}>
-            Use
+            {P.use}
           </button>
           <button className="btn" onClick={newPhrase} disabled={generating}>
-            {generating ? <span className="spinner sm" /> : '🎲'} AI phrase
+            {generating ? <span className="spinner sm" /> : '🎲'} {P.aiPhrase}
           </button>
         </div>
       </section>
@@ -208,23 +213,23 @@ Include one syllables entry per Chinese character of the target, in order.`,
 
         <div className="lab-controls">
           <button className="btn btn-lg" onClick={() => listen()} disabled={nativeBusy}>
-            {nativeBusy ? <span className="spinner sm" /> : '🔊'} Listen
+            {nativeBusy ? <span className="spinner sm" /> : '🔊'} {T.common.listen}
           </button>
           <button className="btn btn-lg" onClick={() => listen(true)} disabled={nativeBusy}>
-            🐢 Slow
+            🐢 {T.common.slow}
           </button>
           {!recording ? (
             <button className="btn btn-lg btn-primary" onClick={startRec} disabled={assessing}>
-              🎤 Record
+              {P.record}
             </button>
           ) : (
             <button className="btn btn-lg btn-danger pulse" onClick={stopRec}>
-              ⏹ Stop
+              {P.stop}
             </button>
           )}
           {clip && !recording && (
             <button className="btn btn-lg" onClick={() => playSamples(clip, 16000)}>
-              ▶️ My voice
+              {P.myVoice}
             </button>
           )}
         </div>
@@ -237,16 +242,16 @@ Include one syllables entry per Chinese character of the target, in order.`,
         <PitchChart native={native} mine={mine} />
         <div className="chart-legend">
           <span>
-            <i className="lg-native" /> Native (Gemini)
+            <i className="lg-native" /> {P.native}
           </span>
           <span>
-            <i className="lg-mine" /> You
+            <i className="lg-mine" /> {P.you}
           </span>
-          <span className="muted small">Pitch relative to each speaker's average — compare the shapes, not the height.</span>
+          <span className="muted small">{P.pitchNote}</span>
         </div>
       </section>
 
-      {assessing && <Spinner label="Listening to your pronunciation…" />}
+      {assessing && <Spinner label={P.assessing} />}
       {result && (
         <section className="card report">
           <div className="score-row">
@@ -255,12 +260,12 @@ Include one syllables entry per Chinese character of the target, in order.`,
                 <div className="score-ring" style={{ ['--p' as string]: result[k] ?? 0 }}>
                   <span>{result[k]}</span>
                 </div>
-                <small>{k}</small>
+                <small>{P.scores[k] ?? k}</small>
               </div>
             ))}
           </div>
           <p>
-            <strong>Heard:</strong> <span lang="zh-CN">{result.heard}</span> <span className="muted">({result.heardPinyin})</span>
+            <strong>{P.heard}</strong> <span lang="zh-CN">{result.heard}</span> <span className="muted">({result.heardPinyin})</span>
           </p>
           <div className="syllable-grid">
             {result.syllables?.map((s, i) => (
@@ -269,7 +274,7 @@ Include one syllables entry per Chinese character of the target, in order.`,
                   {s.char}
                 </span>
                 <span className="syl-py">{s.target}</span>
-                {!s.ok && <span className="syl-heard">heard {s.heard}</span>}
+                {!s.ok && <span className="syl-heard">{P.heardSyl(s.heard)}</span>}
               </div>
             ))}
           </div>
@@ -296,6 +301,7 @@ Include one syllables entry per Chinese character of the target, in order.`,
 
 function PitchChart({ native, mine }: { native: number[] | null; mine: number[] | null }) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const lang = useLang();
   useEffect(() => {
     const c = canvas.current;
     if (!c) return;
@@ -345,22 +351,23 @@ function PitchChart({ native, mine }: { native: number[] | null; mine: number[] 
       ctx.fillStyle = css.getPropertyValue('--muted');
       ctx.font = '14px Inter, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('Press Listen and Record to see pitch curves', w / 2, h / 2);
+      ctx.fillText(tr().tone.chartEmpty, w / 2, h / 2);
     }
-  }, [native, mine]);
+  }, [native, mine, lang]);
   return <canvas ref={canvas} className="pitch-chart" />;
 }
 
 function ToneGuide() {
+  const P = useT().tone;
   const tones = [
-    { n: 1, name: 'High & flat', path: 'M5,10 L95,10', ex: '妈', py: 'mā', m: 'mother' },
-    { n: 2, name: 'Rising', path: 'M5,40 L95,8', ex: '麻', py: 'má', m: 'hemp' },
-    { n: 3, name: 'Low dip', path: 'M5,30 Q40,58 70,50 T95,20', ex: '马', py: 'mǎ', m: 'horse' },
-    { n: 4, name: 'Sharp fall', path: 'M5,8 L95,52', ex: '骂', py: 'mà', m: 'to scold' },
-  ];
+    { n: 1, path: 'M5,10 L95,10', ex: '妈', py: 'mā' },
+    { n: 2, path: 'M5,40 L95,8', ex: '麻', py: 'má' },
+    { n: 3, path: 'M5,30 Q40,58 70,50 T95,20', ex: '马', py: 'mǎ' },
+    { n: 4, path: 'M5,8 L95,52', ex: '骂', py: 'mà' },
+  ].map((t) => ({ ...t, name: P.toneNames[t.n - 1], m: P.toneMeanings[t.n - 1] }));
   return (
     <section className="card">
-      <h3>The four tones</h3>
+      <h3>{P.fourTones}</h3>
       <div className="tone-guide">
         {tones.map((t) => (
           <div key={t.n} className={`tone-card t${t.n}`}>
@@ -375,26 +382,17 @@ function ToneGuide() {
             </div>
             <Pinyin pinyin={`${t.py} · ${t.m}`} />
             <small className="muted">
-              Tone {t.n} · {t.name}
+              {P.toneN(t.n, t.name)}
             </small>
           </div>
         ))}
       </div>
       <details>
-        <summary>Tone sandhi rules</summary>
+        <summary>{P.sandhi}</summary>
         <ul>
-          <li>
-            <b>3 + 3 → 2 + 3</b>: 你好 is said <i>ní hǎo</i>.
-          </li>
-          <li>
-            <b>不 bù</b> becomes <i>bú</i> before a 4th tone: 不是 <i>bú shì</i>.
-          </li>
-          <li>
-            <b>一 yī</b> becomes <i>yí</i> before a 4th tone (一个 yí gè) and <i>yì</i> before tones 1–3 (一起 yìqǐ).
-          </li>
-          <li>
-            A 3rd tone before any non-3rd tone is usually a <b>low half-tone</b> (just the dip, no rise): 老师 <i>lǎoshī</i>.
-          </li>
+          {P.sandhiRules.map((rule) => (
+            <li key={rule}>{rule}</li>
+          ))}
         </ul>
       </details>
     </section>

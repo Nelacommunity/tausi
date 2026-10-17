@@ -1,4 +1,4 @@
-import { settingsStore } from './state';
+import { settingsStore, explainIn } from './state';
 import type { TutorMode } from '../data/scenarios';
 
 export const LEVEL_GUIDE: Record<number, string> = {
@@ -22,7 +22,7 @@ const MODE_RULES: Record<TutorMode, string> = {
 export function tutorSystemPrompt(opts: { scenario: string; mode: TutorMode; level?: number }) {
   const s = settingsStore.get();
   const level = opts.level ?? s.level;
-  const lang = s.nativeLanguage;
+  const lang = explainIn();
   return `You are 李老师 (Lǐ lǎoshī), a warm, encouraging, highly skilled native Mandarin Chinese tutor from Beijing. You are on a live voice call with your student${s.name ? ` ${s.name}` : ''}.
 
 STUDENT: ${LEVEL_GUIDE[level]}. Native language: ${lang}. Goal: ${s.goal}.
@@ -44,13 +44,13 @@ TEACHING PRINCIPLES:
 export function reportPrompt(transcript: string, scenario: string) {
   const s = settingsStore.get();
   return `You are an expert Mandarin teacher reviewing a spoken practice session. Scenario: ${scenario}.
-Student: HSK ${s.level}, native language ${s.nativeLanguage}.
+Student: HSK ${s.level}, native language ${explainIn()}.
 Student lines come from automatic speech recognition and may contain recognition noise — only flag clear language errors, and use them to estimate pronunciation clarity.
 
 TRANSCRIPT:
 ${transcript}
 
-Return JSON exactly in this shape (explanations in ${s.nativeLanguage}):
+Return JSON exactly in this shape (explanations in ${explainIn()}):
 {
   "summary": "2–3 encouraging but honest sentences on how the session went",
   "scores": {"overall": 0-100, "fluency": 0-100, "accuracy": 0-100, "vocabulary": 0-100, "pronunciation": 0-100},

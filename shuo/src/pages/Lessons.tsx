@@ -5,8 +5,11 @@ import { CURRICULUM, type Unit } from '../data/curriculum';
 import { errorText, generateJSON, learnerProfile } from '../lib/gemini';
 import { speak } from '../lib/speech';
 import { addCards } from '../lib/srs';
-import { addMistakes, award, navigate, progressStore, setHandoff, settingsStore } from '../lib/state';
+import { addMistakes, award, navigate, progressStore, setHandoff, settingsStore, explainIn } from '../lib/state';
 import { persisted, uid } from '../lib/store';
+import { logActivity } from '../lib/history';
+import { getLang, tr, useLang, useT } from '../lib/i18n';
+import { unitText } from '../locales/content';
 
 type Exercise =
   | { type: 'mc'; prompt: string; options: string[]; answer: number; explanation?: string }
@@ -28,8 +31,7 @@ const lessonCache = persisted<Record<string, Lesson>>('lessonCache', {});
 const customUnits = persisted<Unit[]>('customUnits', [], { sync: true });
 
 function lessonPrompt(unit: Unit) {
-  const s = settingsStore.get();
-  const L = s.nativeLanguage;
+  const L = explainIn();
   return `Create a complete, high-quality Mandarin lesson for HSK ${unit.level}.
 Unit: "${unit.title}". Topic: ${unit.topic}. Grammar focus: ${unit.grammar}. Can-do goal: ${unit.canDo}.
 ${learnerProfile()}
@@ -61,6 +63,9 @@ export default function Lessons() {
   const [open, setOpen] = useState<Unit | null>(null);
   const [level, setLevel] = useState(settings.level);
   const [customTopic, setCustomTopic] = useState('');
+  const T = useT();
+  const lang = useLang();
+  const L = T.lessons;
 
   if (open) return <LessonView unit={open} onBack={() => setOpen(null)} />;
 
@@ -84,35 +89,35 @@ export default function Lessons() {
 
   return (
     <div>
-      <PageHeader title="Lessons" zh="课程" subtitle="A structured path from HSK 1 to 6. Every lesson is generated fresh for you: vocabulary, grammar, dialogue, culture and 10 exercises." />
+      <PageHeader title={L.title} zh="课程" subtitle={L.subtitle} />
 
       {nextUnit && (
         <section className="card continue-card">
           <div>
-            <small className="muted">Up next · HSK {nextUnit.level}</small>
-            <h2>{nextUnit.title}</h2>
+            <small className="muted">{L.upNext(nextUnit.level)}</small>
+            <h2>{unitText(nextUnit, lang).title}</h2>
             <p className="muted">
-              {nextUnit.canDo} · <span lang="zh-CN">{nextUnit.grammar}</span>
+              {unitText(nextUnit, lang).canDo} · <span lang="zh-CN">{nextUnit.grammar}</span>
             </p>
           </div>
           <button className="btn btn-primary btn-lg" onClick={() => setOpen(nextUnit)}>
-            Start lesson →
+            {L.start}
           </button>
         </section>
       )}
 
       <section className="card">
-        <h3>✨ Make a lesson about anything</h3>
+        <h3>{L.makeAny}</h3>
         <div className="row gap">
           <input
             className="input grow"
-            placeholder="e.g. talking about my job as a nurse, ordering bubble tea, WeChat slang, negotiating salary"
+            placeholder={L.customPlaceholder}
             value={customTopic}
             onChange={(e) => setCustomTopic(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && createCustom()}
           />
           <button className="btn btn-primary" onClick={createCustom}>
-            Create
+            {L.create}
           </button>
         </div>
         {customs.length > 0 && (
@@ -146,9 +151,9 @@ export default function Lessons() {
             <button key={u.id} className={`unit ${rec ? 'done' : ''}`} onClick={() => setOpen(u)}>
               <span className="unit-num">{rec ? '✓' : i + 1}</span>
               <span className="unit-body">
-                <strong>{u.title}</strong>
+                <strong>{unitText(u, lang).title}</strong>
                 <small className="muted">
-                  {u.topic} · <span lang="zh-CN">{u.grammar}</span>
+                  {unitText(u, lang).topic} · <span lang="zh-CN">{u.grammar}</span>
                 </small>
               </span>
               {rec && <span className="tag">{rec.score}%</span>}
@@ -169,6 +174,9 @@ function LessonView({ unit, onBack }: { unit: Unit; onBack: () => void }) {
   const [score, setScore] = useState(0);
   const [attempt, setAttempt] = useState<{ id: string; correct: number; total: number } | null>(null);
   const { open: openWord, popup } = useWordPopup();
+  const T = useT();
+  const L = T.lessons;
+  const ut = unitText(unit, useLang());
 
   async function load(force = false) {
     if (lesson && !force) return;
@@ -199,6 +207,7 @@ function LessonView({ unit, onBack }: { unit: Unit; onBack: () => void }) {
     setPhase('done');
     progressStore.set((p) => ({ ...p, lessons: { ...p.lessons, [unit.id]: { score: Math.max(pct, p.lessons[unit.id]?.score ?? 0), completedAt: Date.now() } } }));
     award(20 + Math.round(pct / 5), 'lessons');
+    logActivity('lesson', `${unitText(unit, getLang()).title} · HSK ${unit.level}`, { score: pct, xp: 20 + Math.round(pct / 5), details: { unitId: unit.id, correct, total } });
   }
 
   function practiceSpeaking() {
@@ -216,22 +225,22 @@ Then have a freer conversation on the topic. Make the student actively use the t
   return (
     <div>
       <button className="btn-link back" onClick={onBack}>
-        ← All lessons
+        {L.allLessons}
       </button>
       <PageHeader
-        title={unit.title}
+        title={ut.title}
         zh={`HSK ${unit.level}`}
-        subtitle={unit.canDo}
+        subtitle={ut.canDo}
         actions={
           lesson && (
             <button className="btn btn-sm" onClick={() => load(true)} disabled={busy}>
-              ↻ Regenerate
+              {L.regenerate}
             </button>
           )
         }
       />
       <ErrorBox error={error} onRetry={() => load(true)} />
-      {busy && <Spinner label="Your teacher is preparing the lesson…" />}
+      {busy && <Spinner label={L.preparing} />}
 
       {lesson && !busy && phase === 'learn' && (
         <>
@@ -241,9 +250,9 @@ Then have a freer conversation on the topic. Make the student actively use the t
 
           <section className="card">
             <div className="row between wrap">
-              <h3>📚 Vocabulary</h3>
+              <h3>{T.common.vocabulary}</h3>
               <button className="btn btn-sm" onClick={() => addCards(lesson.vocab, unit.title)}>
-                + Add all to flashcards
+                {L.addAll}
               </button>
             </div>
             <div className="vocab-list">
@@ -268,7 +277,7 @@ Then have a freer conversation on the topic. Make the student actively use the t
           </section>
 
           <section className="card grammar">
-            <h3>🧩 Grammar: {lesson.grammar.point}</h3>
+            <h3>{L.grammar(lesson.grammar.point)}</h3>
             <div className="pattern" lang="zh-CN">
               {lesson.grammar.pattern}
             </div>
@@ -284,7 +293,7 @@ Then have a freer conversation on the topic. Make the student actively use the t
 
           <section className="card">
             <div className="row between wrap">
-              <h3>🎭 Dialogue</h3>
+              <h3>{L.dialogue}</h3>
               <PlayDialogue lines={lesson.dialogue} />
             </div>
             {lesson.dialogue.map((d, i) => (
@@ -303,14 +312,14 @@ Then have a freer conversation on the topic. Make the student actively use the t
 
           {lesson.culture && (
             <section className="card culture">
-              <h3>🏮 Culture note</h3>
+              <h3>{L.culture}</h3>
               <p>{lesson.culture}</p>
             </section>
           )}
 
           <div className="row center">
             <button className="btn btn-primary btn-lg" onClick={() => setPhase('practice')} disabled={!lesson.exercises.length}>
-              Start practice ({lesson.exercises.length} exercises) →
+              {L.startPractice(lesson.exercises.length)}
             </button>
           </div>
         </>
@@ -321,8 +330,8 @@ Then have a freer conversation on the topic. Make the student actively use the t
       {lesson && phase === 'done' && (
         <section className="card empty">
           <div className="big-emoji">{score >= 80 ? '🏆' : score >= 50 ? '👏' : '💪'}</div>
-          <h2>Lesson complete — {score}%</h2>
-          <p className="muted">{score >= 80 ? 'Excellent work! 太棒了！' : 'Good effort — review the lesson and try again for a higher score.'}</p>
+          <h2>{L.complete(score)}</h2>
+          <p className="muted">{score >= 80 ? L.excellent : L.goodEffort}</p>
           {attempt && (
             <ShareResult
               key={attempt.id}
@@ -336,16 +345,16 @@ Then have a freer conversation on the topic. Make the student actively use the t
           )}
           <div className="row gap center wrap">
             <button className="btn btn-primary" onClick={practiceSpeaking}>
-              🎙️ Now speak it with the Voice Tutor
+              {L.speakIt}
             </button>
             <button className="btn" onClick={() => setPhase('learn')}>
-              Review lesson
+              {L.review}
             </button>
             <button className="btn" onClick={() => setPhase('practice')}>
-              Retry exercises
+              {L.retry}
             </button>
             <button className="btn" onClick={onBack}>
-              Back to path
+              {L.backToPath}
             </button>
           </div>
         </section>
@@ -356,6 +365,7 @@ Then have a freer conversation on the topic. Make the student actively use the t
 }
 
 function PlayDialogue({ lines }: { lines: { zh: string }[] }) {
+  useLang();
   const [playing, setPlaying] = useState(false);
   return (
     <button
@@ -367,7 +377,7 @@ function PlayDialogue({ lines }: { lines: { zh: string }[] }) {
         setPlaying(false);
       }}
     >
-      {playing ? <span className="spinner sm" /> : '▶️'} Play dialogue
+      {playing ? <span className="spinner sm" /> : '▶️'} {tr().lessons.playDialogue}
     </button>
   );
 }
@@ -388,6 +398,7 @@ function Practice({ exercises, onFinish, onBack }: { exercises: Exercise[]; onFi
   const [correct, setCorrect] = useState(0);
   const [result, setResult] = useState<{ ok: boolean; message: string; answer?: string } | null>(null);
   const ex = exercises[i];
+  const L = useT().lessons;
 
   function submit(ok: boolean, message: string, answer?: string) {
     setResult({ ok, message, answer });
@@ -404,7 +415,7 @@ function Practice({ exercises, onFinish, onBack }: { exercises: Exercise[]; onFi
     <section className="card practice">
       <div className="row between">
         <button className="btn-link" onClick={onBack}>
-          ← Lesson
+          {L.lesson}
         </button>
         <span className="muted small">
           {i + 1} / {exercises.length}
@@ -419,16 +430,16 @@ function Practice({ exercises, onFinish, onBack }: { exercises: Exercise[]; onFi
       {result && (
         <div className={`result-bar ${result.ok ? 'ok' : 'bad'}`}>
           <div>
-            <strong>{result.ok ? '✓ 对了！Correct' : '✗ Not quite'}</strong>
+            <strong>{result.ok ? L.correct : L.notQuite}</strong>
             {result.answer && (
               <div>
-                Answer: <span lang="zh-CN">{result.answer}</span>
+                {L.answer} <span lang="zh-CN">{result.answer}</span>
               </div>
             )}
             {result.message && <div className="small">{result.message}</div>}
           </div>
           <button className="btn btn-primary" onClick={next} autoFocus>
-            {i + 1 >= exercises.length ? 'Finish' : 'Continue →'}
+            {i + 1 >= exercises.length ? L.finish : L.continue}
           </button>
         </div>
       )}
@@ -442,6 +453,8 @@ function ExerciseView({ ex, locked, onSubmit }: { ex: Exercise; locked: boolean;
   const [grading, setGrading] = useState(false);
   const chunks = useMemo(() => (ex.type === 'order' ? shuffle(ex.words.map((w, idx) => ({ w, idx }))) : []), [ex]);
   const [built, setBuilt] = useState<number[]>([]);
+  const T = useT();
+  const L = T.lessons;
 
   useEffect(() => {
     if (ex.type === 'listen') void speak(ex.zh);
@@ -462,7 +475,7 @@ function ExerciseView({ ex, locked, onSubmit }: { ex: Exercise; locked: boolean;
         {ex.type === 'mc' && <h3>{ex.prompt}</h3>}
         {ex.type === 'fill' && (
           <>
-            <small className="muted">Fill in the blank</small>
+            <small className="muted">{L.fillBlank}</small>
             <h3 className="zh-lg" lang="zh-CN">
               {ex.sentence.replace(/_{2,}|（\s*）|\(\s*\)/, '＿＿')}
             </h3>
@@ -471,10 +484,10 @@ function ExerciseView({ ex, locked, onSubmit }: { ex: Exercise; locked: boolean;
         )}
         {ex.type === 'listen' && (
           <>
-            <small className="muted">Listen and choose the meaning</small>
+            <small className="muted">{L.listenChoose}</small>
             <div className="row gap">
-              <SpeakButton text={ex.zh} label="Play" className="btn btn-lg" />
-              <SpeakButton text={ex.zh} slow label="Slow" className="btn btn-lg" />
+              <SpeakButton text={ex.zh} label={T.common.listen} className="btn btn-lg" />
+              <SpeakButton text={ex.zh} slow label={T.common.slow} className="btn btn-lg" />
             </div>
             {locked && <Zh text={ex.zh} />}
           </>
@@ -494,7 +507,7 @@ function ExerciseView({ ex, locked, onSubmit }: { ex: Exercise; locked: boolean;
     const sentence = built.map((b) => chunks[b].w).join('');
     return (
       <div className="exercise">
-        <small className="muted">Put the words in order</small>
+        <small className="muted">{L.order}</small>
         <h3>{ex.translation}</h3>
         <div className="built-line" lang="zh-CN">
           {built.map((b, k) => (
@@ -502,7 +515,7 @@ function ExerciseView({ ex, locked, onSubmit }: { ex: Exercise; locked: boolean;
               {chunks[b].w}
             </button>
           ))}
-          {!built.length && <span className="muted">Tap words below</span>}
+          {!built.length && <span className="muted">{L.tapWords}</span>}
         </div>
         <div className="word-bank" lang="zh-CN">
           {chunks.map((c, k) => (
@@ -516,7 +529,7 @@ function ExerciseView({ ex, locked, onSubmit }: { ex: Exercise; locked: boolean;
             const ok = norm(sentence) === norm(ex.answer);
             onSubmit(ok, '', ok ? undefined : ex.answer);
           }}>
-            Check
+            {T.common.check}
           </button>
         )}
       </div>
@@ -526,13 +539,13 @@ function ExerciseView({ ex, locked, onSubmit }: { ex: Exercise; locked: boolean;
   // translate
   async function grade() {
     if (ex.type !== 'translate' || !text.trim()) return;
-    if (norm(text) === norm(ex.answer)) return onSubmit(true, 'Perfect match!');
+    if (norm(text) === norm(ex.answer)) return onSubmit(true, L.perfect);
     setGrading(true);
     try {
       const r = await generateJSON<{ correct: boolean; feedback: string; corrected: string }>(
         `A Mandarin learner translated "${ex.prompt}" as: "${text}". Reference answer: "${ex.answer}".
 Is the learner's translation grammatically correct and does it convey the meaning (other valid phrasings are fine; ignore punctuation; pinyin input counts as correct only if accurate with tones)?
-JSON: {"correct": true/false, "feedback": "one short ${settingsStore.get().nativeLanguage} sentence of feedback", "corrected": "the learner's sentence minimally corrected (or unchanged if correct)"}`,
+JSON: {"correct": true/false, "feedback": "one short ${explainIn()} sentence of feedback", "corrected": "the learner's sentence minimally corrected (or unchanged if correct)"}`,
         { temperature: 0.1 },
       );
       if (!r.correct) addMistakes([{ source: 'lesson', said: text, correct: r.corrected || ex.answer, explanation: r.feedback }]);
@@ -546,7 +559,7 @@ JSON: {"correct": true/false, "feedback": "one short ${settingsStore.get().nativ
 
   return (
     <div className="exercise">
-      <small className="muted">Translate into Chinese</small>
+      <small className="muted">{L.translateZh}</small>
       <h3>{ex.type === 'translate' && ex.prompt}</h3>
       <textarea className="input zh-input" rows={2} value={text} disabled={locked} placeholder="用中文写…" onChange={(e) => setText(e.target.value)} onKeyDown={(e) => {
         if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -556,7 +569,7 @@ JSON: {"correct": true/false, "feedback": "one short ${settingsStore.get().nativ
       }} />
       {!locked && (
         <button className="btn btn-primary" onClick={grade} disabled={grading || !text.trim()}>
-          {grading ? <span className="spinner sm" /> : null} Check
+          {grading ? <span className="spinner sm" /> : null} {T.common.check}
         </button>
       )}
     </div>

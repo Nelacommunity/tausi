@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { addCards, cardsStore } from '../lib/srs';
 import { speak } from '../lib/speech';
-import { settingsStore } from '../lib/state';
+import { settingsStore, explainIn } from '../lib/state';
 import { isHan, segment, syllables, toPinyin } from '../lib/zh';
 import { errorText, generateJSON } from '../lib/gemini';
 import { lookupBuiltin } from '../data/hsk';
+import { useLang, useT } from '../lib/i18n';
 
 /** Chinese text with optional pinyin ruby and tone colouring. Words are clickable when `onWord` is set. */
 export function Zh({
@@ -70,12 +71,13 @@ export function Pinyin({ hanzi, pinyin }: { hanzi?: string; pinyin?: string }) {
 }
 
 export function SpeakButton({ text, slow, label, className = '' }: { text: string; slow?: boolean; label?: string; className?: string }) {
+  const T = useT();
   const [busy, setBusy] = useState(false);
   return (
     <button
       type="button"
       className={`btn-icon ${busy ? 'busy' : ''} ${className}`}
-      title={slow ? 'Play slowly' : 'Play audio'}
+      title={slow ? T.common.playSlow : T.common.play}
       onClick={async (e) => {
         e.stopPropagation();
         setBusy(true);
@@ -93,6 +95,7 @@ export function SpeakButton({ text, slow, label, className = '' }: { text: strin
 }
 
 export function AddCardButton({ word, deck = 'Collected' }: { word: { hanzi: string; pinyin?: string; meaning: string; example?: string; exampleEn?: string }; deck?: string }) {
+  const T = useT();
   const cards = cardsStore.use();
   const has = cards.some((c) => c.hanzi === word.hanzi);
   return (
@@ -105,7 +108,7 @@ export function AddCardButton({ word, deck = 'Collected' }: { word: { hanzi: str
         addCards([{ ...word, pinyin: word.pinyin || toPinyin(word.hanzi) }], deck);
       }}
     >
-      {has ? '✓ In deck' : '+ Flashcard'}
+      {has ? T.common.inDeck : T.common.addCard}
     </button>
   );
 }
@@ -120,13 +123,14 @@ export function Spinner({ label }: { label?: string }) {
 }
 
 export function ErrorBox({ error, onRetry }: { error: string | null; onRetry?: () => void }) {
+  const T = useT();
   if (!error) return null;
   return (
     <div className="error-box">
       <span>⚠️ {error}</span>
       {onRetry && (
         <button className="btn btn-sm" onClick={onRetry}>
-          Retry
+          {T.common.retry}
         </button>
       )}
     </div>
@@ -134,11 +138,12 @@ export function ErrorBox({ error, onRetry }: { error: string | null; onRetry?: (
 }
 
 export function PageHeader({ title, zh, subtitle, actions }: { title: string; zh?: string; subtitle?: string; actions?: ReactNode }) {
+  const lang = useLang();
   return (
     <header className="page-header">
       <div>
         <h1>
-          {title} {zh && <span className="h-zh">{zh}</span>}
+          {title} {zh && zh !== title && lang !== 'zh' && <span className="h-zh">{zh}</span>}
         </h1>
         {subtitle && <p className="muted">{subtitle}</p>}
       </div>
@@ -162,6 +167,7 @@ export interface WordTarget {
 }
 
 export function WordPopup({ target, onClose }: { target: WordTarget | null; onClose: () => void }) {
+  const T = useT();
   const [info, setInfo] = useState<Lookup | null>(null);
   const [error, setError] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -178,7 +184,7 @@ export function WordPopup({ target, onClose }: { target: WordTarget | null; onCl
     let cancelled = false;
     generateJSON<Lookup>(
       `Define the Chinese word "${word}" as used in this sentence: "${context}".
-Return JSON: {"pinyin": "tone-marked pinyin", "meaning": "concise ${settingsStore.get().nativeLanguage} meaning in this context", "note": "optional short usage note or empty string"}`,
+Return JSON: {"pinyin": "tone-marked pinyin", "meaning": "concise ${explainIn()} meaning in this context", "note": "optional short usage note or empty string"}`,
       { temperature: 0.2 },
     )
       .then((r) => {
@@ -227,7 +233,7 @@ Return JSON: {"pinyin": "tone-marked pinyin", "meaning": "concise ${settingsStor
           <AddCardButton word={{ hanzi: target.word, pinyin: info.pinyin, meaning: info.meaning, example: target.context }} />
         </>
       ) : (
-        <Spinner label="Looking up…" />
+        <Spinner label={T.common.lookingUp} />
       )}
     </div>
   );

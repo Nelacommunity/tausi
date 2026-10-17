@@ -627,5 +627,30 @@ create index if not exists shuo_results_class_idx on shuo_results(class_id, crea
 create index if not exists shuo_results_student_idx on shuo_results(student_id, created_at desc);
 alter table shuo_results enable row level security;
 
+-- Shuō learning history: one row per completed activity (lesson, voice
+-- session, speaking report, chat, tone drill, reading, handwriting quiz,
+-- mistakes quiz). Written from the browser; RLS keeps it to the student.
+create table if not exists shuo_activity (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  kind       text not null check (kind in ('lesson', 'voice', 'speaking', 'chat', 'pronunciation', 'reading', 'writing', 'mistakes')),
+  title      text not null check (char_length(title) <= 200),
+  score      integer check (score between 0 and 100),
+  xp         integer not null default 0,
+  details    jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists shuo_activity_user_idx on shuo_activity(user_id, created_at desc);
+alter table shuo_activity enable row level security;
+drop policy if exists "users read own shuo activity" on shuo_activity;
+create policy "users read own shuo activity" on shuo_activity
+  for select to authenticated using (auth.uid() = user_id);
+drop policy if exists "users add own shuo activity" on shuo_activity;
+create policy "users add own shuo activity" on shuo_activity
+  for insert to authenticated with check (auth.uid() = user_id);
+drop policy if exists "users delete own shuo activity" on shuo_activity;
+create policy "users delete own shuo activity" on shuo_activity
+  for delete to authenticated using (auth.uid() = user_id);
+
 -- Make the API pick up new tables immediately.
 notify pgrst, 'reload schema';

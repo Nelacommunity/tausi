@@ -3,8 +3,10 @@ import { AddCardButton, ErrorBox, PageHeader, Pinyin, SpeakButton, Spinner, Zh, 
 import { errorText, generateJSON, learnerProfile } from '../lib/gemini';
 import { speak, stopPlayback } from '../lib/speech';
 import { addCards } from '../lib/srs';
-import { award, settingsStore } from '../lib/state';
+import { award, settingsStore, explainIn } from '../lib/state';
 import { persisted } from '../lib/store';
+import { logActivity } from '../lib/history';
+import { useT } from '../lib/i18n';
 
 interface Story {
   title: string;
@@ -30,6 +32,8 @@ export default function Reader() {
   const [showEn, setShowEn] = useState<Record<number, boolean>>({});
   const [playing, setPlaying] = useState<number | null>(null);
   const { open: openWord, popup } = useWordPopup();
+  const T = useT();
+  const R = T.reader;
 
   async function generate(fromText?: string) {
     setBusy(true);
@@ -40,13 +44,13 @@ export default function Reader() {
       const prompt = fromText
         ? `Here is a Chinese text the learner wants to study:\n"""${fromText}"""\n${learnerProfile()}
 Split it into natural paragraphs (keep the original text exactly; convert to simplified characters if needed). Return JSON:
-{"title": "short Chinese title", "paragraphs": ["..."], "translations": ["${settings.nativeLanguage} translation per paragraph"], "vocab": [{"hanzi":"","pinyin":"","meaning":""}], "questions": [{"q":"question in ${settings.level <= 3 ? settings.nativeLanguage : 'Chinese'}","options":["","","",""],"answer": 0,"explanation":""}]}
+{"title": "short Chinese title", "paragraphs": ["..."], "translations": ["${explainIn()} translation per paragraph"], "vocab": [{"hanzi":"","pinyin":"","meaning":""}], "questions": [{"q":"question in ${settings.level <= 3 ? explainIn() : 'Chinese'}","options":["","","",""],"answer": 0,"explanation":""}]}
 Give 8–12 key vocab items likely new to the learner and 3 comprehension questions.`
         : `Write an original, engaging graded-reader story in simplified Chinese. ${learnerProfile()}
 Genre: ${genre}. ${topic ? `Topic: ${topic}.` : ''} Length: ${len} characters.
 Use ~90% vocabulary at or below HSK ${settings.level} and ~10% new words (i+1). Use natural, grammatical sentences, some dialogue, and a satisfying ending.
 Return JSON:
-{"title": "Chinese title", "paragraphs": ["paragraph 1", "..."], "translations": ["${settings.nativeLanguage} translation per paragraph"], "vocab": [{"hanzi":"","pinyin":"","meaning":""}], "questions": [{"q":"question in ${settings.level <= 3 ? settings.nativeLanguage : 'Chinese'}","options":["","","",""],"answer": 0,"explanation":"${settings.nativeLanguage}"}]}
+{"title": "Chinese title", "paragraphs": ["paragraph 1", "..."], "translations": ["${explainIn()} translation per paragraph"], "vocab": [{"hanzi":"","pinyin":"","meaning":""}], "questions": [{"q":"question in ${settings.level <= 3 ? explainIn() : 'Chinese'}","options":["","","",""],"answer": 0,"explanation":"${explainIn()}"}]}
 Give 6–10 vocab items (the new/harder words) and 3–4 comprehension questions; "answer" is the index of the correct option.`;
       const s = await generateJSON<Story>(prompt, { temperature: fromText ? 0.3 : 1 });
       readerStore.set({ story: s, answers: {} });
@@ -75,6 +79,10 @@ Give 6–10 vocab items (the new/harder words) and 3–4 comprehension questions
     if (Object.keys(next).length === story.questions.length) {
       const correct = story.questions.filter((q, i) => next[i] === q.answer).length;
       award(10 + correct * 3, 'reading');
+      logActivity('reading', `${T.nav.read} · ${story.title}`, {
+        score: (correct / Math.max(1, story.questions.length)) * 100, xp: 10 + correct * 3,
+        details: { correct, total: story.questions.length },
+      });
     }
   }
 
@@ -82,45 +90,45 @@ Give 6–10 vocab items (the new/harder words) and 3–4 comprehension questions
 
   return (
     <div>
-      <PageHeader title="Graded Reader" zh="分级阅读" subtitle="Stories written for your exact level. Tap any word for its meaning, listen along, then test your comprehension." />
+      <PageHeader title={R.title} zh="分级阅读" subtitle={R.subtitle} />
       <ErrorBox error={error} />
 
       <section className="card">
         <div className="row gap wrap">
           <label className="field">
-            <span>Genre</span>
+            <span>{R.genre}</span>
             <select className="input" value={genre} onChange={(e) => setGenre(e.target.value)}>
               {GENRES.map((g) => (
-                <option key={g}>{g}</option>
+                <option key={g} value={g}>{R.genres[g] ?? g}</option>
               ))}
             </select>
           </label>
           <label className="field grow">
-            <span>Topic (optional)</span>
-            <input className="input" placeholder="e.g. a lost cat in Chengdu, first day at a new job" value={topic} onChange={(e) => setTopic(e.target.value)} />
+            <span>{R.topic}</span>
+            <input className="input" placeholder={R.topicPlaceholder} value={topic} onChange={(e) => setTopic(e.target.value)} />
           </label>
           <label className="field">
-            <span>Length</span>
+            <span>{R.length}</span>
             <select className="input" value={length} onChange={(e) => setLength(e.target.value as typeof length)}>
-              <option value="short">Short</option>
-              <option value="medium">Medium</option>
-              <option value="long">Long</option>
+              <option value="short">{R.lengths.short}</option>
+              <option value="medium">{R.lengths.medium}</option>
+              <option value="long">{R.lengths.long}</option>
             </select>
           </label>
           <button className="btn btn-primary align-end" onClick={() => generate()} disabled={busy}>
-            ✨ Write me a story
+            {R.write}
           </button>
         </div>
         <details>
-          <summary>…or study your own text (news article, song lyrics, WeChat message)</summary>
+          <summary>{R.ownText}</summary>
           <textarea className="input" rows={4} placeholder="粘贴中文文本…" value={pasted} onChange={(e) => setPasted(e.target.value)} />
           <button className="btn" onClick={() => generate(pasted)} disabled={busy || !pasted.trim()}>
-            Study this text
+            {R.studyThis}
           </button>
         </details>
       </section>
 
-      {busy && <Spinner label="Writing your story…" />}
+      {busy && <Spinner label={R.writing} />}
 
       {story && !busy && (
         <>
@@ -132,7 +140,7 @@ Give 6–10 vocab items (the new/harder words) and 3–4 comprehension questions
               <div className="row gap">
                 {playing === null ? (
                   <button className="btn" onClick={playAll}>
-                    ▶️ Listen
+                    {R.listen}
                   </button>
                 ) : (
                   <button
@@ -142,11 +150,11 @@ Give 6–10 vocab items (the new/harder words) and 3–4 comprehension questions
                       stopPlayback();
                     }}
                   >
-                    ⏹ Stop
+                    {R.stop}
                   </button>
                 )}
                 <button className="btn" onClick={() => settingsStore.set((s) => ({ ...s, showPinyin: !s.showPinyin }))}>
-                  {settings.showPinyin ? 'Hide pinyin' : 'Show pinyin'}
+                  {settings.showPinyin ? R.hidePinyin : R.showPinyin}
                 </button>
               </div>
             </div>
@@ -158,7 +166,7 @@ Give 6–10 vocab items (the new/harder words) and 3–4 comprehension questions
                 <div className="bubble-tools">
                   <SpeakButton text={p} />
                   <button className="btn-link" onClick={() => setShowEn((s) => ({ ...s, [i]: !s[i] }))}>
-                    {showEn[i] ? 'Hide translation' : 'Translate'}
+                    {showEn[i] ? R.hideTranslation : T.common.translate}
                   </button>
                 </div>
                 {showEn[i] && <p className="translation">{story.translations?.[i]}</p>}
@@ -169,9 +177,9 @@ Give 6–10 vocab items (the new/harder words) and 3–4 comprehension questions
           {story.vocab?.length > 0 && (
             <section className="card">
               <div className="row between wrap">
-                <h3>Key vocabulary</h3>
+                <h3>{R.keyVocab}</h3>
                 <button className="btn btn-sm" onClick={() => addCards(story.vocab, 'Reader')}>
-                  + Add all to flashcards
+                  {T.common.addAllCards}
                 </button>
               </div>
               <div className="vocab-grid">
@@ -192,7 +200,7 @@ Give 6–10 vocab items (the new/harder words) and 3–4 comprehension questions
           {story.questions?.length > 0 && (
             <section className="card">
               <h3>
-                Comprehension {Object.keys(answers).length === story.questions.length && `· ${correctCount}/${story.questions.length}`}
+                {R.comprehension} {Object.keys(answers).length === story.questions.length && `· ${correctCount}/${story.questions.length}`}
               </h3>
               {story.questions.map((q, qi) => (
                 <div key={qi} className="question">

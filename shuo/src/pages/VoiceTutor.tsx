@@ -7,8 +7,11 @@ import { errorText, generateJSON, generateText } from '../lib/gemini';
 import { LiveSession, type LiveStatus } from '../lib/live';
 import { reportPrompt, tutorSystemPrompt } from '../lib/prompts';
 import { addCards } from '../lib/srs';
-import { VOICES, addMistakes, award, sessionsStore, settingsStore, takeHandoff } from '../lib/state';
+import { VOICES, addMistakes, award, sessionsStore, settingsStore, takeHandoff, MODELS, explainIn } from '../lib/state';
 import { uid } from '../lib/store';
+import { logActivity } from '../lib/history';
+import { useLang, useT } from '../lib/i18n';
+import { scenarioSub, scenarioTitle as scTitle } from '../locales/content';
 
 interface Entry {
   id: string;
@@ -62,9 +65,12 @@ export default function VoiceTutor() {
   const orb = useRef<HTMLDivElement>(null);
   const transcriptEnd = useRef<HTMLDivElement>(null);
   const { open: openWord, popup } = useWordPopup();
+  const T = useT();
+  const lang = useLang();
+  const V = T.voice;
 
   const scenario = SCENARIOS.find((s) => s.id === scenarioId);
-  const scenarioTitle = scenario?.title ?? handoff?.scenarioTitle ?? 'Custom scenario';
+  const scenarioTitle = (scenario && scTitle(scenario, lang)) ?? handoff?.scenarioTitle ?? V.customScenario;
   const live = status === 'live' || status === 'connecting';
 
   // Timer
@@ -104,6 +110,7 @@ export default function VoiceTutor() {
   useEffect(() => {
     if (prevStatus.current === 'live' && status !== 'live' && seconds > 10) {
       award(Math.max(3, Math.round((seconds / 60) * 3)), 'voiceSeconds', seconds);
+      logActivity('voice', `Voice · ${scenarioTitle}`, { xp: Math.max(3, Math.round((seconds / 60) * 3)), details: { seconds, scenario: scenarioTitle } });
     }
     prevStatus.current = status;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,7 +136,7 @@ export default function VoiceTutor() {
     const scenarioText = scenarioId === 'custom' ? custom || 'Free conversation' : `${scenario!.title}. ${scenario!.prompt}`;
     const s = new LiveSession(
       {
-        model: settings.liveModel,
+        model: MODELS.live,
         voice: settings.tutorVoice,
         systemPrompt: tutorSystemPrompt({ scenario: scenarioText, mode }),
         kickoff: 'The call has just connected. Greet the student warmly in Chinese and start the session.',
@@ -187,7 +194,7 @@ export default function VoiceTutor() {
 ${transcriptText() || '(just started)'}
 
 Suggest 3 natural things the STUDENT could say next, at their level (one simple, one medium, one slightly challenging).
-Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", "en": "${settings.nativeLanguage} meaning"}]}`,
+Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", "en": "${explainIn()} meaning"}]}`,
       );
       setSuggestions(r.suggestions);
     } catch (e) {
@@ -199,7 +206,7 @@ Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", 
 
   async function translate(entry: Entry) {
     try {
-      const t = await generateText(`Translate this Chinese into natural ${settings.nativeLanguage}. Reply with the translation only:\n${entry.text}`, {
+      const t = await generateText(`Translate this Chinese into natural ${explainIn()}. Reply with the translation only:\n${entry.text}`, {
         temperature: 0.2,
       });
       setEntries((prev) => prev.map((e) => (e.id === entry.id ? { ...e, translation: t.trim() } : e)));
@@ -232,6 +239,10 @@ Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", 
         ].slice(0, 100),
       );
       award(10, 'drills', 0);
+      logActivity('speaking', `Speaking report · ${scenarioTitle}`, {
+        score: r.scores?.overall ?? 0, xp: 10,
+        details: { scores: r.scores, estimatedLevel: r.estimatedLevel, summary: r.summary, seconds },
+      });
     } catch (e) {
       setError(errorText(e));
     } finally {
@@ -244,15 +255,15 @@ Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", 
   return (
     <div className="voice-page">
       <PageHeader
-        title="Voice Tutor"
+        title={V.title}
         zh="口语陪练"
-        subtitle="Real-time spoken conversation with a native-level AI tutor powered by Gemini Live. Just talk — interrupt any time."
+        subtitle={V.subtitle}
       />
       <ErrorBox error={error} />
 
       {!live && status !== 'closed' && (
         <section className="card">
-          <h3>1 · Choose a scenario</h3>
+          <h3>{V.chooseScenario}</h3>
           <div className="scenario-grid">
             {SCENARIOS.map((s) => (
               <button
@@ -262,50 +273,50 @@ Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", 
                 title={s.prompt}
               >
                 <span className="scenario-icon">{s.icon}</span>
-                <span className="scenario-title">{s.title}</span>
-                <span className="scenario-zh">{s.zh}</span>
+                <span className="scenario-title">{scTitle(s, lang)}</span>
+                <span className="scenario-zh">{scenarioSub(s, lang)}</span>
                 {s.minLevel > settings.level && <span className="tag tag-warn">HSK {s.minLevel}+</span>}
               </button>
             ))}
             <button className={`scenario ${scenarioId === 'custom' ? 'selected' : ''}`} onClick={() => setScenarioId('custom')}>
               <span className="scenario-icon">✨</span>
-              <span className="scenario-title">Custom</span>
-              <span className="scenario-zh">自定义</span>
+              <span className="scenario-title">{V.custom}</span>
+              {lang !== 'zh' && <span className="scenario-zh">自定义</span>}
             </button>
           </div>
           {scenarioId === 'custom' && (
             <textarea
               className="input"
               rows={3}
-              placeholder="Describe any situation, e.g. 'You are my Chinese colleague; help me prepare to present our Q3 results to the Shanghai office.'"
+              placeholder={V.customPlaceholder}
               value={custom}
               onChange={(e) => setCustom(e.target.value)}
             />
           )}
 
-          <h3>2 · Tutor style</h3>
+          <h3>{V.style}</h3>
           <div className="segmented">
             {TUTOR_MODES.map((m) => (
-              <button key={m.id} className={mode === m.id ? 'active' : ''} onClick={() => setMode(m.id)} title={m.desc}>
-                {m.label}
+              <button key={m.id} className={mode === m.id ? 'active' : ''} onClick={() => setMode(m.id)} title={V.modes[m.id]?.[1] ?? m.desc}>
+                {V.modes[m.id]?.[0] ?? m.label}
               </button>
             ))}
           </div>
-          <p className="muted small">{TUTOR_MODES.find((m) => m.id === mode)?.desc}</p>
+          <p className="muted small">{V.modes[mode]?.[1]}</p>
 
           <div className="row wrap gap">
             <label className="field">
-              <span>Voice</span>
+              <span>{T.common.voice}</span>
               <select className="input" value={settings.tutorVoice} onChange={(e) => settingsStore.set((s) => ({ ...s, tutorVoice: e.target.value }))}>
                 {VOICES.map((v) => (
                   <option key={v.id} value={v.id}>
-                    {v.id} — {v.desc}
+                    {v.id} — {T.voices[v.id] ?? v.desc}
                   </option>
                 ))}
               </select>
             </label>
             <label className="field">
-              <span>Your level</span>
+              <span>{T.common.yourLevel}</span>
               <select className="input" value={settings.level} onChange={(e) => settingsStore.set((s) => ({ ...s, level: +e.target.value }))}>
                 {[1, 2, 3, 4, 5, 6].map((l) => (
                   <option key={l} value={l}>
@@ -317,9 +328,9 @@ Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", 
           </div>
 
           <button className="btn btn-primary btn-lg" onClick={start}>
-            🎙️ Start speaking
+            {V.start}
           </button>
-          <p className="muted small">Use headphones for the best experience. Your mic audio goes directly from your browser to Google's Gemini API.</p>
+          <p className="muted small">{V.headphones}</p>
         </section>
       )}
 
@@ -332,26 +343,26 @@ Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", 
             <div className="call-meta">
               <strong>{scenarioTitle}</strong>
               <span className="muted">
-                {status === 'connecting' ? 'Connecting…' : status === 'live' ? (muted ? 'Muted' : modelSpeaking ? '李老师 is speaking…' : 'Listening…') : 'Call ended'} · {mmss}
+                {status === 'connecting' ? V.connecting : status === 'live' ? (muted ? V.muted : modelSpeaking ? V.teacherSpeaking : V.listening) : V.ended} · {mmss}
               </span>
               {detail && <span className="muted small">{detail}</span>}
             </div>
             {live ? (
               <div className="call-controls">
                 <button className={`btn ${muted ? 'btn-warn' : ''}`} onClick={toggleMute}>
-                  {muted ? '🔇 Unmute' : '🎤 Mute'}
+                  {muted ? V.unmute : V.mute}
                 </button>
                 <button className="btn" onClick={hint} disabled={hinting}>
-                  {hinting ? <span className="spinner sm" /> : '💡'} What can I say?
+                  {hinting ? <span className="spinner sm" /> : '💡'} {V.whatSay}
                 </button>
                 <button className="btn btn-danger" onClick={stop}>
-                  ⏹ End
+                  {V.end}
                 </button>
               </div>
             ) : (
               <div className="call-controls">
                 <button className="btn btn-primary" onClick={makeReport} disabled={reporting || entries.length < 2 || !!report}>
-                  {reporting ? <span className="spinner sm" /> : '📊'} Get feedback report
+                  {reporting ? <span className="spinner sm" /> : '📊'} {V.getReport}
                 </button>
                 <button
                   className="btn"
@@ -361,7 +372,7 @@ Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", 
                     setReport(null);
                   }}
                 >
-                  ↺ New session
+                  {V.newSession}
                 </button>
               </div>
             )}
@@ -369,22 +380,22 @@ Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", 
               <div className="row gap">
                 <input
                   className="input"
-                  placeholder="…or type (Chinese, pinyin or English)"
+                  placeholder={V.typePlaceholder}
                   value={typed}
                   onChange={(e) => setTyped(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendTyped()}
                 />
                 <button className="btn" onClick={sendTyped}>
-                  Send
+                  {T.common.send}
                 </button>
               </div>
             )}
             {suggestions && (
               <div className="suggestions">
                 <div className="row between">
-                  <strong>Try saying:</strong>
+                  <strong>{V.trySaying}</strong>
                   <button className="btn-link" onClick={() => setSuggestions(null)}>
-                    hide
+                    {V.hide}
                   </button>
                 </div>
                 {suggestions.map((s, i) => (
@@ -399,8 +410,8 @@ Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", 
           </section>
 
           <section className="card transcript">
-            <h3>Transcript</h3>
-            {entries.length === 0 && <p className="muted">The conversation will appear here. Tap any word for its meaning.</p>}
+            <h3>{V.transcript}</h3>
+            {entries.length === 0 && <p className="muted">{V.transcriptEmpty}</p>}
             {entries.map((e) => (
               <div key={e.id} className={`bubble ${e.role}`}>
                 {e.role === 'model' ? <Zh text={e.text} onWord={openWord} /> : <span lang="zh-CN">{e.text}</span>}
@@ -411,7 +422,7 @@ Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", 
                       <span className="translation">{e.translation}</span>
                     ) : (
                       <button className="btn-link" onClick={() => translate(e)}>
-                        Translate
+                        {T.common.translate}
                       </button>
                     )}
                   </div>
@@ -423,7 +434,7 @@ Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", 
         </div>
       )}
 
-      {reporting && <Spinner label="Analyzing your speaking…" />}
+      {reporting && <Spinner label={V.analyzing} />}
       {report && <ReportView report={report} />}
       {popup}
     </div>
@@ -432,11 +443,13 @@ Return JSON: {"suggestions": [{"zh": "Chinese", "pinyin": "tone-marked pinyin", 
 
 function ReportView({ report }: { report: Report }) {
   const sc = report.scores ?? ({} as Report['scores']);
+  const T = useT();
+  const V = T.voice;
   return (
     <section className="card report">
       <div className="row between wrap">
-        <h2>Session report</h2>
-        <span className="tag">Estimated level: {report.estimatedLevel}</span>
+        <h2>{V.report}</h2>
+        <span className="tag">{V.estLevel(report.estimatedLevel)}</span>
       </div>
       <p>{report.summary}</p>
       {report.id && (
@@ -444,7 +457,7 @@ function ReportView({ report }: { report: Report }) {
           key={report.id}
           result={{
             kind: 'speaking',
-            title: report.scenarioTitle ?? 'Speaking practice',
+            title: report.scenarioTitle ?? V.practice,
             score: sc.overall ?? 0,
             details: {
               scenario: report.scenarioTitle, seconds: report.seconds, estimatedLevel: report.estimatedLevel,
@@ -459,13 +472,13 @@ function ReportView({ report }: { report: Report }) {
             <div className="score-ring" style={{ ['--p' as string]: sc[k] ?? 0 }}>
               <span>{sc[k] ?? '–'}</span>
             </div>
-            <small>{k}</small>
+            <small>{V.scores[k] ?? k}</small>
           </div>
         ))}
       </div>
       {report.strengths?.length > 0 && (
         <>
-          <h3>💪 Strengths</h3>
+          <h3>{V.strengths}</h3>
           <ul>
             {report.strengths.map((s, i) => (
               <li key={i}>{s}</li>
@@ -475,8 +488,8 @@ function ReportView({ report }: { report: Report }) {
       )}
       {report.mistakes?.length > 0 && (
         <>
-          <h3>🛠 Corrections</h3>
-          <p className="muted small">Saved to your Mistake Notebook.</p>
+          <h3>{V.corrections}</h3>
+          <p className="muted small">{V.savedToNotebook}</p>
           {report.mistakes.map((m, i) => (
             <div key={i} className="correction">
               <div className="said">✗ {m.said}</div>
@@ -490,12 +503,12 @@ function ReportView({ report }: { report: Report }) {
       )}
       {report.betterExpressions?.length > 0 && (
         <>
-          <h3>🗣 Sound more native</h3>
+          <h3>{V.native}</h3>
           {report.betterExpressions.map((b, i) => (
             <div key={i} className="correction">
-              <div className="said">You: {b.basic}</div>
+              <div className="said">{V.you} {b.basic}</div>
               <div className="fixed">
-                Native: <Zh text={b.native} /> <SpeakButton text={b.native} />
+                {V.nativeLabel} <Zh text={b.native} /> <SpeakButton text={b.native} />
               </div>
               <div className="muted small">{b.meaning}</div>
             </div>
@@ -505,9 +518,9 @@ function ReportView({ report }: { report: Report }) {
       {report.vocabulary?.length > 0 && (
         <>
           <div className="row between wrap">
-            <h3>📚 Vocabulary</h3>
+            <h3>{T.common.vocabulary}</h3>
             <button className="btn btn-sm" onClick={() => addCards(report.vocabulary, 'Voice sessions')}>
-              + Add all to flashcards
+              {T.common.addAllCards}
             </button>
           </div>
           <div className="vocab-grid">
@@ -526,7 +539,7 @@ function ReportView({ report }: { report: Report }) {
       )}
       {report.nextSteps?.length > 0 && (
         <>
-          <h3>🎯 Next steps</h3>
+          <h3>{V.nextSteps}</h3>
           <ul>
             {report.nextSteps.map((s, i) => (
               <li key={i}>{s}</li>

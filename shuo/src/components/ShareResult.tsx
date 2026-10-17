@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { settingsStore } from '../lib/state';
+import { tr, useT } from '../lib/i18n';
 
 export interface ShareableResult {
   kind: 'lesson' | 'speaking';
@@ -18,7 +19,7 @@ async function send(result: ShareableResult, opts: { auto: boolean; classIds?: s
     body: JSON.stringify({ ...result, ...opts }),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Could not send — try again.');
+  if (!res.ok) throw new Error(data.error || tr().share.sendFailed);
   return (data.sent ?? []) as ClassOption[];
 }
 
@@ -29,6 +30,7 @@ async function send(result: ShareableResult, opts: { auto: boolean; classIds?: s
  */
 export function ShareResult({ result }: { result: ShareableResult }) {
   const { shareMode } = settingsStore.use();
+  const T = useT();
   const [classes, setClasses] = useState<ClassOption[] | null>(null);
   const [target, setTarget] = useState('all');
   const [state, setState] = useState<{ status: 'idle' | 'sending' | 'sent' | 'error'; sentTo?: ClassOption[]; error?: string }>({ status: 'idle' });
@@ -60,32 +62,32 @@ export function ShareResult({ result }: { result: ShareableResult }) {
   if (!classes.length) {
     return (
       <div className="share-panel">
-        <span className="muted">Join a class in Tausi to share results with your teacher.</span>
-        <a className="btn btn-sm" href="/learn">Join a class</a>
+        <span className="muted">{T.share.joinClass}</span>
+        <a className="btn btn-sm" href="/learn">{T.share.joinClassBtn}</a>
       </div>
     );
   }
   if (state.status === 'sent') {
     return (
       <div className="share-panel">
-        <span>✓ Sent to your teacher{state.sentTo && state.sentTo.length > 1 ? 's' : ''}{state.sentTo?.length ? ` · ${state.sentTo.map((c) => c.name).join(', ')}` : ''}</span>
+        <span>{T.share.sent(state.sentTo?.length ?? 1)}{state.sentTo?.length ? ` · ${state.sentTo.map((c) => c.name).join(', ')}` : ''}</span>
       </div>
     );
   }
   if (shareMode === 'auto' && state.status !== 'error') {
-    return <div className="share-panel"><span className="muted">Sending to your teacher…</span></div>;
+    return <div className="share-panel"><span className="muted">{T.share.sending}</span></div>;
   }
   return (
     <div className="share-panel">
       {classes.length > 1 && (
-        <select className="input" value={target} onChange={(e) => setTarget(e.target.value)} aria-label="Class">
-          <option value="all">All my classes</option>
+        <select className="input" value={target} onChange={(e) => setTarget(e.target.value)} aria-label={T.share.classLabel}>
+          <option value="all">{T.share.allClasses}</option>
           {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       )}
       <button className="btn btn-primary btn-sm" disabled={state.status === 'sending'}
         onClick={() => submit(false, target === 'all' ? undefined : [target])}>
-        {state.status === 'sending' ? 'Sending…' : '📤 Send to teacher'}
+        {state.status === 'sending' ? T.share.sendingShort : T.share.send}
       </button>
       {state.status === 'error' && <span className="small" style={{ color: 'var(--bad)' }}>{state.error}</span>}
     </div>

@@ -1,14 +1,13 @@
 import { persisted, todayKey, uid } from './store';
+import { explainLanguage } from './i18n';
 
 // ---------- Settings ----------
 export type ShareMode = 'ask' | 'auto';
 
 export interface Settings {
-  textModel: string;
-  liveModel: string;
-  ttsModel: string;
   tutorVoice: string;
   level: number; // HSK 1–6
+  /** Language the tutor explains in; 'auto' follows the interface language. */
   nativeLanguage: string;
   goal: string;
   showPinyin: boolean;
@@ -20,17 +19,17 @@ export interface Settings {
   shareMode: ShareMode;
 }
 
-export const TEXT_MODELS = [
-  'gemini-3.6-flash',
-  'gemini-3.8-flash',
-  'gemini-3.5-flash',
-  'gemini-3.5-flash-lite',
-  'gemini-3.1-pro-preview',
-  'gemini-2.5-flash',
-  'gemini-2.5-pro',
-];
-export const LIVE_MODELS = ['gemini-3.1-flash-live-preview', 'gemini-2.5-flash-native-audio-preview-12-2025'];
-export const TTS_MODELS = ['gemini-3.1-flash-tts-preview', 'gemini-2.5-flash-preview-tts', 'gemini-2.5-pro-preview-tts'];
+/**
+ * Gemini models used by Shuō — fixed in code (not a student setting), so a
+ * model Google retires can't leave anyone stuck. Requests go through Tausi's
+ * server, which holds the key.
+ */
+export const MODELS = {
+  text: 'gemini-3.6-flash',
+  live: 'gemini-3.1-flash-live-preview',
+  tts: 'gemini-3.1-flash-tts-preview',
+} as const;
+
 export const VOICES = [
   { id: 'Kore', desc: 'Firm, clear (female)' },
   { id: 'Aoede', desc: 'Breezy, warm (female)' },
@@ -43,12 +42,9 @@ export const VOICES = [
 ];
 
 export const settingsStore = persisted<Settings>('settings', {
-  textModel: TEXT_MODELS[0],
-  liveModel: LIVE_MODELS[0],
-  ttsModel: TTS_MODELS[0],
   tutorVoice: 'Kore',
   level: 1,
-  nativeLanguage: 'English',
+  nativeLanguage: 'auto',
   goal: 'Become fluent enough to hold real conversations and work in Chinese',
   showPinyin: true,
   playback: 'gemini',
@@ -179,4 +175,9 @@ export const takeHandoff = () => {
 
 export function navigate(path: string) {
   window.location.hash = `/${path}`;
+}
+
+/** The language the AI should explain things in right now. */
+export function explainIn() {
+  return explainLanguage(settingsStore.get().nativeLanguage);
 }

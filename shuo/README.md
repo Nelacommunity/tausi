@@ -9,6 +9,8 @@ Shuō lives inside the Tausi repo and is served by Tausi at **`/shuo`** (a "Shu�
 - **One login:** Shuō uses Tausi's Supabase session (same origin, same cookies). Signed-out visitors are sent to Tausi's login.
 - **No API key in the browser:** text, JSON and speech requests go through `POST /api/shuo/gemini`; the voice tutor connects to Gemini Live with a single-use token from `POST /api/shuo/live-token`. Both require sign-in and are rate-limited.
 - **Saved progress:** settings, progress, flashcards, mistakes, speaking sessions and custom lessons sync to the `shuo_state` table (each student's own rows only). A device's existing local progress is uploaded the first time.
+- **Learning history:** every finished lesson, voice call, speaking report, chat, Tone Lab drill, story, handwriting run and mistake quiz is logged to `shuo_activity` and shown on the **History** page (and "Recent activity" on Home).
+- **Languages:** English, Kiswahili and 中文 (switcher in the sidebar and Settings). It shares Tausi's `tausi_lang` setting, so changing it in either app changes both. Strings live in `src/locales/` (`en.ts` is the source shape; curriculum and scenario names in `content.ts`). The tutor explains in the interface language unless the student picks another in Settings.
 - **Results for teachers:** in Settings the student chooses "Ask me each time" (a *Send to teacher* button after lessons and speaking reports) or "Send automatically". Results go to `shuo_results` for the classes they joined; teachers see them on the class and student pages and get a notification.
 
 ### Build
@@ -34,5 +36,5 @@ npm run dev:shuo     # rebuild on change while working on Shuō
 ## Notes
 
 - Progress is cached in the browser per account and saved to Supabase. **Settings → Export backup** still works.
-- Model IDs are editable in Settings, so you can switch when Google ships new models. Defaults: `gemini-3.6-flash` (text), `gemini-3.1-flash-live-preview` (voice), `gemini-3.1-flash-tts-preview` (speech).
+- Model IDs are fixed in code (`MODELS` in `src/lib/state.ts`), not shown to students: `gemini-3.6-flash` (text), `gemini-3.1-flash-live-preview` (voice), `gemini-3.1-flash-tts-preview` (speech).
 - Use headphones for voice sessions to avoid echo.

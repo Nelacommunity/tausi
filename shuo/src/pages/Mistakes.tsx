@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { ErrorBox, PageHeader, SpeakButton, Spinner, Zh } from '../components/ui';
 import { errorText, generateJSON, learnerProfile } from '../lib/gemini';
-import { award, mistakesStore, settingsStore } from '../lib/state';
+import { award, mistakesStore, explainIn } from '../lib/state';
+import { logActivity } from '../lib/history';
+import { locale, useT } from '../lib/i18n';
 
 interface Analysis {
   patterns: { title: string; explanation: string; examples: string[] }[];
@@ -18,7 +20,8 @@ const SOURCE_ICON: Record<string, string> = { voice: '🎙️', chat: '💬', le
 
 export default function Mistakes() {
   const mistakes = mistakesStore.use();
-  const settings = settingsStore.use();
+  const T = useT();
+  const M = T.mistakes;
   const [filter, setFilter] = useState<'open' | 'mastered' | 'all'>('open');
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [quiz, setQuiz] = useState<QuizItem[] | null>(null);
@@ -41,7 +44,7 @@ export default function Mistakes() {
         await generateJSON<Analysis>(
           `These are a Mandarin learner's recent mistakes. ${learnerProfile()}
 ${sample}
-Find the 2–4 underlying patterns (e.g. word order of time phrases, misuse of 了, measure words, tones), explain each clearly in ${settings.nativeLanguage}, and give a short study plan.
+Find the 2–4 underlying patterns (e.g. word order of time phrases, misuse of 了, measure words, tones), explain each clearly in ${explainIn()}, and give a short study plan.
 JSON: {"patterns":[{"title":"","explanation":"","examples":["correct Chinese example"]}],"plan":["concrete step"]}`,
         ),
       );
@@ -60,7 +63,7 @@ JSON: {"patterns":[{"title":"","explanation":"","examples":["correct Chinese exa
       const r = await generateJSON<{ items: QuizItem[] }>(
         `Create a 6-question multiple-choice quiz that drills exactly the grammar/vocabulary behind these learner mistakes (use NEW sentences, not the same ones). ${learnerProfile()}
 ${sample}
-Each question: a Chinese sentence with a gap or a "which is correct?" choice. JSON: {"items":[{"prompt":"","options":["4 options"],"answer":0,"explanation":"${settings.nativeLanguage}"}]}`,
+Each question: a Chinese sentence with a gap or a "which is correct?" choice. JSON: {"items":[{"prompt":"","options":["4 options"],"answer":0,"explanation":"${explainIn()}"}]}`,
       );
       setQuiz(r.items);
     } catch (e) {
@@ -74,7 +77,11 @@ Each question: a Chinese sentence with a gap or a "which is correct?" choice. JS
     if (picks[qi] !== undefined || !quiz) return;
     const next = { ...picks, [qi]: oi };
     setPicks(next);
-    if (Object.keys(next).length === quiz.length) award(5 + quiz.filter((q, i) => next[i] === q.answer).length * 2, 'drills');
+    if (Object.keys(next).length === quiz.length) {
+      const correct = quiz.filter((q, i) => next[i] === q.answer).length;
+      award(5 + correct * 2, 'drills');
+      logActivity('mistakes', M.quizTitle, { score: (correct / Math.max(1, quiz.length)) * 100, xp: 5 + correct * 2, details: { correct, total: quiz.length } });
+    }
   }
 
   const toggle = (id: string) => mistakesStore.set((all) => all.map((m) => (m.id === id ? { ...m, mastered: !m.mastered } : m)));
@@ -82,26 +89,26 @@ Each question: a Chinese sentence with a gap or a "which is correct?" choice. JS
   return (
     <div>
       <PageHeader
-        title="Mistake Notebook"
+        title={M.title}
         zh="错题本"
-        subtitle="Every correction from your conversations, lessons and pronunciation drills — collected so you can fix them for good."
+        subtitle={M.subtitle}
         actions={
           <>
             <button className="btn" onClick={analyze} disabled={!open.length || !!busy}>
-              🔍 Find my patterns
+              {M.patterns}
             </button>
             <button className="btn btn-primary" onClick={makeQuiz} disabled={!open.length || !!busy}>
-              🎯 Quiz my weak spots
+              {M.quiz}
             </button>
           </>
         }
       />
       <ErrorBox error={error} />
-      {busy && <Spinner label={busy === 'quiz' ? 'Building your personal quiz…' : 'Analyzing your mistakes…'} />}
+      {busy && <Spinner label={busy === 'quiz' ? M.building : M.analyzing} />}
 
       {analysis && (
         <section className="card">
-          <h3>Your patterns</h3>
+          <h3>{M.yourPatterns}</h3>
           {analysis.patterns.map((p, i) => (
             <div key={i} className="pattern-card">
               <strong>{p.title}</strong>
@@ -113,7 +120,7 @@ Each question: a Chinese sentence with a gap or a "which is correct?" choice. JS
               ))}
             </div>
           ))}
-          <h4>Study plan</h4>
+          <h4>{M.plan}</h4>
           <ol>
             {analysis.plan.map((s, i) => (
               <li key={i}>{s}</li>
@@ -125,7 +132,7 @@ Each question: a Chinese sentence with a gap or a "which is correct?" choice. JS
       {quiz && (
         <section className="card">
           <h3>
-            Weak-spot quiz {Object.keys(picks).length === quiz.length && `· ${quiz.filter((q, i) => picks[i] === q.answer).length}/${quiz.length}`}
+            {M.quizTitle} {Object.keys(picks).length === quiz.length && `· ${quiz.filter((q, i) => picks[i] === q.answer).length}/${quiz.length}`}
           </h3>
           {quiz.map((q, qi) => (
             <div key={qi} className="question">
@@ -152,14 +159,14 @@ Each question: a Chinese sentence with a gap or a "which is correct?" choice. JS
       <div className="segmented">
         {(['open', 'mastered', 'all'] as const).map((f) => (
           <button key={f} className={filter === f ? 'active' : ''} onClick={() => setFilter(f)}>
-            {f === 'open' ? `To fix (${open.length})` : f === 'mastered' ? `Mastered (${mistakes.length - open.length})` : 'All'}
+            {f === 'open' ? M.toFix(open.length) : f === 'mastered' ? M.mastered(mistakes.length - open.length) : T.common.all}
           </button>
         ))}
       </div>
 
       {list.length === 0 ? (
         <section className="card empty">
-          <p className="muted">{filter === 'open' ? 'No open mistakes. Go make some — that\'s how you learn! 😄' : 'Nothing here yet.'}</p>
+          <p className="muted">{filter === 'open' ? M.noneOpen : M.nothing}</p>
         </section>
       ) : (
         <div className="mistake-list">
@@ -167,13 +174,13 @@ Each question: a Chinese sentence with a gap or a "which is correct?" choice. JS
             <div key={m.id} className={`card mistake ${m.mastered ? 'mastered' : ''}`}>
               <div className="row between">
                 <span className="muted small">
-                  {SOURCE_ICON[m.source]} {m.source} · {new Date(m.created).toLocaleDateString()}
+                  {SOURCE_ICON[m.source]} {M.sources[m.source] ?? m.source} · {new Date(m.created).toLocaleDateString(locale())}
                 </span>
                 <div className="row gap">
                   <button className="btn btn-sm" onClick={() => toggle(m.id)}>
-                    {m.mastered ? 'Reopen' : '✓ Mastered'}
+                    {m.mastered ? M.reopen : M.markMastered}
                   </button>
-                  <button className="btn-icon" title="Delete" onClick={() => mistakesStore.set((all) => all.filter((x) => x.id !== m.id))}>
+                  <button className="btn-icon" title={T.common.delete} onClick={() => mistakesStore.set((all) => all.filter((x) => x.id !== m.id))}>
                     🗑
                   </button>
                 </div>

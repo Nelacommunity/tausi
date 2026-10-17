@@ -3,8 +3,11 @@ import { AddCardButton, ErrorBox, PageHeader, SpeakButton, Zh, useWordPopup } fr
 import { SCENARIOS } from '../data/scenarios';
 import { errorText, generateJSON, type Content } from '../lib/gemini';
 import { LEVEL_GUIDE } from '../lib/prompts';
-import { addMistakes, award, settingsStore } from '../lib/state';
+import { addMistakes, award, settingsStore, explainIn } from '../lib/state';
 import { persisted, uid } from '../lib/store';
+import { logActivity } from '../lib/history';
+import { getLang, useLang, useT } from '../lib/i18n';
+import { scenarioTitle } from '../locales/content';
 
 interface TutorTurn {
   correction: { hasErrors: boolean; corrected: string; explanation: string };
@@ -27,22 +30,22 @@ function systemPrompt(scenarioId: string) {
   const s = settingsStore.get();
   const sc = SCENARIOS.find((x) => x.id === scenarioId) ?? SCENARIOS[0];
   return `You are 李老师, a friendly native Mandarin tutor chatting by text with a student.
-Student: ${LEVEL_GUIDE[s.level]}. Native language: ${s.nativeLanguage}. Goal: ${s.goal}.
+Student: ${LEVEL_GUIDE[s.level]}. Native language: ${explainIn()}. Goal: ${s.goal}.
 Scenario: ${sc.title} — ${sc.prompt}
 
 For EVERY student message, respond with JSON:
 {
   "correction": {
     "hasErrors": true/false,
-    "corrected": "the student's message rewritten as natural, correct Chinese (if they wrote ${s.nativeLanguage} or pinyin, give the Chinese they should have written)",
-    "explanation": "brief ${s.nativeLanguage} explanation of each fix (empty string if no errors)"
+    "corrected": "the student's message rewritten as natural, correct Chinese (if they wrote ${explainIn()} or pinyin, give the Chinese they should have written)",
+    "explanation": "brief ${explainIn()} explanation of each fix (empty string if no errors)"
   },
   "reply": "your in-character reply in simplified Chinese, 1–3 sentences, matched to the student's level, ending with a question to keep the conversation going",
-  "translation": "${s.nativeLanguage} translation of your reply",
+  "translation": "${explainIn()} translation of your reply",
   "vocab": [{"hanzi": "", "pinyin": "", "meaning": ""}]
 }
 "vocab" lists 0–3 words from your reply that are likely new for this student.
-Be encouraging. Treat pinyin or ${s.nativeLanguage} input as an attempt the student wants help turning into Chinese.`;
+Be encouraging. Treat pinyin or ${explainIn()} input as an attempt the student wants help turning into Chinese.`;
 }
 
 export default function ChatTutor() {
@@ -54,6 +57,9 @@ export default function ChatTutor() {
   const [ideas, setIdeas] = useState<{ zh: string; en: string }[] | null>(null);
   const end = useRef<HTMLDivElement>(null);
   const { open: openWord, popup } = useWordPopup();
+  const T = useT();
+  const lang = useLang();
+  const C = T.chat;
 
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -79,6 +85,10 @@ export default function ChatTutor() {
         addMistakes([{ source: 'chat', said: userMsg.text, correct: turn.correction.corrected, explanation: turn.correction.explanation }]);
       }
       award(2, 'chats');
+      if (!messages.some((m) => m.role === 'user')) {
+        const sc = SCENARIOS.find((x) => x.id === scenario) ?? SCENARIOS[0];
+        logActivity('chat', `${T.nav.chat} · ${scenarioTitle(sc, getLang())}`, { xp: 2, details: { scenario: sc.id } });
+      }
     } catch (e) {
       setError(errorText(e));
     } finally {
@@ -118,20 +128,20 @@ export default function ChatTutor() {
   return (
     <div className="chat-page">
       <PageHeader
-        title="Chat Tutor"
+        title={C.title}
         zh="文字聊天"
-        subtitle="Write in Chinese (or pinyin / English when stuck). Every message is corrected, and you can tap any word."
+        subtitle={C.subtitle}
         actions={
           <>
             <select className="input" value={scenario} onChange={(e) => chatStore.set({ scenario: e.target.value, messages: [] })}>
               {SCENARIOS.filter((s) => s.id !== 'tones').map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.icon} {s.title}
+                  {s.icon} {scenarioTitle(s, lang)}
                 </option>
               ))}
             </select>
             <button className="btn" onClick={() => chatStore.set((s) => ({ ...s, messages: [] }))}>
-              New chat
+              {C.newChat}
             </button>
           </>
         }
@@ -140,9 +150,9 @@ export default function ChatTutor() {
       <section className="card chat-window">
         {messages.length === 0 && !busy && (
           <div className="empty">
-            <p>Start a written conversation with your tutor.</p>
+            <p>{C.startPrompt}</p>
             <button className="btn btn-primary" onClick={start}>
-              开始 · Start chatting
+              {C.startBtn}
             </button>
           </div>
         )}
@@ -159,7 +169,7 @@ export default function ChatTutor() {
                     <small>{m.turn.correction.explanation}</small>
                   </div>
                 ) : (
-                  <div className="inline-ok">✓ Perfect!</div>
+                  <div className="inline-ok">{C.perfect}</div>
                 ))}
             </div>
           ) : (
@@ -169,7 +179,7 @@ export default function ChatTutor() {
                 <SpeakButton text={m.text} />
                 <SpeakButton text={m.text} slow />
                 <button className="btn-link" onClick={() => setMessages((all) => all.map((x) => (x.id === m.id ? { ...x, showEn: !x.showEn } : x)))}>
-                  {m.showEn ? 'Hide' : 'Translate'}
+                  {m.showEn ? T.common.hide : T.common.translate}
                 </button>
               </div>
               {m.showEn && <div className="translation">{m.turn?.translation}</div>}
@@ -208,13 +218,13 @@ export default function ChatTutor() {
       )}
 
       <div className="composer">
-        <button className="btn" title="Suggest replies" onClick={suggest} disabled={!messages.length || busy}>
+        <button className="btn" title={C.suggest} onClick={suggest} disabled={!messages.length || busy}>
           💡
         </button>
         <textarea
           className="input"
           rows={1}
-          placeholder="用中文写… (Enter to send, Shift+Enter for new line)"
+          placeholder={C.placeholder}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -225,7 +235,7 @@ export default function ChatTutor() {
           }}
         />
         <button className="btn btn-primary" onClick={() => send(input)} disabled={busy || !input.trim()}>
-          Send
+          {T.common.send}
         </button>
       </div>
       {popup}

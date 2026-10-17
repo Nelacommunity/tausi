@@ -6,6 +6,8 @@ import { errorText, generateJSON, learnerProfile } from '../lib/gemini';
 import { cardsStore } from '../lib/srs';
 import { award } from '../lib/state';
 import { isHan } from '../lib/zh';
+import { logActivity } from '../lib/history';
+import { tr, useT } from '../lib/i18n';
 
 interface CharStory {
   meaning: string;
@@ -29,6 +31,8 @@ export default function Characters() {
   const [error, setError] = useState<string | null>(null);
   const host = useRef<HTMLDivElement>(null);
   const writer = useRef<HanziWriter | null>(null);
+  const T = useT();
+  const C = T.chars;
 
   const list = useMemo(() => Array.from(chars).filter(isHan), [chars]);
   const char = list[idx] ?? list[0];
@@ -57,7 +61,7 @@ export default function Characters() {
       strokeAnimationSpeed: 1,
       delayBetweenStrokes: 250,
       showHintAfterMisses: 2,
-      onLoadCharDataError: () => setError(`No stroke data for ${char}.`),
+      onLoadCharDataError: () => setError(tr().chars.noStroke(char)),
     });
     setFeedback(null);
     setMistakes(0);
@@ -73,7 +77,7 @@ export default function Characters() {
   function startQuiz() {
     const w = writer.current;
     if (!w) return;
-    setFeedback('Draw the strokes in order ✍️');
+    setFeedback(tr().chars.drawPrompt);
     setMistakes(0);
     let misses = 0;
     void w.quiz({
@@ -82,8 +86,9 @@ export default function Characters() {
         setMistakes(misses);
       },
       onComplete: ({ totalMistakes }) => {
-        setFeedback(totalMistakes === 0 ? '完美！Perfect — no mistakes!' : `Done with ${totalMistakes} mistake${totalMistakes > 1 ? 's' : ''}. Try again for a clean run!`);
+        setFeedback(totalMistakes === 0 ? tr().chars.perfect : tr().chars.doneWith(totalMistakes));
         award(totalMistakes === 0 ? 5 : 3, 'writing');
+        logActivity('writing', `${tr().nav.write} · ${char}`, { xp: totalMistakes === 0 ? 5 : 3, details: { char, mistakes: totalMistakes } });
       },
     });
   }
@@ -118,16 +123,16 @@ Give 4 common words, prioritising ones at or near the learner's level.`,
 
   return (
     <div>
-      <PageHeader title="Characters" zh="写汉字" subtitle="Watch the correct stroke order, then write it yourself — strokes are checked as you draw." />
+      <PageHeader title={C.title} zh="写汉字" subtitle={C.subtitle} />
       <ErrorBox error={error} />
       <div className="grid-2 chars-layout">
         <section className="card writer-card">
           <div className="row gap wrap">
-            <input className="input grow" placeholder="Enter characters to practise, e.g. 学习中文" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load(input)} />
+            <input className="input grow" placeholder={C.placeholder} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load(input)} />
             <button className="btn" onClick={() => load(input)}>
-              Load
+              {C.load}
             </button>
-            <button className="btn" title="Random character from your words" onClick={() => load(pool[Math.floor(Math.random() * pool.length)] ?? '好')}>
+            <button className="btn" title={C.random} onClick={() => load(pool[Math.floor(Math.random() * pool.length)] ?? '好')}>
               🎲
             </button>
           </div>
@@ -145,39 +150,39 @@ Give 4 common words, prioritising ones at or near the learner's level.`,
           </div>
           <div className="segmented center">
             <button className={mode === 'watch' ? 'active' : ''} onClick={() => setMode('watch')}>
-              👀 Watch
+              {C.watch}
             </button>
             <button className={mode === 'quiz' ? 'active' : ''} onClick={() => setMode('quiz')}>
-              ✍️ Write
+              {C.write}
             </button>
           </div>
           <div className="row gap center wrap">
             {mode === 'watch' ? (
               <button className="btn" onClick={() => writer.current?.animateCharacter()}>
-                ↻ Replay
+                {C.replay}
               </button>
             ) : (
               <>
                 <button className="btn" onClick={startQuiz}>
-                  ↻ Restart
+                  {C.restart}
                 </button>
                 <button className="btn" onClick={() => writer.current?.showOutline()}>
-                  Show outline
+                  {C.showOutline}
                 </button>
                 <button className="btn" onClick={() => writer.current?.hideOutline()}>
-                  Hide outline
+                  {C.hideOutline}
                 </button>
               </>
             )}
             {list.length > 1 && (
               <button className="btn" onClick={() => setIdx((i) => (i + 1) % list.length)}>
-                Next →
+                {C.next}
               </button>
             )}
           </div>
           {feedback && (
             <p className="center">
-              {feedback} {mode === 'quiz' && mistakes > 0 && <span className="muted">({mistakes} misses)</span>}
+              {feedback} {mode === 'quiz' && mistakes > 0 && <span className="muted">{C.misses(mistakes)}</span>}
             </p>
           )}
         </section>
@@ -195,16 +200,16 @@ Give 4 common words, prioritising ones at or near the learner's level.`,
           {story ? (
             <div className="char-story">
               <p>
-                <b>Meaning:</b> {story.meaning}
+                <b>{C.meaning}</b> {story.meaning}
               </p>
               <p>
-                <b>Radical:</b> {story.radical}
+                <b>{C.radical}</b> {story.radical}
               </p>
               <p>
-                <b>Components:</b> {story.components}
+                <b>{C.components}</b> {story.components}
               </p>
               <p className="tip">📜 {story.story}</p>
-              <h4>Words with {char}</h4>
+              <h4>{C.wordsWith(char)}</h4>
               <div className="vocab-grid">
                 {story.words?.map((w) => (
                   <div key={w.hanzi} className="vocab-item">
@@ -214,20 +219,20 @@ Give 4 common words, prioritising ones at or near the learner's level.`,
                     <Pinyin hanzi={w.hanzi} />
                     <span className="muted small">{w.meaning}</span>
                     <button className="btn-link" onClick={() => load(w.hanzi)}>
-                      Practise
+                      {C.practise}
                     </button>
                   </div>
                 ))}
               </div>
             </div>
           ) : storyBusy ? (
-            <Spinner label="Digging into the character's history…" />
+            <Spinner label={C.digging} />
           ) : (
             <button className="btn" onClick={explain}>
-              ✨ Radicals, etymology & memory story
+              {C.explain}
             </button>
           )}
-          <h4>From your words</h4>
+          <h4>{C.fromWords}</h4>
           <div className="char-pool">
             {pool.slice(0, 60).map((c) => (
               <button key={c} onClick={() => load(c)} lang="zh-CN" className={c === char ? 'active' : ''}>

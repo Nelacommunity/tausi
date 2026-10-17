@@ -2,6 +2,11 @@ import { CURRICULUM } from '../data/curriculum';
 import { cardsStore, dueCards } from '../lib/srs';
 import { liveStreak, mistakesStore, progressStore, sessionsStore, settingsStore, today } from '../lib/state';
 import { todayKey } from '../lib/store';
+import { useEffect, useState } from 'react';
+import { loadHistory, type Activity } from '../lib/history';
+import { locale, useLang, useT } from '../lib/i18n';
+import { unitText } from '../locales/content';
+import { ActivityRow } from './History';
 
 export default function Dashboard() {
   const settings = settingsStore.use();
@@ -9,6 +14,13 @@ export default function Dashboard() {
   const cards = cardsStore.use();
   const mistakes = mistakesStore.use();
   const sessions = sessionsStore.use();
+  const T = useT();
+  const lang = useLang();
+  const D = T.dashboard;
+  const [recent, setRecent] = useState<Activity[] | null>(null);
+  useEffect(() => {
+    loadHistory(undefined, 5).then(setRecent).catch(() => setRecent([]));
+  }, []);
   const t = today(progress);
   const { due, fresh } = dueCards(cards);
   const streak = liveStreak(progress);
@@ -24,16 +36,17 @@ export default function Dashboard() {
   const week = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
-    return { label: d.toLocaleDateString(undefined, { weekday: 'short' }), xp: progress.days[todayKey(d)]?.xp ?? 0 };
+    return { label: d.toLocaleDateString(locale(), { weekday: 'short' }), xp: progress.days[todayKey(d)]?.xp ?? 0 };
   });
   const maxXp = Math.max(settings.dailyGoal, ...week.map((w) => w.xp));
 
+  const nextTitle = nextUnit ? unitText(nextUnit, lang).title : '';
   const plan = [
-    { done: t.cards >= Math.min(20, due.length + t.cards) && t.cards > 0, label: `Review flashcards (${due.length + fresh.length} waiting)`, href: '#/cards', icon: '🃏' },
-    { done: t.lessons > 0, label: nextUnit ? `Lesson: ${nextUnit.title}` : 'Create a custom lesson', href: '#/lessons', icon: '📚' },
-    { done: t.voiceSeconds >= 300, label: `Speak for 5 minutes (${Math.floor(t.voiceSeconds / 60)}/5 min)`, href: '#/voice', icon: '🎙️' },
-    { done: t.drills > 0, label: 'One Tone Lab drill', href: '#/pronounce', icon: '🎵' },
-    { done: t.reading > 0 || t.writing > 0, label: 'Read a story or write characters', href: '#/read', icon: '📖' },
+    { done: t.cards >= Math.min(20, due.length + t.cards) && t.cards > 0, label: D.planCards(due.length + fresh.length), href: '#/cards', icon: '🃏' },
+    { done: t.lessons > 0, label: nextUnit ? D.planLesson(nextTitle) : D.planCustom, href: '#/lessons', icon: '📚' },
+    { done: t.voiceSeconds >= 300, label: D.planSpeak(Math.floor(t.voiceSeconds / 60)), href: '#/voice', icon: '🎙️' },
+    { done: t.drills > 0, label: D.planDrill, href: '#/pronounce', icon: '🎵' },
+    { done: t.reading > 0 || t.writing > 0, label: D.planRead, href: '#/read', icon: '📖' },
   ];
   const planDone = plan.filter((p) => p.done).length;
 
@@ -44,17 +57,15 @@ export default function Dashboard() {
           <p className="hero-greet" lang="zh-CN">
             {greet}{settings.name ? `，${settings.name}` : ''}！
           </p>
-          <h1>Let's get you speaking Chinese.</h1>
-          <p className="muted">
-            HSK {settings.level} · {progress.xp.toLocaleString()} XP total · best streak {progress.bestStreak} days
-          </p>
+          <h1>{D.title}</h1>
+          <p className="muted">{D.summary(settings.level, progress.xp.toLocaleString(locale()), progress.bestStreak)}</p>
           <div className="row gap wrap">
             <a className="btn btn-primary btn-lg" href="#/voice">
-              🎙️ Talk to your tutor
+              {D.talk}
             </a>
             {nextUnit && (
               <a className="btn btn-lg" href="#/lessons">
-                📚 Continue: {nextUnit.title}
+                {D.continue(nextTitle)}
               </a>
             )}
           </div>
@@ -71,29 +82,29 @@ export default function Dashboard() {
         <div className="card stat">
           <span className="stat-icon">🔥</span>
           <strong>{streak}</strong>
-          <small>day streak</small>
+          <small>{D.dayStreak}</small>
         </div>
         <a className="card stat" href="#/cards">
           <span className="stat-icon">🃏</span>
           <strong>{due.length + fresh.length}</strong>
-          <small>cards to review</small>
+          <small>{D.toReview}</small>
         </a>
         <div className="card stat">
           <span className="stat-icon">🧠</span>
           <strong>{learned}</strong>
-          <small>words learned</small>
+          <small>{D.learned}</small>
         </div>
         <a className="card stat" href="#/mistakes">
           <span className="stat-icon">📓</span>
           <strong>{openMistakes}</strong>
-          <small>mistakes to fix</small>
+          <small>{D.toFix}</small>
         </a>
       </div>
 
       <div className="grid-2">
         <section className="card">
           <div className="row between">
-            <h3>Today's plan</h3>
+            <h3>{D.todaysPlan}</h3>
             <span className="tag">
               {planDone}/{plan.length}
             </span>
@@ -110,7 +121,7 @@ export default function Dashboard() {
         </section>
 
         <section className="card">
-          <h3>This week</h3>
+          <h3>{D.thisWeek}</h3>
           <div className="week-chart">
             {week.map((w, i) => (
               <div key={i} className="week-col" title={`${w.xp} XP`}>
@@ -122,9 +133,9 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-          <h3>Speaking progress</h3>
+          <h3>{D.speaking}</h3>
           {sessions.length === 0 ? (
-            <p className="muted small">Finish a voice session and get a feedback report to track your speaking scores here.</p>
+            <p className="muted small">{D.noSessions}</p>
           ) : (
             <div className="sessions">
               {sessions.slice(0, 5).map((s) => (
@@ -133,7 +144,7 @@ export default function Dashboard() {
                   <div>
                     <strong>{s.scenario}</strong>
                     <div className="muted small">
-                      {new Date(s.date).toLocaleDateString()} · {Math.round(s.seconds / 60)} min · {s.estimatedLevel}
+                      {new Date(s.date).toLocaleDateString(locale())} · {Math.round(s.seconds / 60)} {D.min} · {s.estimatedLevel}
                     </div>
                   </div>
                 </div>
@@ -143,25 +154,31 @@ export default function Dashboard() {
         </section>
       </div>
 
+      <section className="card">
+        <div className="row between">
+          <h3>{D.recent}</h3>
+          <a className="btn-link" href="#/history">{D.seeAll}</a>
+        </div>
+        {recent === null ? (
+          <span className="spinner sm" />
+        ) : recent.length === 0 ? (
+          <p className="muted small">{D.noRecent}</p>
+        ) : (
+          <div className="history-list">
+            {recent.map((a) => <ActivityRow key={a.id} a={a} />)}
+          </div>
+        )}
+      </section>
+
       <section className="card why">
-        <h3>Why Shuō works</h3>
+        <h3>{D.why}</h3>
         <div className="why-grid">
-          <div>
-            <b>🎙️ Unlimited speaking</b>
-            <p className="muted small">A native-level voice tutor available 24/7 that you can interrupt, like a real call — at a fraction of a private teacher's cost.</p>
-          </div>
-          <div>
-            <b>🎯 Built around your mistakes</b>
-            <p className="muted small">Every correction feeds your notebook, quizzes and flashcards, so weak spots get fixed instead of repeated.</p>
-          </div>
-          <div>
-            <b>🎵 Tones you can see</b>
-            <p className="muted small">Pitch curves compare your voice with a native speaker's, plus AI scoring for every syllable.</p>
-          </div>
-          <div>
-            <b>📈 Real progression</b>
-            <p className="muted small">HSK 1→6 curriculum, graded reading, spaced repetition and handwriting — all adapted to your level.</p>
-          </div>
+          {([[D.why1, D.why1d], [D.why2, D.why2d], [D.why3, D.why3d], [D.why4, D.why4d]] as const).map(([h, p]) => (
+            <div key={h}>
+              <b>{h}</b>
+              <p className="muted small">{p}</p>
+            </div>
+          ))}
         </div>
       </section>
     </div>

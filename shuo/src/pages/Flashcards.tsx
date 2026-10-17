@@ -4,8 +4,9 @@ import { HSK_DECKS } from '../data/hsk';
 import { errorText, generateJSON, learnerProfile } from '../lib/gemini';
 import { speak } from '../lib/speech';
 import { addCards, cardsStore, dueCards, nextIntervalLabel, review, type Card, type Grade } from '../lib/srs';
-import { navigate, settingsStore } from '../lib/state';
+import { explainIn, navigate, settingsStore } from '../lib/state';
 import { toPinyin } from '../lib/zh';
+import { locale, useT } from '../lib/i18n';
 
 type Tab = 'review' | 'decks' | 'browse';
 
@@ -13,18 +14,19 @@ export default function Flashcards() {
   const cards = cardsStore.use();
   const [tab, setTab] = useState<Tab>(cards.length ? 'review' : 'decks');
   const { due, fresh } = dueCards(cards);
+  const F = useT().cards;
 
   return (
     <div>
       <PageHeader
-        title="Flashcards"
+        title={F.title}
         zh="生词本"
-        subtitle="Spaced repetition: each word comes back just before you'd forget it."
+        subtitle={F.subtitle}
         actions={
           <div className="segmented">
             {(['review', 'decks', 'browse'] as Tab[]).map((t) => (
               <button key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)}>
-                {t === 'review' ? `Review (${due.length + fresh.length})` : t === 'decks' ? 'Add words' : `All (${cards.length})`}
+                {t === 'review' ? F.reviewTab(due.length + fresh.length) : t === 'decks' ? F.addTab : F.allTab(cards.length)}
               </button>
             ))}
           </div>
@@ -45,6 +47,7 @@ function Review({ onEmpty }: { onEmpty: () => void }) {
   const [tick, setTick] = useState(0);
   const { queue, due, fresh } = useMemo(() => dueCards(cards), [cards, tick]); // eslint-disable-line react-hooks/exhaustive-deps
   const card = queue[0];
+  const F = useT().cards;
 
   // Re-check periodically so short learning steps (1–10 min) come back on their own.
   useEffect(() => {
@@ -80,9 +83,9 @@ function Review({ onEmpty }: { onEmpty: () => void }) {
   if (!cards.length) {
     return (
       <section className="card empty">
-        <p>No flashcards yet. Add the HSK 1 deck or generate a topic deck to get started.</p>
+        <p>{F.none}</p>
         <button className="btn btn-primary" onClick={onEmpty}>
-          Add words
+          {F.addTab}
         </button>
       </section>
     );
@@ -93,17 +96,17 @@ function Review({ onEmpty }: { onEmpty: () => void }) {
     return (
       <section className="card empty">
         <div className="big-emoji">🎉</div>
-        <h2>All done for now!</h2>
+        <h2>{F.allDone}</h2>
         <p className="muted">
-          {done > 0 && `You reviewed ${done} cards this session. `}
-          {next ? `Next review ${new Date(next.due).toLocaleString()}.` : ''}
+          {done > 0 && F.reviewed(done)}
+          {next ? F.nextReview(new Date(next.due).toLocaleString(locale())) : ''}
         </p>
         <div className="row gap center wrap">
           <button className="btn" onClick={() => navigate('voice')}>
-            🎙️ Use them in conversation
+            {F.useThem}
           </button>
           <button className="btn" onClick={() => settingsStore.set((s) => ({ ...s, newCardsPerDay: s.newCardsPerDay + 5 }))}>
-            + 5 more new cards today
+            {F.moreNew}
           </button>
         </div>
       </section>
@@ -123,15 +126,15 @@ function Review({ onEmpty }: { onEmpty: () => void }) {
     <div className="review">
       <div className="row between wrap">
         <div className="muted small">
-          <span className="tag">{due.length} due</span> <span className="tag tag-new">{fresh.length} new</span> · {card.deck}
-          {card.state === 'new' && <span className="tag tag-new">NEW</span>}
+          <span className="tag">{F.due(due.length)}</span> <span className="tag tag-new">{F.new(fresh.length)}</span> · {card.deck}
+          {card.state === 'new' && <span className="tag tag-new">{F.newTag}</span>}
         </div>
         <div className="segmented sm">
           <button className={direction === 'recognize' ? 'active' : ''} onClick={() => setDirection('recognize')}>
-            汉字 → meaning
+            {F.toMeaning}
           </button>
           <button className={direction === 'recall' ? 'active' : ''} onClick={() => setDirection('recall')}>
-            meaning → 汉字
+            {F.toHanzi}
           </button>
         </div>
       </div>
@@ -159,14 +162,14 @@ function Review({ onEmpty }: { onEmpty: () => void }) {
             <Explain card={card} />
           </div>
         ) : (
-          <p className="muted small">Tap or press Space to reveal</p>
+          <p className="muted small">{F.reveal}</p>
         )}
       </section>
 
       {revealed && (
         <div className="grade-row">
-          {(['Again', 'Hard', 'Good', 'Easy'] as const).map((label, g) => (
-            <button key={label} className={`grade g${g}`} onClick={() => grade(g as Grade)}>
+          {F.grades.map((label, g) => (
+            <button key={g} className={`grade g${g}`} onClick={() => grade(g as Grade)}>
               <span>{label}</span>
               <small>
                 {nextIntervalLabel(card, g as Grade)} · {g + 1}
@@ -182,6 +185,7 @@ function Review({ onEmpty }: { onEmpty: () => void }) {
 function Explain({ card }: { card: Card }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const F = useT().cards;
 
   async function explain() {
     setBusy(true);
@@ -205,7 +209,7 @@ Return JSON: {"breakdown": "character/radical breakdown and what each part means
     <div onClick={(e) => e.stopPropagation()}>
       <ErrorBox error={error} />
       <button className="btn btn-sm" onClick={explain} disabled={busy}>
-        {busy ? <span className="spinner sm" /> : '✨'} Explain, mnemonic & example
+        {busy ? <span className="spinner sm" /> : '✨'} {F.explain}
       </button>
     </div>
   );
@@ -218,6 +222,8 @@ function Decks() {
   const [error, setError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [manual, setManual] = useState({ hanzi: '', meaning: '' });
+  const T = useT();
+  const F = T.cards;
 
   async function generateDeck() {
     if (!topic.trim()) return;
@@ -230,7 +236,7 @@ function Decks() {
 Pick words slightly above the learner's level that they'd genuinely need. Return JSON: {"words":[{"hanzi":"","pinyin":"tone marks","meaning":"","example":"short example sentence","exampleEn":""}]}`,
       );
       const n = addCards(r.words, topic.trim());
-      setMsg(`Added ${n} new cards to "${topic.trim()}".`);
+      setMsg(F.addedN(n, topic.trim()));
       setTopic('');
     } catch (e) {
       setError(errorText(e));
@@ -248,7 +254,7 @@ Pick words slightly above the learner's level that they'd genuinely need. Return
     if (!meaning) {
       setBusy(true);
       try {
-        const r = await generateJSON<{ pinyin: string; meaning: string }>(`Chinese word "${hanzi}". JSON: {"pinyin":"tone-marked","meaning":"concise English meaning"}`, {
+        const r = await generateJSON<{ pinyin: string; meaning: string }>(`Chinese word "${hanzi}". JSON: {"pinyin":"tone-marked","meaning":"concise ${explainIn()} meaning"}`, {
           temperature: 0.2,
         });
         meaning = r.meaning;
@@ -261,14 +267,14 @@ Pick words slightly above the learner's level that they'd genuinely need. Return
       setBusy(false);
     }
     const n = addCards([{ hanzi, pinyin: pinyin || toPinyin(hanzi), meaning }], 'My words');
-    setMsg(n ? `Added ${hanzi}.` : `${hanzi} is already in your deck.`);
+    setMsg(n ? F.addedWord(hanzi) : F.already(hanzi));
     setManual({ hanzi: '', meaning: '' });
   }
 
   return (
     <div className="grid-2">
       <section className="card">
-        <h3>📦 HSK decks</h3>
+        <h3>{F.hskDecks}</h3>
         {Object.entries(HSK_DECKS).map(([name, words]) => {
           const have = words.filter((w) => cards.some((c) => c.hanzi === w.hanzi)).length;
           return (
@@ -276,45 +282,45 @@ Pick words slightly above the learner's level that they'd genuinely need. Return
               <div>
                 <strong>{name}</strong>
                 <div className="muted small">
-                  {words.length} words · {have} in your collection
+                  {F.deckInfo(words.length, have)}
                 </div>
               </div>
-              <button className="btn btn-sm" disabled={have === words.length} onClick={() => setMsg(`Added ${addCards(words, name)} cards from ${name}.`)}>
-                {have === words.length ? '✓ Added' : 'Add'}
+              <button className="btn btn-sm" disabled={have === words.length} onClick={() => setMsg(F.addedFrom(addCards(words, name), name))}>
+                {have === words.length ? F.added : T.common.add}
               </button>
             </div>
           );
         })}
-        <p className="muted small">New cards are introduced {settingsStore.get().newCardsPerDay} per day (change in Settings).</p>
+        <p className="muted small">{F.perDay(settingsStore.get().newCardsPerDay)}</p>
       </section>
 
       <section className="card">
-        <h3>✨ AI topic deck</h3>
-        <p className="muted small">Any topic, tailored to your level — your job, hobbies, an upcoming trip…</p>
+        <h3>{F.aiDeck}</h3>
+        <p className="muted small">{F.aiDeckNote}</p>
         <div className="row gap">
-          <input className="input grow" placeholder="e.g. software engineering, hot pot, basketball" value={topic} onChange={(e) => setTopic(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && generateDeck()} />
+          <input className="input grow" placeholder={F.topicPlaceholder} value={topic} onChange={(e) => setTopic(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && generateDeck()} />
           <button className="btn btn-primary" onClick={generateDeck} disabled={busy}>
-            Generate
+            {T.common.generate}
           </button>
         </div>
         <div className="chips">
-          {['Business meetings', 'Travel in China', 'Food & cooking', 'Tech & programming', 'Emotions', 'Doctor & health'].map((t) => (
+          {F.topics.map((t) => (
             <button key={t} className="chip" onClick={() => setTopic(t)}>
               {t}
             </button>
           ))}
         </div>
 
-        <h3>✍️ Add a word</h3>
+        <h3>{F.addWord}</h3>
         <div className="row gap wrap">
           <input className="input" placeholder="汉字" value={manual.hanzi} onChange={(e) => setManual({ ...manual, hanzi: e.target.value })} />
-          <input className="input grow" placeholder="Meaning (leave blank for AI)" value={manual.meaning} onChange={(e) => setManual({ ...manual, meaning: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && addManual()} />
+          <input className="input grow" placeholder={F.meaningPlaceholder} value={manual.meaning} onChange={(e) => setManual({ ...manual, meaning: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && addManual()} />
           <button className="btn" onClick={addManual} disabled={busy}>
-            Add
+            {T.common.add}
           </button>
         </div>
       </section>
-      {busy && <Spinner label="Working…" />}
+      {busy && <Spinner label={T.common.working} />}
       <ErrorBox error={error} />
       {msg && <div className="success-box">✓ {msg}</div>}
     </div>
@@ -326,15 +332,17 @@ function Browse() {
   const [q, setQ] = useState('');
   const [deck, setDeck] = useState('all');
   const decks = [...new Set(cards.map((c) => c.deck))];
+  const T = useT();
+  const F = T.cards;
   const list = cards.filter((c) => (deck === 'all' || c.deck === deck) && (!q || c.hanzi.includes(q) || c.pinyin.toLowerCase().includes(q.toLowerCase()) || c.meaning.toLowerCase().includes(q.toLowerCase())));
   const stateLabel = (c: Card) => (c.state === 'new' ? 'new' : c.state === 'learning' ? 'learning' : c.interval >= 21 ? 'mature' : 'young');
 
   return (
     <section className="card">
       <div className="row gap wrap">
-        <input className="input grow" placeholder="Search hanzi, pinyin or meaning" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className="input grow" placeholder={F.search} value={q} onChange={(e) => setQ(e.target.value)} />
         <select className="input" value={deck} onChange={(e) => setDeck(e.target.value)}>
-          <option value="all">All decks</option>
+          <option value="all">{F.allDecks}</option>
           {decks.map((d) => (
             <option key={d}>{d}</option>
           ))}
@@ -344,10 +352,9 @@ function Browse() {
         <table className="word-table">
           <thead>
             <tr>
-              <th>Word</th>
-              <th>Pinyin</th>
-              <th>Meaning</th>
-              <th>Status</th>
+              {F.cols.map((c) => (
+                <th key={c}>{c}</th>
+              ))}
               <th />
             </tr>
           </thead>
@@ -362,11 +369,11 @@ function Browse() {
                 </td>
                 <td>{c.meaning}</td>
                 <td>
-                  <span className={`tag st-${stateLabel(c)}`}>{stateLabel(c)}</span>
+                  <span className={`tag st-${stateLabel(c)}`}>{F.states[stateLabel(c)]}</span>
                 </td>
                 <td className="nowrap">
                   <SpeakButton text={c.hanzi} />
-                  <button className="btn-icon" title="Delete" onClick={() => cardsStore.set((all) => all.filter((x) => x.id !== c.id))}>
+                  <button className="btn-icon" title={T.common.delete} onClick={() => cardsStore.set((all) => all.filter((x) => x.id !== c.id))}>
                     🗑
                   </button>
                 </td>
@@ -375,7 +382,7 @@ function Browse() {
           </tbody>
         </table>
       </div>
-      {list.length > 400 && <p className="muted small">Showing first 400 of {list.length}.</p>}
+      {list.length > 400 && <p className="muted small">{F.showing(list.length)}</p>}
     </section>
   );
 }

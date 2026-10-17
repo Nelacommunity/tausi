@@ -11,18 +11,22 @@ import Characters from './pages/Characters';
 import Reader from './pages/Reader';
 import Mistakes from './pages/Mistakes';
 import Settings from './pages/Settings';
+import History from './pages/History';
+import { LANGS, setLang, tr, useLang, useT } from './lib/i18n';
+import type { Dict } from './locales/en';
 
-const ROUTES: { path: string; label: string; icon: string; zh: string; page: () => ReactElement; mobile?: boolean }[] = [
-  { path: '', label: 'Home', icon: '🏠', zh: '首页', page: Dashboard, mobile: true },
-  { path: 'voice', label: 'Voice Tutor', icon: '🎙️', zh: '口语', page: VoiceTutor, mobile: true },
-  { path: 'lessons', label: 'Lessons', icon: '📚', zh: '课程', page: Lessons, mobile: true },
-  { path: 'chat', label: 'Chat Tutor', icon: '💬', zh: '聊天', page: ChatTutor },
-  { path: 'pronounce', label: 'Tone Lab', icon: '🎵', zh: '声调', page: Pronunciation },
-  { path: 'cards', label: 'Flashcards', icon: '🃏', zh: '生词', page: Flashcards, mobile: true },
-  { path: 'write', label: 'Characters', icon: '✍️', zh: '写字', page: Characters },
-  { path: 'read', label: 'Reader', icon: '📖', zh: '阅读', page: Reader },
-  { path: 'mistakes', label: 'Mistakes', icon: '📓', zh: '错题本', page: Mistakes },
-  { path: 'settings', label: 'Settings', icon: '⚙️', zh: '设置', page: Settings, mobile: true },
+const ROUTES: { path: string; key: keyof Dict['nav']; icon: string; zh: string; page: () => ReactElement; mobile?: boolean }[] = [
+  { path: '', key: 'home', icon: '🏠', zh: '首页', page: Dashboard, mobile: true },
+  { path: 'voice', key: 'voice', icon: '🎙️', zh: '口语', page: VoiceTutor, mobile: true },
+  { path: 'lessons', key: 'lessons', icon: '📚', zh: '课程', page: Lessons, mobile: true },
+  { path: 'chat', key: 'chat', icon: '💬', zh: '聊天', page: ChatTutor },
+  { path: 'pronounce', key: 'pronounce', icon: '🎵', zh: '声调', page: Pronunciation },
+  { path: 'cards', key: 'cards', icon: '🃏', zh: '生词', page: Flashcards, mobile: true },
+  { path: 'write', key: 'write', icon: '✍️', zh: '写字', page: Characters },
+  { path: 'read', key: 'read', icon: '📖', zh: '阅读', page: Reader },
+  { path: 'mistakes', key: 'mistakes', icon: '📓', zh: '错题本', page: Mistakes },
+  { path: 'history', key: 'history', icon: '🗂️', zh: '记录', page: History },
+  { path: 'settings', key: 'settings', icon: '⚙️', zh: '设置', page: Settings, mobile: true },
 ];
 
 const current = () => window.location.hash.replace(/^#\/?/, '').split('?')[0];
@@ -32,6 +36,8 @@ export default function App() {
   const [moreOpen, setMoreOpen] = useState(false);
   const settings = settingsStore.use();
   const progress = progressStore.use();
+  const T = useT();
+  const lang = useLang();
 
   useEffect(() => {
     const onHash = () => {
@@ -56,28 +62,35 @@ export default function App() {
           <span className="brand-mark">说</span>
           <span>
             <strong>Shuō</strong>
-            <small>AI Mandarin Coach</small>
+            <small>{T.app.tagline}</small>
           </span>
         </a>
         <nav>
           {ROUTES.map((r) => (
             <a key={r.path} href={`#/${r.path}`} className={r.path === route.path ? 'active' : ''}>
               <span className="nav-icon">{r.icon}</span>
-              <span className="nav-label">{r.label}</span>
-              <span className="nav-zh">{r.zh}</span>
+              <span className="nav-label">{T.nav[r.key]}</span>
+              {lang !== 'zh' && <span className="nav-zh">{r.zh}</span>}
             </a>
           ))}
         </nav>
         <div className="sidebar-foot">
-          <a className="back-to-tausi" href="/learn">← Back to Tausi</a>
-          <div className="streak-pill" title="Day streak">
-            🔥 {liveStreak(progress)} day{liveStreak(progress) === 1 ? '' : 's'}
+          <div className="lang-switch" role="group" aria-label={T.app.language}>
+            {LANGS.map((l) => (
+              <button key={l.id} className={lang === l.id ? 'active' : ''} onClick={() => setLang(l.id)} title={l.label} lang={l.id}>
+                {l.short}
+              </button>
+            ))}
           </div>
-          <div className="goal-bar" title={`${t.xp}/${settings.dailyGoal} XP today`}>
+          <a className="back-to-tausi" href="/learn">{T.app.backToTausi}</a>
+          <div className="streak-pill" title={T.app.dayStreak}>
+            🔥 {T.app.days(liveStreak(progress))}
+          </div>
+          <div className="goal-bar" title={T.app.xpToday(t.xp, settings.dailyGoal)}>
             <div style={{ width: `${pct}%` }} />
           </div>
           <small className="muted">
-            {t.xp}/{settings.dailyGoal} XP today · HSK {settings.level}
+            {T.app.xpToday(t.xp, settings.dailyGoal)} · HSK {settings.level}
           </small>
         </div>
       </aside>
@@ -94,12 +107,12 @@ export default function App() {
         {ROUTES.filter((r) => r.mobile).map((r) => (
           <a key={r.path} href={`#/${r.path}`} className={r.path === route.path ? 'active' : ''}>
             <span>{r.icon}</span>
-            <small>{r.label.split(' ')[0]}</small>
+            <small>{T.nav[r.key].split(' ')[0]}</small>
           </a>
         ))}
         <button className={moreOpen ? 'active' : ''} onClick={() => setMoreOpen((o) => !o)}>
           <span>☰</span>
-          <small>More</small>
+          <small>{T.nav.more}</small>
         </button>
       </nav>
 
@@ -109,9 +122,16 @@ export default function App() {
             {ROUTES.map((r) => (
               <a key={r.path} href={`#/${r.path}`} onClick={() => setMoreOpen(false)}>
                 <span>{r.icon}</span>
-                {r.label}
+                {T.nav[r.key]}
               </a>
             ))}
+            <div className="lang-switch more-lang" role="group" aria-label={T.app.language}>
+              {LANGS.map((l) => (
+                <button key={l.id} className={lang === l.id ? 'active' : ''} onClick={() => setLang(l.id)} lang={l.id}>
+                  {l.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -130,10 +150,10 @@ class PageBoundary extends Component<{ children: ReactNode }, { error: Error | n
     return (
       <div className="card empty">
         <div className="big-emoji">😵</div>
-        <h2>This page hit an error</h2>
+        <h2>{tr().app.pageError}</h2>
         <p className="muted">{this.state.error.message}</p>
         <button className="btn btn-primary" onClick={() => this.setState({ error: null })}>
-          Try again
+          {tr().app.tryAgain}
         </button>
       </div>
     );

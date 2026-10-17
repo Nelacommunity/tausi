@@ -1,6 +1,6 @@
 import { pcm16ToFloat, playSamples, stopPlayback } from './audio';
 import { synthesize } from './gemini';
-import { settingsStore } from './state';
+import { settingsStore, MODELS } from './state';
 
 export const SLOW_STYLE =
   'Read this aloud very slowly and clearly in standard Mandarin, pronouncing every tone carefully, like a teacher for a beginner';
@@ -10,7 +10,7 @@ const cache = new Map<string, { samples: Float32Array; rate: number }>();
 /** Fetch (and cache) Gemini TTS audio for a phrase. */
 export async function ttsAudio(text: string, style?: string) {
   const s = settingsStore.get();
-  const key = `${s.ttsModel}|${s.tutorVoice}|${style ?? ''}|${text}`;
+  const key = `${MODELS.tts}|${s.tutorVoice}|${style ?? ''}|${text}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const { data, rate } = await synthesize(text, { style });
