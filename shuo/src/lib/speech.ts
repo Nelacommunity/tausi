@@ -44,7 +44,7 @@ export async function speak(text: string, opts: { slow?: boolean } = {}) {
       const { samples, rate } = await ttsAudio(text, opts.slow ? SLOW_STYLE : undefined);
       return await playSamples(samples, rate);
     } catch (e) {
-      console.warn('Gemini TTS failed, using browser voice', e);
+      console.warn('AI voice failed, using browser voice', e);
     }
   }
   return browserSpeak(text, opts.slow ? 0.6 : 0.9);
