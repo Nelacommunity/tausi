@@ -53,7 +53,7 @@ Shuō is a Vite + React single-page app in `shuo/`, built to `public/shuo` and s
 - **Uploads:** `app/lib/file-check.ts` reads each file's first bytes and accepts only real PDF/PNG/JPEG/WebP (the browser-declared type is ignored), with per-file, total and count limits; storage names are sanitised.
 - **Redirects:** every `?next=` (proxy, login, signup, `/auth/callback`) goes through `safeNextPath()`, which allows only same-site paths (blocks `//host`, `/\host`, control characters).
 - **Passwords:** sign-up requires 10+ characters with letters and numbers, and refuses common passwords and the email name (`app/lib/password.ts`). Set the same minimum in Supabase → Authentication → Policies so the API enforces it too.
-- **Disclosure:** `/.well-known/security.txt` and the `/security` page point researchers to security@tausi.app.
+- **Disclosure:** `/.well-known/security.txt` and the `/security` page point researchers to support@tausi.app.
 - **Rate limiting:** an in-memory limiter on every route, plus a shared Postgres counter (`rate_limit_hit`) on the AI routes so limits hold when the host runs several instances behind a load balancer.
 - **Performance:** independent queries run in parallel, indexes cover the filters the reports and class views use, static logos are cached, and the browser preconnects to Supabase only (fonts are self-hosted; AI calls are server-side).
 

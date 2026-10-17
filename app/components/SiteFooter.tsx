@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useT } from "@/app/lib/language-context";
 
-const CONTACT_EMAIL = "hello@tausi.app";
-const SECURITY_EMAIL = "security@tausi.app";
+/** One inbox for questions, privacy requests and security reports. */
+const SUPPORT_EMAIL = "support@tausi.app";
 
 /** The public site footer: product links, company, legal, language and trust notes. */
 export function SiteFooter() {
@@ -27,8 +27,8 @@ export function SiteFooter() {
       title: F.company,
       links: [
         { href: "/about", label: F.about },
-        { href: `mailto:${CONTACT_EMAIL}`, label: F.contact, plain: true },
-        { href: `mailto:${SECURITY_EMAIL}`, label: F.reportIssue, plain: true },
+        { href: `mailto:${SUPPORT_EMAIL}`, label: F.contact, plain: true },
+        { href: `mailto:${SUPPORT_EMAIL}?subject=Security%20report`, label: F.reportIssue, plain: true },
       ],
     },
     {
